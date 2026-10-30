@@ -22,19 +22,19 @@ export default function HomePage() {
   return (
     <div className="w-full">
       {/* HERO SECTION */}
-      <section className="relative w-full min-h-[660px] sm:min-h-[720px] lg:min-h-[780px] flex items-center pt-28 sm:pt-36 pb-16 overflow-hidden bg-[#f4f5f7]">
+      <section className="relative w-full min-h-[660px] sm:min-h-[720px] lg:min-h-[800px] flex items-center pt-28 sm:pt-36 pb-16 overflow-hidden bg-[#e8e7e2]">
         {/* Full-bleed 3D Isometric Logistics Scene */}
         <div className="absolute inset-0 z-0 pointer-events-none select-none">
           <Image
-            src="/hero-clean-ref-2x.jpg"
+            src="/hero-bg.jpg"
             alt="SwiftDrop 3D Smart Logistics Hub"
             fill
             priority
             quality={95}
-            className="object-cover object-right md:object-right-center"
+            className="object-cover object-right lg:object-center"
           />
           {/* Studio lighting gradient to ensure text readability on all viewports */}
-          <div className="absolute inset-0 bg-gradient-to-r from-[#f4f5f7] via-[#f4f5f7]/95 sm:via-[#f4f5f7]/80 md:via-[#f4f5f7]/40 to-transparent z-10" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#e8e7e2] via-[#e8e7e2]/90 sm:via-[#e8e7e2]/70 md:via-[#e8e7e2]/30 to-transparent z-10" />
         </div>
 
         <div className="relative z-20 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
