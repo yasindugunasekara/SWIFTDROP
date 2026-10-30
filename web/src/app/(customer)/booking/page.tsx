@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { clearAuthSession } from '../../../lib/auth';
 
 export default function CustomerDashboardPage() {
   const [activeDuty, setActiveDuty] = useState('book');
@@ -15,6 +16,11 @@ export default function CustomerDashboardPage() {
   });
   const [bookedSuccess, setBookedSuccess] = useState(false);
 
+  const handleLogout = () => {
+    clearAuthSession();
+    window.location.href = '/login';
+  };
+
   const priceMap: Record<string, number> = {
     small: 4.50,
     medium: 12.50,
@@ -24,58 +30,62 @@ export default function CustomerDashboardPage() {
   const currentPrice = (priceMap[packageSize] || 12.50) + (addons.fragile ? 2.0 : 0) + (addons.signature ? 1.5 : 0) + (addons.express ? 5.0 : 0);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-24 sm:pt-28 pb-10">
-      {/* Outer Dashboard Card matching reference UI */}
-      <div className="bg-white rounded-[32px] p-6 lg:p-8 shadow-[0_15px_40px_-10px_rgba(0,0,0,0.06)] border border-slate-200/90">
-        
-        {/* TOP NAVBAR FOR CUSTOMER ROLE */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between pb-6 mb-6 border-b border-slate-100 gap-4">
-          <div className="flex items-center gap-3">
+    <div className="w-full min-h-screen bg-slate-50 flex flex-col">
+      {/* FULL-WIDTH STICKY DASHBOARD HEADER */}
+      <header className="w-full bg-white border-b border-slate-200/80 px-4 sm:px-8 py-3.5 flex flex-col md:flex-row md:items-center justify-between sticky top-0 z-40 shadow-sm gap-4">
+        <div className="flex items-center gap-3">
+          <Link href="/" className="flex items-center no-underline">
             <span className="text-2xl font-black text-slate-900 tracking-tight">
-              swiftdrop<span className="text-brand-orange">.</span>
+              swiftdrop<span className="text-[#ff6600]">.</span>
             </span>
-            <span className="px-2.5 py-0.5 text-xs font-bold bg-sky-100 text-sky-700 rounded-full">
-              Customer Portal
-            </span>
-          </div>
-
-          {/* Role Duty Pills */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0">
-            {[
-              { id: 'book', label: 'Book Delivery', icon: '📦' },
-              { id: 'track', label: 'Track Parcel', icon: '📍' },
-              { id: 'history', label: 'History & Receipts', icon: '📜' },
-              { id: 'addresses', label: 'Saved Addresses', icon: '🏠' },
-              { id: 'support', label: 'Help / Support', icon: '💬' },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveDuty(tab.id)}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                  activeDuty === tab.id
-                    ? 'bg-orange-50 text-brand-orange border border-orange-200/60 shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                }`}
-              >
-                <span>{tab.icon}</span>
-                <span>{tab.label}</span>
-              </button>
-            ))}
-          </div>
-
-          {/* Quick Search & Summary Pill */}
-          <div className="flex items-center gap-2">
-            <button className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition-colors cursor-pointer">
-              🔍
-            </button>
-            <div className="flex items-center gap-2 bg-brand-orange text-white px-4 py-2 rounded-full text-xs font-bold shadow-sm">
-              <span>🛍️</span>
-              <span>3 Shipments</span>
-            </div>
-          </div>
+          </Link>
+          <span className="px-2.5 py-0.5 text-xs font-bold bg-sky-100 text-sky-700 rounded-full">
+            Customer Portal
+          </span>
         </div>
 
-        {/* TWO-COLUMN DASHBOARD GRID */}
+        {/* Role Duty Navigation Pills */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0">
+          {[
+            { id: 'book', label: 'Book Delivery', icon: '📦' },
+            { id: 'track', label: 'Track Parcel', icon: '📍' },
+            { id: 'history', label: 'History & Receipts', icon: '📜' },
+            { id: 'addresses', label: 'Saved Addresses', icon: '🏠' },
+            { id: 'support', label: 'Help / Support', icon: '💬' },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveDuty(tab.id)}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                activeDuty === tab.id
+                  ? 'bg-orange-50 text-[#ff6600] border border-orange-200/60 shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <span>{tab.icon}</span>
+              <span>{tab.label}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Right Status & Logout */}
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="flex items-center gap-2 bg-[#ff6600] text-white px-4 py-2 rounded-full text-xs font-bold shadow-sm">
+            <span>🛍️</span>
+            <span>3 Shipments</span>
+          </div>
+
+          <button
+            onClick={handleLogout}
+            className="px-3.5 py-1.5 text-xs font-bold text-slate-700 hover:text-rose-600 bg-slate-100 hover:bg-rose-50 border border-slate-200 rounded-full transition-all cursor-pointer"
+          >
+            Log out
+          </button>
+        </div>
+      </header>
+
+      {/* FULL-PAGE MAIN WORKSPACE */}
+      <main className="flex-1 w-full max-w-[1700px] mx-auto px-4 sm:px-8 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
           {/* LEFT / CENTER MAJOR WORKSPACE (approx 68% width) */}
@@ -354,8 +364,7 @@ export default function CustomerDashboardPage() {
           </div>
 
         </div>
-
-      </div>
+      </main>
     </div>
   );
 }

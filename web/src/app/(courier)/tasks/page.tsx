@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
+import { clearAuthSession } from '../../../lib/auth';
 
 export default function CourierDashboardPage() {
   const [activeDuty, setActiveDuty] = useState('route');
@@ -9,57 +11,71 @@ export default function CourierDashboardPage() {
   const [photoUploaded, setPhotoUploaded] = useState(false);
   const [completed, setCompleted] = useState(false);
 
+  const handleLogout = () => {
+    clearAuthSession();
+    window.location.href = '/login';
+  };
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-24 sm:pt-28 pb-10">
-      {/* Outer Dashboard Card matching reference UI */}
-      <div className="bg-white rounded-[32px] p-6 lg:p-8 shadow-[0_15px_40px_-10px_rgba(0,0,0,0.06)] border border-slate-200/90">
-        
-        {/* TOP NAVBAR FOR COURIER ROLE */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between pb-6 mb-6 border-b border-slate-100 gap-4">
-          <div className="flex items-center gap-3">
+    <div className="w-full min-h-screen bg-slate-50 flex flex-col">
+      {/* FULL-WIDTH STICKY DASHBOARD HEADER */}
+      <header className="w-full bg-white border-b border-slate-200/80 px-4 sm:px-8 py-3.5 flex flex-col md:flex-row md:items-center justify-between sticky top-0 z-40 shadow-sm gap-4">
+        <div className="flex items-center gap-3">
+          <Link href="/" className="flex items-center no-underline">
             <span className="text-2xl font-black text-slate-900 tracking-tight">
-              swiftdrop<span className="text-brand-orange">.</span>
+              swiftdrop<span className="text-[#ff6600]">.</span>
             </span>
-            <span className="px-2.5 py-0.5 text-xs font-bold bg-amber-100 text-amber-800 rounded-full">
-              Courier Hub
-            </span>
-          </div>
+          </Link>
+          <span className="px-2.5 py-0.5 text-xs font-bold bg-amber-100 text-amber-800 rounded-full">
+            Courier Hub
+          </span>
+        </div>
 
-          {/* Role Duty Pills */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0">
-            {[
-              { id: 'route', label: "Today's Route", icon: '🗺️' },
-              { id: 'tasks', label: 'Active Tasks (6)', icon: '🚚' },
-              { id: 'proof', label: 'Camera Proof Logs', icon: '📸' },
-              { id: 'failed', label: 'Exceptions & Returns', icon: '⚠️' },
-              { id: 'earnings', label: 'Daily Earnings', icon: '💰' },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveDuty(tab.id)}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                  activeDuty === tab.id
-                    ? 'bg-amber-50 text-amber-700 border border-amber-300/70 shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                }`}
-              >
-                <span>{tab.icon}</span>
-                <span>{tab.label}</span>
-              </button>
-            ))}
-          </div>
+        {/* Role Duty Navigation Pills */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0">
+          {[
+            { id: 'route', label: "Today's Route", icon: '🗺️' },
+            { id: 'tasks', label: 'Active Tasks (6)', icon: '🚚' },
+            { id: 'proof', label: 'Camera Proof Logs', icon: '📸' },
+            { id: 'failed', label: 'Exceptions & Returns', icon: '⚠️' },
+            { id: 'earnings', label: 'Daily Earnings', icon: '💰' },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveDuty(tab.id)}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                activeDuty === tab.id
+                  ? 'bg-amber-50 text-amber-700 border border-amber-300/70 shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <span>{tab.icon}</span>
+              <span>{tab.label}</span>
+            </button>
+          ))}
+        </div>
 
-          {/* Shift Status & Badge */}
+        {/* Right Shift Status & Logout */}
+        <div className="flex items-center gap-3 sm:gap-4">
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span className="text-xs font-bold text-slate-700">Online & GPS Active</span>
-            <div className="bg-amber-500 text-white px-3.5 py-1.5 rounded-full text-xs font-bold shadow-sm">
+            <span className="text-xs font-bold text-slate-700 hidden sm:inline">GPS Active</span>
+            <div className="bg-amber-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-sm">
               Rider #101
             </div>
           </div>
-        </div>
 
-        {/* TWO-COLUMN DASHBOARD GRID */}
+          <button
+            onClick={handleLogout}
+            className="px-3.5 py-1.5 text-xs font-bold text-slate-700 hover:text-rose-600 bg-slate-100 hover:bg-rose-50 border border-slate-200 rounded-full transition-all cursor-pointer"
+          >
+            Log out
+          </button>
+        </div>
+      </header>
+
+      {/* FULL-PAGE MAIN WORKSPACE */}
+      <main className="flex-1 w-full max-w-[1700px] mx-auto px-4 sm:px-8 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
           {/* LEFT MAJOR WORKSPACE */}
@@ -315,8 +331,7 @@ export default function CourierDashboardPage() {
           </div>
 
         </div>
-
-      </div>
+      </main>
     </div>
   );
 }

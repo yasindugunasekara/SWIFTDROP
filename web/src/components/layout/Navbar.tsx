@@ -2,14 +2,25 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { getStoredUser, clearAuthSession, User } from '../../lib/auth';
 
 export default function Navbar() {
+  const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     setUser(getStoredUser());
   }, []);
+
+  // Remove the public marketing navbar completely when inside any dashboard route
+  const isDashboardRoute = ['/booking', '/tasks', '/portal', '/dispatch', '/analytics', '/inbox', '/config'].some(
+    (prefix) => pathname === prefix || pathname.startsWith(prefix + '/')
+  );
+
+  if (isDashboardRoute) {
+    return null;
+  }
 
   const handleLogout = () => {
     clearAuthSession();
