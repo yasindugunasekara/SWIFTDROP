@@ -83,7 +83,7 @@ export default function Navbar() {
               </Link>
               <button
                 onClick={handleLogout}
-                className="text-xs font-bold text-slate-500 hover:text-[#ff6600] transition-colors cursor-pointer"
+                className="px-4 py-1.5 text-xs sm:text-sm font-bold text-white bg-[#ff6600] hover:bg-[#ea580c] rounded-full shadow-sm transition-all cursor-pointer"
               >
                 Logout
               </button>
@@ -91,9 +91,9 @@ export default function Navbar() {
           ) : (
             <Link
               href="/login"
-              className="text-xs sm:text-sm font-bold text-slate-700 hover:text-[#ff6600] transition-colors px-3 py-1.5"
+              className="px-4 py-1.5 text-xs sm:text-sm font-bold text-white bg-[#ff6600] hover:bg-[#ea580c] rounded-full shadow-sm transition-all"
             >
-              login
+              LOGIN
             </Link>
           )}
         </div>

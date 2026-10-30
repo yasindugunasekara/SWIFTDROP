@@ -186,10 +186,10 @@ export default function HomePage() {
       </section>
 
       {/* HOW IT WORKS SECTION */}
-      <section id="process" className="py-20 bg-slate-50 border-t border-slate-100">
+      <section id="process" className="py-20 bg-[#e8e7e2] border-t border-slate-200/60">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="text-center max-w-xl mx-auto mb-14">
-            <span className="text-xs font-bold tracking-widest text-brand-orange bg-orange-50 px-3 py-1 rounded-full uppercase">
+            <span className="text-xs font-bold tracking-widest text-[#ff6600] bg-white border border-orange-200/80 px-3.5 py-1 rounded-full uppercase shadow-sm">
               SIMPLE 4-STEP PROCESS
             </span>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mt-3 mb-2">
@@ -201,32 +201,32 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm relative">
-              <div className="text-4xl font-black text-slate-200 mb-2">01</div>
+            <div className="bg-white p-7 rounded-3xl border border-white/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative">
+              <div className="text-4xl font-black text-[#ff6600]/20 mb-2">01</div>
               <h4 className="text-base font-bold text-slate-900 mb-1.5">Book or Inject</h4>
               <p className="text-xs text-slate-600 leading-relaxed">
                 Enter parcel weight & dimensions for an instant server-verified fee quote, or inject via B2B API.
               </p>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm relative">
-              <div className="text-4xl font-black text-slate-200 mb-2">02</div>
+            <div className="bg-white p-7 rounded-3xl border border-white/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative">
+              <div className="text-4xl font-black text-[#ff6600]/20 mb-2">02</div>
               <h4 className="text-base font-bold text-slate-900 mb-1.5">Smart Dispatch</h4>
               <p className="text-xs text-slate-600 leading-relaxed">
                 Dispatchers match parcels to nearby couriers balancing active fleet workloads across delivery zones.
               </p>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm relative">
-              <div className="text-4xl font-black text-slate-200 mb-2">03</div>
+            <div className="bg-white p-7 rounded-3xl border border-white/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative">
+              <div className="text-4xl font-black text-[#ff6600]/20 mb-2">03</div>
               <h4 className="text-base font-bold text-slate-900 mb-1.5">Real-Time Transit</h4>
               <p className="text-xs text-slate-600 leading-relaxed">
                 RabbitMQ broker broadcasts status events triggering notifications and live tracking timeline updates.
               </p>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm relative">
-              <div className="text-4xl font-black text-slate-200 mb-2">04</div>
+            <div className="bg-white p-7 rounded-3xl border border-white/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative">
+              <div className="text-4xl font-black text-[#ff6600]/20 mb-2">04</div>
               <h4 className="text-base font-bold text-slate-900 mb-1.5">Proof of Delivery</h4>
               <p className="text-xs text-slate-600 leading-relaxed">
                 Courier verifies delivery with doorstep camera photo or recipient signature, generating instant VAT receipts.
@@ -307,10 +307,10 @@ export default function HomePage() {
       </section>
 
       {/* TRANSPARENT PRICING SECTION */}
-      <section id="pricing" className="py-20 bg-slate-50 border-t border-slate-100">
+      <section id="pricing" className="py-20 bg-[#e8e7e2] border-t border-slate-200/60">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="text-center max-w-xl mx-auto mb-14">
-            <span className="text-xs font-bold tracking-widest text-[#ff6600] bg-orange-50 border border-orange-200/80 px-3.5 py-1 rounded-full uppercase">
+            <span className="text-xs font-bold tracking-widest text-[#ff6600] bg-white border border-orange-200/80 px-3.5 py-1 rounded-full uppercase shadow-sm">
               TRANSPARENT RATES
             </span>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mt-3 mb-2">
