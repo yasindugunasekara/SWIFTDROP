@@ -186,7 +186,7 @@ export default function HomePage() {
       </section>
 
       {/* HOW IT WORKS SECTION */}
-      <section className="py-20 bg-slate-50 border-t border-slate-100">
+      <section id="process" className="py-20 bg-slate-50 border-t border-slate-100">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="text-center max-w-xl mx-auto mb-14">
             <span className="text-xs font-bold tracking-widest text-brand-orange bg-orange-50 px-3 py-1 rounded-full uppercase">
@@ -300,6 +300,129 @@ export default function HomePage() {
                 className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-orange hover:bg-brand-orange-dark text-white text-xs font-bold rounded-full transition-all"
               >
                 Sign In to Merchant Portal &rarr;
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* TRANSPARENT PRICING SECTION */}
+      <section id="pricing" className="py-20 bg-slate-50 border-t border-slate-100">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="text-center max-w-xl mx-auto mb-14">
+            <span className="text-xs font-bold tracking-widest text-[#ff6600] bg-orange-50 border border-orange-200/80 px-3.5 py-1 rounded-full uppercase">
+              TRANSPARENT RATES
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mt-3 mb-2">
+              Simple, Predictable Island-Wide Pricing
+            </h2>
+            <p className="text-slate-600 text-sm">
+              No hidden fuel surcharges. Server-calculated transparent pricing based on real-time distance and weight.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Tier 1 */}
+            <div className="bg-white p-8 rounded-3xl border border-slate-200/90 shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Standard Delivery</span>
+                <div className="flex items-baseline gap-1 mt-3 mb-2">
+                  <span className="text-4xl font-black text-slate-900">$4.50</span>
+                  <span className="text-xs text-slate-500 font-medium">/ parcel</span>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed mb-6">
+                  Reliable next-day delivery across municipal and inter-district zones.
+                </p>
+                <ul className="space-y-3 text-xs text-slate-700 pb-8 border-t border-slate-100 pt-6">
+                  <li className="flex items-center gap-2">
+                    <span className="text-[#ff6600] font-bold">✓</span> Up to 2 kg parcel weight included
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-[#ff6600] font-bold">✓</span> Real-time GPS & milestone tracking
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-[#ff6600] font-bold">✓</span> Free doorstep pickup
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-[#ff6600] font-bold">✓</span> SMS & WhatsApp recipient alerts
+                  </li>
+                </ul>
+              </div>
+              <Link
+                href="/booking"
+                className="w-full py-3 text-center bg-white hover:bg-orange-50 text-[#ff6600] border border-orange-200/80 rounded-full font-bold text-xs transition-all"
+              >
+                Book Standard Parcel
+              </Link>
+            </div>
+
+            {/* Tier 2 - Most Popular */}
+            <div className="bg-white p-8 rounded-3xl border-2 border-[#ff6600] shadow-xl relative flex flex-col justify-between">
+              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#ff6600] text-white px-3.5 py-1 rounded-full text-[10px] font-black tracking-wider uppercase shadow-md shadow-orange-500/20">
+                MOST POPULAR
+              </div>
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-[#ff6600]">Same-Day Express</span>
+                <div className="flex items-baseline gap-1 mt-3 mb-2">
+                  <span className="text-4xl font-black text-slate-900">$8.50</span>
+                  <span className="text-xs text-slate-500 font-medium">/ parcel</span>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed mb-6">
+                  Urgent doorstep delivery within 2-4 hours anywhere in urban hubs.
+                </p>
+                <ul className="space-y-3 text-xs text-slate-700 pb-8 border-t border-slate-100 pt-6">
+                  <li className="flex items-center gap-2">
+                    <span className="text-[#ff6600] font-bold">✓</span> Priority courier dispatch in 10 mins
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-[#ff6600] font-bold">✓</span> Direct point-to-point transit
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-[#ff6600] font-bold">✓</span> Digital recipient signature & camera proof
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-[#ff6600] font-bold">✓</span> $100 complimentary cargo guarantee
+                  </li>
+                </ul>
+              </div>
+              <Link
+                href="/booking"
+                className="w-full py-3 text-center bg-[#ff6600] hover:bg-[#ea580c] text-white rounded-full font-bold text-xs shadow-lg shadow-orange-500/25 transition-all"
+              >
+                Ship Express Now
+              </Link>
+            </div>
+
+            {/* Tier 3 */}
+            <div className="bg-white p-8 rounded-3xl border border-slate-200/90 shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Merchant B2B Volume</span>
+                <div className="flex items-baseline gap-1 mt-3 mb-2">
+                  <span className="text-3xl font-black text-slate-900">Custom SLA</span>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed mb-6">
+                  Dedicated volume pricing for high-throughput e-commerce stores.
+                </p>
+                <ul className="space-y-3 text-xs text-slate-700 pb-8 border-t border-slate-100 pt-6">
+                  <li className="flex items-center gap-2">
+                    <span className="text-[#ff6600] font-bold">✓</span> Secured REST Partner APIs & Webhooks
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-[#ff6600] font-bold">✓</span> Bulk CSV automated waybill printing
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-[#ff6600] font-bold">✓</span> Dedicated fleet dispatch manager
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-[#ff6600] font-bold">✓</span> Automated reconciliation & monthly billing
+                  </li>
+                </ul>
+              </div>
+              <Link
+                href="/login"
+                className="w-full py-3 text-center bg-white hover:bg-orange-50 text-[#ff6600] border border-orange-200/80 rounded-full font-bold text-xs transition-all"
+              >
+                Merchant Sign In
               </Link>
             </div>
           </div>

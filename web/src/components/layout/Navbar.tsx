@@ -55,72 +55,46 @@ export default function Navbar() {
           </Link>
         </div>
 
-        {/* Center Navigation Links - Common Public Services */}
-        <nav className="hidden md:flex items-center gap-7 lg:gap-8">
-          <Link href="/#services" className="text-xs sm:text-sm font-semibold text-slate-700 hover:text-slate-950 transition-colors">
-            Send
+        {/* Center Navigation Links - Exact user requested links */}
+        <nav className="hidden md:flex items-center gap-7 lg:gap-9">
+          <Link href="/#services" className="text-xs sm:text-sm font-bold text-slate-700 hover:text-[#ff6600] transition-colors tracking-wide">
+            OUR SERVICES
           </Link>
-          <Link href="/tracking/SWIFT-DEMO" className="text-xs sm:text-sm font-semibold text-slate-700 hover:text-slate-950 transition-colors">
-            Track
+          <Link href="/#process" className="text-xs sm:text-sm font-bold text-slate-700 hover:text-[#ff6600] transition-colors tracking-wide">
+            PROCESS
           </Link>
-          <Link href="/#business" className="text-xs sm:text-sm font-semibold text-slate-700 hover:text-slate-950 transition-colors">
-            Business
+          <Link href="/#coverage" className="text-xs sm:text-sm font-bold text-slate-700 hover:text-[#ff6600] transition-colors tracking-wide">
+            COVERAGE
           </Link>
-          <Link href="/#pricing" className="text-xs sm:text-sm font-semibold text-slate-700 hover:text-slate-950 transition-colors">
-            Pricing
-          </Link>
-          <Link href="/exceptions" className="text-xs sm:text-sm font-semibold text-slate-700 hover:text-slate-950 transition-colors">
-            Support
+          <Link href="/#pricing" className="text-xs sm:text-sm font-bold text-slate-700 hover:text-[#ff6600] transition-colors tracking-wide">
+            PRICING
           </Link>
         </nav>
 
-        {/* Right Action / Auth Buttons */}
+        {/* Right Action: login only */}
         <div className="flex items-center gap-3">
           {user ? (
-            <div className="flex items-center gap-2.5">
-              <span className={`px-2.5 py-0.5 text-[10px] sm:text-xs font-bold rounded-full uppercase tracking-wider ${
-                user.role === 'CUSTOMER' ? 'bg-sky-100 text-sky-700' :
-                user.role === 'COURIER' ? 'bg-amber-100 text-amber-700' :
-                user.role === 'MERCHANT' ? 'bg-purple-100 text-purple-700' :
-                'bg-rose-100 text-rose-700'
-              }`}>
-                {user.role}
-              </span>
-              <span className="hidden sm:inline text-xs font-semibold text-slate-800">
-                {user.fullName || user.email.split('@')[0]}
-              </span>
-
-              {/* Dedicated Dashboard Button */}
+            <div className="flex items-center gap-3">
               <Link
                 href={getDashboardLink(user.role)}
-                className="flex items-center gap-1.5 px-4 py-2 text-xs sm:text-sm font-bold text-white bg-[#111827] hover:bg-black rounded-full shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
+                className="px-4 py-1.5 text-xs sm:text-sm font-bold text-white bg-[#ff6600] hover:bg-[#ea580c] rounded-full shadow-sm transition-all"
               >
-                Dashboard <span className="text-[#ff6600]">&rarr;</span>
+                Dashboard &rarr;
               </Link>
-
               <button
                 onClick={handleLogout}
-                className="px-2 py-1 text-xs font-medium text-slate-500 hover:text-rose-600 transition-colors cursor-pointer"
-                title="Log out"
+                className="text-xs font-bold text-slate-500 hover:text-[#ff6600] transition-colors cursor-pointer"
               >
-                Log out
+                Logout
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-3 sm:gap-4">
-              <Link
-                href="/login"
-                className="text-xs sm:text-sm font-semibold text-slate-700 hover:text-slate-950 transition-colors px-2 py-1"
-              >
-                Log in
-              </Link>
-              <Link
-                href="/booking"
-                className="flex items-center gap-1.5 px-4 sm:px-5 py-2 text-xs sm:text-sm font-bold text-white bg-[#111827] hover:bg-black rounded-full shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
-              >
-                Ship Now <span className="text-[#ff6600] text-sm">&rarr;</span>
-              </Link>
-            </div>
+            <Link
+              href="/login"
+              className="text-xs sm:text-sm font-bold text-slate-700 hover:text-[#ff6600] transition-colors px-3 py-1.5"
+            >
+              login
+            </Link>
           )}
         </div>
       </header>
