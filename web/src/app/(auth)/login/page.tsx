@@ -23,7 +23,6 @@ export default function LoginPage() {
     DISPATCHER: { email: 'dispatcher@swiftdrop.com', pass: 'Dispatcher@123', name: 'Fleet Operations Manager', path: '/dispatch' },
   };
 
-  // Switch role tab and autofill demo credentials
   const handleRoleTabChange = (role: UserRole) => {
     setActiveRole(role);
     setEmail(demoAccounts[role as keyof typeof demoAccounts]?.email || '');
@@ -37,11 +36,9 @@ export default function LoginPage() {
     setErrorMsg('');
 
     try {
-      // Authenticate with sample demo credentials or backend
       const account = demoAccounts[activeRole as keyof typeof demoAccounts];
 
       if (email && password) {
-        // Save session locally
         saveAuthSession(
           {
             id: `usr-${activeRole.toLowerCase()}-01`,
@@ -53,7 +50,6 @@ export default function LoginPage() {
           'mock_jwt_refresh_token_swiftdrop'
         );
 
-        // Redirect to role workspace
         router.push(account?.path || '/');
       } else {
         setErrorMsg('Please enter both email and password.');
@@ -66,7 +62,6 @@ export default function LoginPage() {
   };
 
   const handleGoogleLogin = () => {
-    // Google OAuth 2.0 flow
     saveAuthSession(
       {
         id: 'usr-google-customer',
@@ -80,53 +75,41 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="login-wrapper">
-      <div className="login-card">
+    <div className="min-h-[calc(100vh-130px)] flex items-center justify-center px-4 py-8">
+      <div className="w-full max-w-md bg-white rounded-3xl p-7 sm:p-8 shadow-xl border border-slate-200/80">
         {/* Brand Header */}
-        <div className="card-header">
-          <Link href="/" className="logo-text">
-            swift<span className="orange-dot">.</span>
+        <div className="text-center mb-6">
+          <Link href="/" className="inline-block text-3xl font-extrabold text-slate-900 tracking-tight mb-1">
+            swift<span className="text-brand-orange">.</span>
           </Link>
-          <h2 className="login-heading">Welcome Back</h2>
-          <p className="login-sub">Select your account type to sign in to SwiftDrop.</p>
+          <h2 className="text-xl font-bold text-slate-900">Welcome Back</h2>
+          <p className="text-xs text-slate-500 mt-0.5">Select your account type to sign in to SwiftDrop.</p>
         </div>
 
         {/* Role Tabs */}
-        <div className="role-tabs">
-          <button
-            type="button"
-            className={`tab-btn ${activeRole === 'CUSTOMER' ? 'active' : ''}`}
-            onClick={() => handleRoleTabChange('CUSTOMER')}
-          >
-            Customer
-          </button>
-          <button
-            type="button"
-            className={`tab-btn ${activeRole === 'COURIER' ? 'active' : ''}`}
-            onClick={() => handleRoleTabChange('COURIER')}
-          >
-            Courier
-          </button>
-          <button
-            type="button"
-            className={`tab-btn ${activeRole === 'MERCHANT' ? 'active' : ''}`}
-            onClick={() => handleRoleTabChange('MERCHANT')}
-          >
-            Merchant
-          </button>
-          <button
-            type="button"
-            className={`tab-btn ${activeRole === 'DISPATCHER' ? 'active' : ''}`}
-            onClick={() => handleRoleTabChange('DISPATCHER')}
-          >
-            Dispatcher
-          </button>
+        <div className="grid grid-cols-4 gap-1 bg-slate-100 p-1 rounded-xl mb-4">
+          {(['CUSTOMER', 'COURIER', 'MERCHANT', 'DISPATCHER'] as UserRole[]).map((r) => (
+            <button
+              key={r}
+              type="button"
+              className={`py-2 text-xs font-semibold rounded-lg transition-all capitalize cursor-pointer ${
+                activeRole === r
+                  ? 'bg-white text-brand-orange shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+              onClick={() => handleRoleTabChange(r)}
+            >
+              {r.toLowerCase()}
+            </button>
+          ))}
         </div>
 
         {/* Demo Credentials Quick Info Box */}
-        <div className="demo-info-badge">
-          <div className="badge-tag">Sample Credential Loaded</div>
-          <div className="badge-details">
+        <div className="bg-orange-50/80 border border-orange-200/80 rounded-xl p-3 mb-5 text-xs text-orange-950">
+          <div className="font-bold text-[0.7rem] text-brand-orange uppercase tracking-wider mb-1">
+            Sample Credential Loaded
+          </div>
+          <div className="flex flex-col sm:flex-row sm:justify-between gap-1 text-slate-700">
             <span><strong>Email:</strong> {email}</span>
             <span><strong>Password:</strong> {password}</span>
           </div>
@@ -134,9 +117,13 @@ export default function LoginPage() {
 
         {/* Social Login Button for Customers */}
         {activeRole === 'CUSTOMER' && (
-          <div className="social-login-block">
-            <button type="button" onClick={handleGoogleLogin} className="google-btn">
-              <svg width="18" height="18" viewBox="0 0 24 24" className="google-icon">
+          <div className="mb-4">
+            <button
+              type="button"
+              onClick={handleGoogleLogin}
+              className="w-full flex items-center justify-center gap-3 bg-white border border-slate-300 rounded-xl py-2 px-4 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-sm cursor-pointer"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.65v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.14z"/>
                 <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.24v3.15C3.26 21.36 7.33 24 12 24z"/>
                 <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.24C.45 8.15 0 9.92 0 12s.45 3.85 1.24 5.42l4.04-3.15z"/>
@@ -144,37 +131,37 @@ export default function LoginPage() {
               </svg>
               Continue with Google (OAuth 2.0)
             </button>
-            <div className="divider-line">
-              <span>or sign in with email</span>
+            <div className="flex items-center my-4 text-xs text-slate-400 before:flex-1 before:border-t before:border-slate-200 after:flex-1 after:border-t after:border-slate-200">
+              <span className="px-2">or sign in with email</span>
             </div>
           </div>
         )}
 
         {/* Error Alert */}
         {errorMsg && (
-          <div className="error-alert">
+          <div className="bg-red-50 text-red-700 border border-red-200 text-xs rounded-lg p-2.5 mb-4">
             {errorMsg}
           </div>
         )}
 
         {/* Main Login Form */}
-        <form onSubmit={handleLogin} className="login-form">
-          <div className="form-group">
-            <label className="input-label">Email Address</label>
+        <form onSubmit={handleLogin} className="flex flex-col gap-3.5">
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-slate-700">Email Address</label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="name@company.com"
-              className="styled-input"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm text-slate-900 focus:outline-none focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/20 transition-all"
             />
           </div>
 
-          <div className="form-group">
-            <div className="label-row">
-              <label className="input-label">Password</label>
-              <a href="#" className="forgot-link">Forgot password?</a>
+          <div className="flex flex-col gap-1">
+            <div className="flex justify-between items-center">
+              <label className="text-xs font-semibold text-slate-700">Password</label>
+              <a href="#" className="text-xs text-brand-orange hover:underline">Forgot password?</a>
             </div>
             <input
               type="password"
@@ -182,266 +169,28 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="styled-input"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm text-slate-900 focus:outline-none focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/20 transition-all"
             />
           </div>
 
-          <button type="submit" disabled={loading} className="submit-btn">
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full mt-2 py-3 bg-brand-dark hover:bg-brand-dark-hover text-white rounded-full font-semibold text-sm transition-all shadow-md hover:-translate-y-0.5 cursor-pointer disabled:opacity-50"
+          >
             {loading ? 'Authenticating...' : `Sign In as ${activeRole.charAt(0) + activeRole.slice(1).toLowerCase()}`}
           </button>
         </form>
 
         {/* Card Footer */}
-        <div className="card-footer">
+        <div className="mt-6 text-center text-xs text-slate-500">
           {activeRole === 'MERCHANT' ? (
-            <p>New business partner? <Link href="/register" className="footer-link">Apply for Merchant Account</Link></p>
+            <p>New business partner? <Link href="/register" className="text-brand-orange font-semibold hover:underline">Apply for Merchant Account</Link></p>
           ) : (
-            <p>Don&apos;t have an account? <Link href="/register" className="footer-link">Sign up now</Link></p>
+            <p>Don&apos;t have an account? <Link href="/register" className="text-brand-orange font-semibold hover:underline">Sign up now</Link></p>
           )}
         </div>
       </div>
-
-      <style jsx>{`
-        .login-wrapper {
-          min-height: calc(100vh - 120px);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 2rem 1rem;
-        }
-
-        .login-card {
-          width: 100%;
-          max-width: 460px;
-          background: #ffffff;
-          border-radius: 24px;
-          padding: 2.25rem;
-          box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.08), 0 0 1px 1px rgba(0, 0, 0, 0.04);
-          border: 1px solid #e2e8f0;
-        }
-
-        .card-header {
-          text-align: center;
-          margin-bottom: 1.5rem;
-        }
-
-        .logo-text {
-          font-size: 2rem;
-          font-weight: 800;
-          color: #0f172a;
-          text-decoration: none;
-          letter-spacing: -0.04em;
-        }
-
-        .orange-dot {
-          color: #ff6600;
-        }
-
-        .login-heading {
-          font-size: 1.5rem;
-          font-weight: 750;
-          color: #0f172a;
-          margin: 0.5rem 0 0.25rem;
-        }
-
-        .login-sub {
-          font-size: 0.875rem;
-          color: #64748b;
-        }
-
-        /* Role Switcher Tabs */
-        .role-tabs {
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 0.35rem;
-          background: #f1f5f9;
-          padding: 0.35rem;
-          border-radius: 12px;
-          margin-bottom: 1.25rem;
-        }
-
-        .tab-btn {
-          border: none;
-          background: transparent;
-          padding: 0.5rem 0;
-          font-size: 0.8rem;
-          font-weight: 600;
-          color: #64748b;
-          border-radius: 8px;
-          cursor: pointer;
-          transition: all 0.15s ease;
-        }
-
-        .tab-btn.active {
-          background: #ffffff;
-          color: #ff6600;
-          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-        }
-
-        /* Demo Credentials Badge */
-        .demo-info-badge {
-          background: #fff7ed;
-          border: 1px solid #fed7aa;
-          border-radius: 12px;
-          padding: 0.75rem 1rem;
-          margin-bottom: 1.25rem;
-          font-size: 0.8rem;
-        }
-
-        .badge-tag {
-          font-weight: 700;
-          color: #c2410c;
-          text-transform: uppercase;
-          font-size: 0.7rem;
-          letter-spacing: 0.05em;
-          margin-bottom: 0.25rem;
-        }
-
-        .badge-details {
-          display: flex;
-          justify-content: space-between;
-          color: #7c2d12;
-        }
-
-        /* Social Login */
-        .social-login-block {
-          margin-bottom: 1.25rem;
-        }
-
-        .google-btn {
-          width: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0.75rem;
-          background: #ffffff;
-          border: 1px solid #cbd5e1;
-          border-radius: 12px;
-          padding: 0.65rem 1rem;
-          font-size: 0.9rem;
-          font-weight: 600;
-          color: #334155;
-          cursor: pointer;
-          transition: background 0.15s ease;
-        }
-
-        .google-btn:hover {
-          background: #f8fafc;
-        }
-
-        .divider-line {
-          display: flex;
-          align-items: center;
-          text-align: center;
-          margin: 1.25rem 0;
-          color: #94a3b8;
-          font-size: 0.75rem;
-        }
-
-        .divider-line::before,
-        .divider-line::after {
-          content: '';
-          flex: 1;
-          border-bottom: 1px solid #e2e8f0;
-        }
-
-        .divider-line span {
-          padding: 0 0.75rem;
-        }
-
-        /* Form Controls */
-        .login-form {
-          display: flex;
-          flex-direction: column;
-          gap: 1.15rem;
-        }
-
-        .form-group {
-          display: flex;
-          flex-direction: column;
-          gap: 0.4rem;
-        }
-
-        .input-label {
-          font-size: 0.825rem;
-          font-weight: 600;
-          color: #334155;
-        }
-
-        .label-row {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-
-        .forgot-link {
-          font-size: 0.8rem;
-          color: #ff6600;
-          font-weight: 500;
-        }
-
-        .styled-input {
-          width: 100%;
-          padding: 0.7rem 0.9rem;
-          border-radius: 10px;
-          border: 1px solid #cbd5e1;
-          font-size: 0.925rem;
-          color: #0f172a;
-          outline: none;
-          transition: border-color 0.15s ease, box-shadow 0.15s ease;
-        }
-
-        .styled-input:focus {
-          border-color: #ff6600;
-          box-shadow: 0 0 0 3px rgba(255, 102, 0, 0.15);
-        }
-
-        .submit-btn {
-          margin-top: 0.5rem;
-          width: 100%;
-          padding: 0.85rem;
-          background: #111827;
-          color: #ffffff;
-          border: none;
-          border-radius: 9999px;
-          font-size: 0.95rem;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-
-        .submit-btn:hover {
-          background: #1f2937;
-          transform: translateY(-1px);
-        }
-
-        .submit-btn:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-        }
-
-        .error-alert {
-          background: #fef2f2;
-          color: #b91c1c;
-          border: 1px solid #fecaca;
-          padding: 0.65rem 0.85rem;
-          border-radius: 8px;
-          font-size: 0.825rem;
-          margin-bottom: 1rem;
-        }
-
-        .card-footer {
-          margin-top: 1.5rem;
-          text-align: center;
-          font-size: 0.85rem;
-          color: #64748b;
-        }
-
-        .footer-link {
-          color: #ff6600;
-          font-weight: 600;
-        }
-      `}</style>
     </div>
   );
 }

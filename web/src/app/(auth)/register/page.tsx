@@ -15,7 +15,6 @@ export default function RegisterPage() {
 
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate user creation & session
     saveAuthSession(
       {
         id: `usr-${Date.now()}`,
@@ -34,238 +33,99 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="register-wrapper">
-      <div className="register-card">
-        <div className="card-header">
-          <Link href="/" className="logo-text">
-            swift<span className="orange-dot">.</span>
+    <div className="min-h-[calc(100vh-130px)] flex items-center justify-center px-4 py-8">
+      <div className="w-full max-w-md bg-white rounded-3xl p-7 sm:p-8 shadow-xl border border-slate-200/80">
+        <div className="text-center mb-6">
+          <Link href="/" className="inline-block text-3xl font-extrabold text-slate-900 tracking-tight mb-1">
+            swift<span className="text-brand-orange">.</span>
           </Link>
-          <h2 className="register-heading">Create Account</h2>
-          <p className="register-sub">Join SwiftDrop to send, track, or manage deliveries.</p>
+          <h2 className="text-xl font-bold text-slate-900">Create Account</h2>
+          <p className="text-xs text-slate-500 mt-0.5">Join SwiftDrop to send, track, or manage deliveries.</p>
         </div>
 
-        <form onSubmit={handleRegister} className="register-form">
-          <div className="form-group">
-            <label className="input-label">Account Type</label>
-            <div className="role-selector">
-              <button
-                type="button"
-                className={`role-chip ${role === 'CUSTOMER' ? 'active' : ''}`}
-                onClick={() => setRole('CUSTOMER')}
-              >
-                Customer
-              </button>
-              <button
-                type="button"
-                className={`role-chip ${role === 'COURIER' ? 'active' : ''}`}
-                onClick={() => setRole('COURIER')}
-              >
-                Courier
-              </button>
-              <button
-                type="button"
-                className={`role-chip ${role === 'MERCHANT' ? 'active' : ''}`}
-                onClick={() => setRole('MERCHANT')}
-              >
-                Business Merchant
-              </button>
+        <form onSubmit={handleRegister} className="flex flex-col gap-3.5">
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-slate-700">Account Type</label>
+            <div className="grid grid-cols-3 gap-1 bg-slate-100 p-1 rounded-xl">
+              {(['CUSTOMER', 'COURIER', 'MERCHANT'] as UserRole[]).map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  className={`py-2 text-xs font-semibold rounded-lg transition-all capitalize cursor-pointer ${
+                    role === r
+                      ? 'bg-white text-brand-orange shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                  onClick={() => setRole(r)}
+                >
+                  {r === 'MERCHANT' ? 'Business' : r.toLowerCase()}
+                </button>
+              ))}
             </div>
           </div>
 
-          <div className="form-group">
-            <label className="input-label">Full Name</label>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-slate-700">Full Name</label>
             <input
               type="text"
               required
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               placeholder="e.g. Kasun Perera"
-              className="styled-input"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm text-slate-900 focus:outline-none focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/20 transition-all"
             />
           </div>
 
           {role === 'MERCHANT' && (
-            <div className="form-group">
-              <label className="input-label">Registered Business / Company Name</label>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-slate-700">Registered Business / Company Name</label>
               <input
                 type="text"
                 required
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
                 placeholder="e.g. Apex Electronics Ltd"
-                className="styled-input"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm text-slate-900 focus:outline-none focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/20 transition-all"
               />
             </div>
           )}
 
-          <div className="form-group">
-            <label className="input-label">Email Address</label>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-slate-700">Email Address</label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="name@company.com"
-              className="styled-input"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm text-slate-900 focus:outline-none focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/20 transition-all"
             />
           </div>
 
-          <div className="form-group">
-            <label className="input-label">Password</label>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-slate-700">Password</label>
             <input
               type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Min. 8 characters"
-              className="styled-input"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm text-slate-900 focus:outline-none focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/20 transition-all"
             />
           </div>
 
-          <button type="submit" className="submit-btn">
+          <button
+            type="submit"
+            className="w-full mt-2 py-3 bg-brand-dark hover:bg-brand-dark-hover text-white rounded-full font-semibold text-sm transition-all shadow-md hover:-translate-y-0.5 cursor-pointer"
+          >
             Create {role.charAt(0) + role.slice(1).toLowerCase()} Account
           </button>
         </form>
 
-        <div className="card-footer">
-          <p>Already have an account? <Link href="/login" className="footer-link">Sign in</Link></p>
+        <div className="mt-6 text-center text-xs text-slate-500">
+          <p>Already have an account? <Link href="/login" className="text-brand-orange font-semibold hover:underline">Sign in</Link></p>
         </div>
       </div>
-
-      <style jsx>{`
-        .register-wrapper {
-          min-height: calc(100vh - 120px);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 2.5rem 1rem;
-        }
-
-        .register-card {
-          width: 100%;
-          max-width: 480px;
-          background: #ffffff;
-          border-radius: 24px;
-          padding: 2.25rem;
-          box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.08);
-          border: 1px solid #e2e8f0;
-        }
-
-        .card-header {
-          text-align: center;
-          margin-bottom: 1.5rem;
-        }
-
-        .logo-text {
-          font-size: 2rem;
-          font-weight: 800;
-          color: #0f172a;
-          text-decoration: none;
-          letter-spacing: -0.04em;
-        }
-
-        .orange-dot {
-          color: #ff6600;
-        }
-
-        .register-heading {
-          font-size: 1.5rem;
-          font-weight: 750;
-          color: #0f172a;
-          margin: 0.5rem 0 0.25rem;
-        }
-
-        .register-sub {
-          font-size: 0.875rem;
-          color: #64748b;
-        }
-
-        .role-selector {
-          display: flex;
-          gap: 0.5rem;
-        }
-
-        .role-chip {
-          flex: 1;
-          padding: 0.5rem 0.25rem;
-          font-size: 0.8rem;
-          font-weight: 600;
-          background: #f1f5f9;
-          color: #64748b;
-          border: 1px solid transparent;
-          border-radius: 10px;
-          cursor: pointer;
-          transition: all 0.15s ease;
-        }
-
-        .role-chip.active {
-          background: #fff7ed;
-          color: #ff6600;
-          border-color: #fdba74;
-        }
-
-        .register-form {
-          display: flex;
-          flex-direction: column;
-          gap: 1.15rem;
-        }
-
-        .form-group {
-          display: flex;
-          flex-direction: column;
-          gap: 0.4rem;
-        }
-
-        .input-label {
-          font-size: 0.825rem;
-          font-weight: 600;
-          color: #334155;
-        }
-
-        .styled-input {
-          width: 100%;
-          padding: 0.7rem 0.9rem;
-          border-radius: 10px;
-          border: 1px solid #cbd5e1;
-          font-size: 0.925rem;
-          color: #0f172a;
-          outline: none;
-        }
-
-        .styled-input:focus {
-          border-color: #ff6600;
-          box-shadow: 0 0 0 3px rgba(255, 102, 0, 0.15);
-        }
-
-        .submit-btn {
-          margin-top: 0.5rem;
-          width: 100%;
-          padding: 0.85rem;
-          background: #111827;
-          color: #ffffff;
-          border: none;
-          border-radius: 9999px;
-          font-size: 0.95rem;
-          font-weight: 600;
-          cursor: pointer;
-        }
-
-        .submit-btn:hover {
-          background: #1f2937;
-        }
-
-        .card-footer {
-          margin-top: 1.5rem;
-          text-align: center;
-          font-size: 0.85rem;
-          color: #64748b;
-        }
-
-        .footer-link {
-          color: #ff6600;
-          font-weight: 600;
-        }
-      `}</style>
     </div>
   );
 }
