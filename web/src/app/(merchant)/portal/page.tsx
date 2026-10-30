@@ -26,7 +26,7 @@ export default function MerchantDashboardPage() {
               swiftdrop<span className="text-[#ff6600]">.</span>
             </span>
           </Link>
-          <span className="px-2.5 py-0.5 text-xs font-bold bg-purple-100 text-purple-800 rounded-full">
+          <span className="px-3 py-1 text-xs font-bold bg-orange-50 text-[#ff6600] border border-orange-200/80 rounded-full">
             Merchant B2B Portal
           </span>
         </div>
@@ -45,7 +45,7 @@ export default function MerchantDashboardPage() {
               onClick={() => setActiveDuty(tab.id)}
               className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                 activeDuty === tab.id
-                  ? 'bg-purple-50 text-purple-700 border border-purple-200 shadow-sm'
+                  ? 'bg-orange-50 text-[#ff6600] border border-orange-200 shadow-sm'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
@@ -58,16 +58,22 @@ export default function MerchantDashboardPage() {
         {/* Right Store Sync & Logout */}
         <div className="flex items-center gap-3 sm:gap-4">
           <div className="flex items-center gap-2">
-            <span className="px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-xs font-bold">
+            <span className="px-3 py-1 bg-orange-50 text-[#ff6600] border border-orange-200/80 rounded-full text-xs font-bold">
               ✓ Store Sync Active
             </span>
           </div>
 
           <button
             onClick={handleLogout}
-            className="px-3.5 py-1.5 text-xs font-bold text-slate-700 hover:text-rose-600 bg-slate-100 hover:bg-rose-50 border border-slate-200 rounded-full transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-slate-700 hover:text-white bg-white hover:bg-[#ff6600] border border-slate-200 hover:border-[#ff6600] rounded-full transition-all shadow-sm cursor-pointer"
+            title="Log out of SwiftDrop"
           >
-            Log out
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+            <span>Logout</span>
           </button>
         </div>
       </header>
@@ -85,7 +91,7 @@ export default function MerchantDashboardPage() {
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
                   Fulfillment Status
                 </span>
-                <span className="text-xs text-purple-600 font-semibold">142 total orders this week</span>
+                <span className="text-xs text-[#ff6600] font-semibold">142 total orders this week</span>
               </div>
 
               <div className="flex items-center gap-2 overflow-x-auto pb-2">
@@ -101,8 +107,8 @@ export default function MerchantDashboardPage() {
                     onClick={() => setActiveFilter(f.id)}
                     className={`px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                       activeFilter === f.id
-                        ? 'bg-brand-dark text-white shadow-sm'
-                        : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                        ? 'bg-[#ff6600] text-white shadow-sm shadow-orange-500/20'
+                        : 'bg-white text-slate-600 border border-slate-200 hover:bg-orange-50 hover:text-[#ff6600]'
                     }`}
                   >
                     {f.label}
@@ -115,7 +121,7 @@ export default function MerchantDashboardPage() {
             <div className="bg-slate-50/70 border border-slate-200/80 rounded-3xl p-6 sm:p-8 flex flex-col md:flex-row gap-8 items-center">
               {/* Left Order Preview */}
               <div className="w-full md:w-5/12 flex flex-col items-center justify-center p-6 bg-white rounded-2xl shadow-sm border border-slate-100">
-                <div className="w-40 h-40 bg-purple-50 rounded-2xl flex flex-col items-center justify-center text-purple-700 p-4 border border-purple-100 text-center">
+                <div className="w-40 h-40 bg-orange-50 rounded-2xl flex flex-col items-center justify-center text-[#ff6600] p-4 border border-orange-200 text-center">
                   <span className="text-4xl mb-1">🏷️</span>
                   <span className="text-xs font-black">#ORD-98765</span>
                   <span className="text-[0.65rem] text-slate-500 mt-1">Apex Electronics Cart</span>
@@ -129,7 +135,7 @@ export default function MerchantDashboardPage() {
               {/* Right Details & Configuration */}
               <div className="w-full md:w-7/12 flex flex-col gap-4">
                 <div>
-                  <span className="text-xs font-bold text-purple-600 uppercase tracking-wider">SECURED PARTNER API</span>
+                  <span className="text-xs font-bold text-[#ff6600] uppercase tracking-wider">SECURED PARTNER API</span>
                   <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight mt-1">
                     Direct Order Injection
                   </h2>
@@ -153,7 +159,7 @@ export default function MerchantDashboardPage() {
                       setCopiedKey(true);
                       setTimeout(() => setCopiedKey(false), 2000);
                     }}
-                    className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold cursor-pointer transition-colors"
+                    className="px-3 py-1.5 bg-orange-50 hover:bg-[#ff6600] text-[#ff6600] hover:text-white border border-orange-200/80 rounded-lg text-xs font-bold cursor-pointer transition-all"
                   >
                     {copiedKey ? '✓ Copied' : 'Copy'}
                   </button>
@@ -176,8 +182,8 @@ export default function MerchantDashboardPage() {
                         onClick={() => setShippingTier(s.id)}
                         className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer ${
                           shippingTier === s.id
-                            ? 'bg-brand-dark text-white border-brand-dark'
-                            : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300'
+                            ? 'bg-[#ff6600] text-white border-[#ff6600] shadow-sm shadow-orange-500/20'
+                            : 'bg-white text-slate-700 border-slate-200 hover:border-orange-300'
                         }`}
                       >
                         {s.label}
@@ -191,7 +197,7 @@ export default function MerchantDashboardPage() {
                   <button
                     type="button"
                     onClick={() => alert('B2B Test Order #ORD-98765 injected! Status webhook dispatched.')}
-                    className="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-full font-bold text-xs shadow-md transition-all cursor-pointer"
+                    className="w-full py-3 bg-[#ff6600] hover:bg-[#ea580c] text-white rounded-full font-bold text-xs shadow-md shadow-orange-500/25 transition-all cursor-pointer"
                   >
                     + Inject New B2B Delivery Order
                   </button>
@@ -217,7 +223,7 @@ export default function MerchantDashboardPage() {
                       <div>
                         <h4 className="text-xs font-bold text-slate-900">{item.name}</h4>
                         <p className="text-[0.7rem] text-slate-400">{item.sub}</p>
-                        <span className="text-[0.7rem] font-bold text-emerald-600">✓ {item.status}</span>
+                        <span className="text-[0.7rem] font-bold text-[#ff6600]">✓ {item.status}</span>
                       </div>
                     </div>
                   </div>
@@ -232,7 +238,7 @@ export default function MerchantDashboardPage() {
             <div>
               <div className="flex items-center justify-between pb-4 border-b border-slate-200 mb-4">
                 <h3 className="text-lg font-bold text-slate-900">Weekly Performance</h3>
-                <span className="text-xs font-bold text-purple-700 bg-purple-50 px-2.5 py-0.5 rounded-full">Approved Partner</span>
+                <span className="text-xs font-bold text-[#ff6600] bg-orange-50 border border-orange-200/80 px-2.5 py-0.5 rounded-full">Approved Partner</span>
               </div>
 
               {/* Order Breakdown */}
@@ -243,11 +249,11 @@ export default function MerchantDashboardPage() {
                 </div>
                 <div className="bg-white p-2.5 rounded-xl border border-slate-200 text-center">
                   <div className="text-[0.65rem] text-slate-400 font-bold uppercase">In Transit</div>
-                  <div className="text-xl font-black text-brand-orange">34</div>
+                  <div className="text-xl font-black text-[#ff6600]">34</div>
                 </div>
                 <div className="bg-white p-2.5 rounded-xl border border-slate-200 text-center">
                   <div className="text-[0.65rem] text-slate-400 font-bold uppercase">Delivered</div>
-                  <div className="text-xl font-black text-emerald-600">94</div>
+                  <div className="text-xl font-black text-[#ff6600]">94</div>
                 </div>
               </div>
 
@@ -265,7 +271,7 @@ export default function MerchantDashboardPage() {
                     </div>
                     <div className="text-right">
                       <div className="text-xs font-bold text-slate-900">{o.price}</div>
-                      <span className="text-[0.65rem] font-bold text-emerald-600">{o.status}</span>
+                      <span className="text-[0.65rem] font-bold text-[#ff6600]">{o.status}</span>
                     </div>
                   </div>
                 ))}
@@ -275,7 +281,7 @@ export default function MerchantDashboardPage() {
               <div className="mt-5 pt-4 border-t border-dashed border-slate-200 space-y-1.5 text-xs text-slate-600">
                 <div className="flex justify-between">
                   <span>Merchant Volume Tier</span>
-                  <span className="font-bold text-purple-700">Tier 2 (15% off)</span>
+                  <span className="font-bold text-[#ff6600]">Tier 2 (15% off)</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Current Billing Cycle Total</span>
@@ -289,7 +295,7 @@ export default function MerchantDashboardPage() {
               <button
                 type="button"
                 onClick={() => alert('Exporting all shipping waybills as PDF...')}
-                className="w-full py-4 bg-brand-orange hover:bg-brand-orange-dark text-white rounded-2xl font-bold text-sm shadow-lg shadow-orange-500/25 transition-all cursor-pointer"
+                className="w-full py-4 bg-[#ff6600] hover:bg-[#ea580c] text-white rounded-2xl font-bold text-sm shadow-lg shadow-orange-500/25 transition-all cursor-pointer"
               >
                 Download Bulk PDF Waybills &rarr;
               </button>

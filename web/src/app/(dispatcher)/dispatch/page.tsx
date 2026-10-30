@@ -31,7 +31,7 @@ export default function DispatcherDashboardPage() {
               swiftdrop<span className="text-[#ff6600]">.</span>
             </span>
           </Link>
-          <span className="px-2.5 py-0.5 text-xs font-bold bg-rose-100 text-rose-800 rounded-full">
+          <span className="px-3 py-1 text-xs font-bold bg-orange-50 text-[#ff6600] border border-orange-200/80 rounded-full">
             Operations Control
           </span>
         </div>
@@ -50,7 +50,7 @@ export default function DispatcherDashboardPage() {
               onClick={() => setActiveDuty(tab.id)}
               className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                 activeDuty === tab.id
-                  ? 'bg-rose-50 text-rose-700 border border-rose-200 shadow-sm'
+                  ? 'bg-orange-50 text-[#ff6600] border border-orange-200 shadow-sm'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
@@ -62,16 +62,22 @@ export default function DispatcherDashboardPage() {
 
         {/* Right Status & Logout */}
         <div className="flex items-center gap-3 sm:gap-4">
-          <div className="flex items-center gap-2 text-xs font-semibold bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full border border-emerald-200">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          <div className="flex items-center gap-2 text-xs font-semibold bg-orange-50 text-[#ff6600] px-3 py-1 rounded-full border border-orange-200/80">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#ff6600] animate-pulse"></span>
             <span className="hidden sm:inline">RabbitMQ Broker Live</span>
           </div>
 
           <button
             onClick={handleLogout}
-            className="px-3.5 py-1.5 text-xs font-bold text-slate-700 hover:text-rose-600 bg-slate-100 hover:bg-rose-50 border border-slate-200 rounded-full transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-slate-700 hover:text-white bg-white hover:bg-[#ff6600] border border-slate-200 hover:border-[#ff6600] rounded-full transition-all shadow-sm cursor-pointer"
+            title="Log out of SwiftDrop"
           >
-            Log out
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+            <span>Logout</span>
           </button>
         </div>
       </header>
@@ -89,7 +95,7 @@ export default function DispatcherDashboardPage() {
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
                   Regional Delivery Zones
                 </span>
-                <span className="text-xs text-rose-600 font-semibold">24 unassigned parcels</span>
+                <span className="text-xs text-[#ff6600] font-semibold">24 unassigned parcels</span>
               </div>
 
               <div className="flex items-center gap-2 overflow-x-auto pb-2">
@@ -105,8 +111,8 @@ export default function DispatcherDashboardPage() {
                     onClick={() => setActiveZone(z.id)}
                     className={`px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                       activeZone === z.id
-                        ? 'bg-brand-dark text-white shadow-sm'
-                        : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                        ? 'bg-[#ff6600] text-white shadow-sm shadow-orange-500/20'
+                        : 'bg-white text-slate-600 border border-slate-200 hover:bg-orange-50 hover:text-[#ff6600]'
                     }`}
                   >
                     {z.label}
@@ -119,7 +125,7 @@ export default function DispatcherDashboardPage() {
             <div className="bg-slate-50/70 border border-slate-200/80 rounded-3xl p-6 sm:p-8 flex flex-col md:flex-row gap-8 items-center">
               {/* Left Route Blueprint */}
               <div className="w-full md:w-5/12 flex flex-col items-center justify-center p-6 bg-white rounded-2xl shadow-sm border border-slate-100">
-                <div className="w-40 h-40 bg-rose-50 rounded-2xl flex flex-col items-center justify-center text-rose-700 p-4 border border-rose-100 text-center">
+                <div className="w-40 h-40 bg-orange-50 rounded-2xl flex flex-col items-center justify-center text-[#ff6600] p-4 border border-orange-200 text-center">
                   <span className="text-4xl mb-1">📦</span>
                   <span className="text-xs font-black">#SWIFT-102938</span>
                   <span className="text-[0.65rem] text-slate-500 mt-1">Weight: 3.5 kg • Priority</span>
@@ -134,8 +140,8 @@ export default function DispatcherDashboardPage() {
               <div className="w-full md:w-7/12 flex flex-col gap-4">
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-rose-600 uppercase tracking-wider">UNASSIGNED IN QUEUE</span>
-                    <span className="text-xs font-bold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full">
+                    <span className="text-xs font-bold text-[#ff6600] uppercase tracking-wider">UNASSIGNED IN QUEUE</span>
+                    <span className="text-xs font-bold bg-orange-50 text-[#ff6600] border border-orange-200/80 px-2.5 py-0.5 rounded-full">
                       Waiting 14m
                     </span>
                   </div>
@@ -148,10 +154,10 @@ export default function DispatcherDashboardPage() {
                 </div>
 
                 {/* AI Recommendation Highlight */}
-                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-900 flex items-center gap-2.5">
+                <div className="p-3 bg-orange-50/60 border border-orange-200 rounded-xl text-xs text-slate-800 flex items-center gap-2.5">
                   <span className="text-lg">🤖</span>
                   <div>
-                    <span className="font-bold">AI Recommended Match: </span>
+                    <span className="font-bold text-[#ff6600]">AI Recommended Match: </span>
                     <span>Sunil Silva (#101) is 1.2 km away with low active workload (2/8).</span>
                   </div>
                 </div>
@@ -164,7 +170,7 @@ export default function DispatcherDashboardPage() {
                   <select
                     value={selectedCourier}
                     onChange={(e) => setSelectedCourier(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 bg-white focus:outline-none focus:border-brand-orange"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 bg-white focus:outline-none focus:border-[#ff6600]"
                   >
                     {couriers.map((c) => (
                       <option key={c.id} value={c.id}>
@@ -177,14 +183,14 @@ export default function DispatcherDashboardPage() {
                 {/* Confirm Assignment Action */}
                 <div className="pt-2">
                   {assigned ? (
-                    <div className="p-3 bg-emerald-100 text-emerald-800 rounded-xl text-center text-xs font-bold">
+                    <div className="p-3 bg-orange-50 text-[#ff6600] border border-orange-200 rounded-xl text-center text-xs font-bold">
                       ✓ Parcel Assigned! RabbitMQ notification published to Sunil Silva.
                     </div>
                   ) : (
                     <button
                       type="button"
                       onClick={() => setAssigned(true)}
-                      className="w-full py-3 bg-rose-600 hover:bg-rose-700 text-white rounded-full font-bold text-xs shadow-md transition-all cursor-pointer"
+                      className="w-full py-3 bg-[#ff6600] hover:bg-[#ea580c] text-white rounded-full font-bold text-xs shadow-md shadow-orange-500/25 transition-all cursor-pointer"
                     >
                       Assign Parcel & Publish Status Event
                     </button>
@@ -204,10 +210,7 @@ export default function DispatcherDashboardPage() {
                   <div key={c.id} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="text-xs font-bold text-slate-900">{c.name}</h4>
-                      <span className={`text-[0.65rem] font-bold px-2 py-0.5 rounded-full ${
-                        c.load < 4 ? 'bg-emerald-100 text-emerald-800' :
-                        c.load < 7 ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'
-                      }`}>
+                      <span className="text-[0.65rem] font-bold px-2 py-0.5 rounded-full bg-orange-50 text-[#ff6600] border border-orange-200/80">
                         {c.status}
                       </span>
                     </div>
@@ -216,9 +219,7 @@ export default function DispatcherDashboardPage() {
                     {/* Progress Bar for Load */}
                     <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
                       <div
-                        className={`h-full rounded-full ${
-                          c.load < 4 ? 'bg-emerald-500' : c.load < 7 ? 'bg-amber-500' : 'bg-rose-500'
-                        }`}
+                        className="h-full rounded-full bg-[#ff6600]"
                         style={{ width: `${(c.load / c.max) * 100}%` }}
                       ></div>
                     </div>
@@ -237,14 +238,14 @@ export default function DispatcherDashboardPage() {
             <div>
               <div className="flex items-center justify-between pb-4 border-b border-slate-200 mb-4">
                 <h3 className="text-lg font-bold text-slate-900">Operations Control</h3>
-                <span className="text-xs font-bold text-rose-600 bg-rose-50 px-2.5 py-0.5 rounded-full">Island-Wide</span>
+                <span className="text-xs font-bold text-[#ff6600] bg-orange-50 border border-orange-200/80 px-2.5 py-0.5 rounded-full">Island-Wide</span>
               </div>
 
               {/* System KPIs */}
               <div className="grid grid-cols-2 gap-3 mb-4">
                 <div className="bg-white p-3 rounded-2xl border border-slate-200 text-center">
                   <div className="text-[0.65rem] text-slate-400 font-bold uppercase">Unassigned</div>
-                  <div className="text-2xl font-black text-rose-600">24</div>
+                  <div className="text-2xl font-black text-[#ff6600]">24</div>
                 </div>
                 <div className="bg-white p-3 rounded-2xl border border-slate-200 text-center">
                   <div className="text-[0.65rem] text-slate-400 font-bold uppercase">On-Road Couriers</div>
@@ -266,7 +267,7 @@ export default function DispatcherDashboardPage() {
                     </div>
                     <div className="text-right">
                       <div className="text-xs font-bold text-slate-900">{item.fee}</div>
-                      <span className={`text-[0.65rem] font-bold ${item.status === 'Assigned' ? 'text-emerald-600' : 'text-amber-600'}`}>
+                      <span className="text-[0.65rem] font-bold text-[#ff6600]">
                         {item.status}
                       </span>
                     </div>
@@ -278,11 +279,11 @@ export default function DispatcherDashboardPage() {
               <div className="mt-5 pt-4 border-t border-dashed border-slate-200 space-y-1.5 text-xs text-slate-600">
                 <div className="flex justify-between">
                   <span>Island-Wide Success Rate</span>
-                  <span className="font-bold text-emerald-600">98.4%</span>
+                  <span className="font-bold text-[#ff6600]">98.4%</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Pending Merchant Approvals</span>
-                  <span className="font-bold text-purple-700">2 businesses</span>
+                  <span className="font-bold text-slate-800">2 businesses</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Average Fleet Dispatch Time</span>
@@ -296,7 +297,7 @@ export default function DispatcherDashboardPage() {
               <button
                 type="button"
                 onClick={() => alert('Smart Auto-Dispatch complete: 18 unassigned parcels assigned to optimal couriers!')}
-                className="w-full py-4 bg-brand-orange hover:bg-brand-orange-dark text-white rounded-2xl font-bold text-sm shadow-lg shadow-orange-500/25 transition-all cursor-pointer"
+                className="w-full py-4 bg-[#ff6600] hover:bg-[#ea580c] text-white rounded-2xl font-bold text-sm shadow-lg shadow-orange-500/25 transition-all cursor-pointer"
               >
                 Auto-Dispatch All 24 Parcels &rarr;
               </button>
