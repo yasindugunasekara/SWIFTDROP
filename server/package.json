@@ -8,11 +8,12 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "worker": "tsx watch src/workers/index.ts",
+    "migrate": "tsx src/database/migrate.ts",
     "lint": "eslint src --ext .ts",
     "test": "jest"
   },
   "dependencies": {
-    "@google/genai": "^0.1.1",
+    "@google/generative-ai": "^0.14.0",
     "amqplib": "^0.10.4",
     "bcrypt": "^5.1.1",
     "cors": "^2.8.5",

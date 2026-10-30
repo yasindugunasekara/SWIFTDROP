@@ -3,8 +3,8 @@ import Navbar from "../components/layout/Navbar";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "SwiftDrop | Courier & Parcel Delivery System",
-  description: "Enterprise courier parcel-delivery and tracking platform",
+  title: "swift. | Send Anything. Anywhere.",
+  description: "Fast, reliable, and affordable parcel delivery for individuals and businesses.",
 };
 
 export default function RootLayout({
@@ -14,7 +14,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body style={{ margin: 0, fontFamily: 'system-ui, -apple-system, sans-serif', background: '#090d16', color: '#f1f5f9', minHeight: '100vh' }}>
+      <body>
         <Navbar />
         <main>{children}</main>
       </body>
