@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "SwiftDrop Courier & Tracking",
+    "slug": "swiftdrop-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#090d16"
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow SwiftDrop to access your camera for proof of delivery photos."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow SwiftDrop to access your location to track live deliveries."
+        }
+      ]
+    ]
+  }
+}

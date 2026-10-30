@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: swiftdrop-worker-deployment
+  namespace: swiftdrop
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: swiftdrop-worker
+  template:
+    metadata:
+      labels:
+        app: swiftdrop-worker
+    spec:
+      containers:
+        - name: swiftdrop-worker
+          image: swiftdrop/server:latest
+          command: ["node", "dist/workers/index.js"]
+          envFrom:
+            - configMapRef:
+                name: swiftdrop-config
+            - secretRef:
+                name: swiftdrop-secrets

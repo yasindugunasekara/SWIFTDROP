@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: swiftdrop-web-deployment
+  namespace: swiftdrop
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: swiftdrop-web
+  template:
+    metadata:
+      labels:
+        app: swiftdrop-web
+    spec:
+      containers:
+        - name: swiftdrop-web
+          image: swiftdrop/web:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: swiftdrop-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: swiftdrop-web-service
+  namespace: swiftdrop
+spec:
+  ports:
+    - port: 3000
+      targetPort: 3000
+  selector:
+    app: swiftdrop-web
