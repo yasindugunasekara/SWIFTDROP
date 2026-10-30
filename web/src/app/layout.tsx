@@ -3,7 +3,7 @@ import Navbar from "../components/layout/Navbar";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "swift. | Send Anything. Anywhere.",
+  title: "swiftdrop. | Send Anything. Anywhere.",
   description: "Fast, reliable, and affordable parcel delivery for individuals and businesses.",
 };
 

@@ -37,7 +37,7 @@ export default function RegisterPage() {
       <div className="w-full max-w-md bg-white rounded-3xl p-7 sm:p-8 shadow-xl border border-slate-200/80">
         <div className="text-center mb-6">
           <Link href="/" className="inline-block text-3xl font-extrabold text-slate-900 tracking-tight mb-1">
-            swift<span className="text-brand-orange">.</span>
+            swiftdrop<span className="text-brand-orange">.</span>
           </Link>
           <h2 className="text-xl font-bold text-slate-900">Create Account</h2>
           <p className="text-xs text-slate-500 mt-0.5">Join SwiftDrop to send, track, or manage deliveries.</p>

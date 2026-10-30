@@ -17,31 +17,46 @@ export default function Navbar() {
     window.location.href = '/login';
   };
 
+  const getDashboardLink = (role: string) => {
+    switch (role) {
+      case 'COURIER':
+        return '/tasks';
+      case 'MERCHANT':
+        return '/portal';
+      case 'DISPATCHER':
+      case 'ADMIN':
+        return '/dispatch';
+      case 'CUSTOMER':
+      default:
+        return '/booking';
+    }
+  };
+
   return (
     <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 sticky top-4 z-50">
-      <header className="flex items-center justify-between bg-white/95 backdrop-blur-md px-5 py-2.5 rounded-full shadow-sm border border-slate-200/80 transition-all">
+      <header className="flex items-center justify-between bg-white/95 backdrop-blur-md px-6 py-3 rounded-full shadow-[0_4px_20px_-2px_rgba(0,0,0,0.06)] border border-slate-200/80 transition-all">
         {/* Brand Logo */}
         <div className="flex items-center">
           <Link href="/" className="flex items-center no-underline">
             <span className="text-2xl font-extrabold text-slate-900 tracking-tight">
-              swift<span className="text-brand-orange">.</span>
+              swiftdrop<span className="text-brand-orange">.</span>
             </span>
           </Link>
         </div>
 
-        {/* Center Navigation Links */}
+        {/* Center Navigation Links - Common Public Services */}
         <nav className="hidden md:flex items-center gap-7">
-          <Link href="/booking" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
-            Send
+          <Link href="/#services" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
+            Services
           </Link>
           <Link href="/tracking/SWIFT-DEMO" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
             Track
           </Link>
-          <Link href="/portal" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
-            Business
+          <Link href="/#business" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
+            For Business
           </Link>
-          <Link href="/booking#pricing" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
-            Pricing
+          <Link href="/#coverage" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
+            Coverage
           </Link>
           <Link href="/exceptions" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
             Support
@@ -64,27 +79,13 @@ export default function Navbar() {
                 {user.fullName || user.email.split('@')[0]}
               </span>
 
-              {/* Contextual Link */}
-              {user.role === 'CUSTOMER' && (
-                <Link href="/history" className="text-xs font-semibold text-brand-orange bg-orange-50 hover:bg-orange-100 px-3 py-1.5 rounded-full transition-colors">
-                  My Parcels
-                </Link>
-              )}
-              {user.role === 'COURIER' && (
-                <Link href="/tasks" className="text-xs font-semibold text-brand-orange bg-orange-50 hover:bg-orange-100 px-3 py-1.5 rounded-full transition-colors">
-                  Daily Tasks
-                </Link>
-              )}
-              {user.role === 'MERCHANT' && (
-                <Link href="/portal" className="text-xs font-semibold text-brand-orange bg-orange-50 hover:bg-orange-100 px-3 py-1.5 rounded-full transition-colors">
-                  Store Orders
-                </Link>
-              )}
-              {(user.role === 'DISPATCHER' || user.role === 'ADMIN') && (
-                <Link href="/dispatch" className="text-xs font-semibold text-brand-orange bg-orange-50 hover:bg-orange-100 px-3 py-1.5 rounded-full transition-colors">
-                  Dispatch
-                </Link>
-              )}
+              {/* Dedicated Dashboard Button */}
+              <Link
+                href={getDashboardLink(user.role)}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-brand-dark hover:bg-brand-dark-hover rounded-full shadow-sm transition-all"
+              >
+                Dashboard <span className="text-brand-orange">&rarr;</span>
+              </Link>
 
               <button
                 onClick={handleLogout}
@@ -97,13 +98,13 @@ export default function Navbar() {
             <div className="flex items-center gap-2">
               <Link
                 href="/login"
-                className="px-4 py-1.5 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full transition-all"
+                className="px-5 py-2 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full transition-all"
               >
                 Log in
               </Link>
               <Link
                 href="/booking"
-                className="flex items-center gap-1.5 px-4 py-1.5 text-sm font-semibold text-white bg-brand-dark hover:bg-brand-dark-hover rounded-full shadow-sm hover:-translate-y-0.5 transition-all"
+                className="flex items-center gap-1.5 px-5 py-2 text-sm font-semibold text-white bg-brand-dark hover:bg-brand-dark-hover rounded-full shadow-sm hover:-translate-y-0.5 transition-all"
               >
                 Ship Now <span className="text-brand-orange font-bold">&rarr;</span>
               </Link>
