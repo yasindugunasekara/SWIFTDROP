@@ -80,12 +80,12 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-130px)] flex items-center justify-center px-4 py-10">
+    <div className="min-h-screen flex items-center justify-center px-4 pt-24 sm:pt-28 pb-12 bg-slate-50/70">
       <div className="w-full max-w-md bg-white rounded-3xl p-7 sm:p-9 shadow-xl border border-slate-200/80">
         {/* Brand Header */}
         <div className="text-center mb-6">
           <Link href="/" className="inline-block text-3xl font-extrabold text-slate-900 tracking-tight mb-1">
-            swiftdrop<span className="text-brand-orange">.</span>
+            swiftdrop<span className="text-[#ff6600]">.</span>
           </Link>
           <h2 className="text-xl font-bold text-slate-900">Sign In to Your Account</h2>
           <p className="text-xs text-slate-500 mt-1">Select your role to access your dedicated workspace.</p>

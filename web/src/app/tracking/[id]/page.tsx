@@ -16,26 +16,27 @@ function TrackingContent() {
   ]);
 
   return (
-    <div style={{ maxWidth: 700, margin: '3rem auto', padding: '2rem', background: '#ffffff', borderRadius: 20, border: '1px solid #e2e8f0', boxShadow: '0 10px 25px rgba(0,0,0,0.05)' }}>
-      <h2 style={{ color: '#0f172a', fontWeight: 800 }}>📍 Live Parcel Tracking</h2>
-      <p style={{ color: '#64748b', marginBottom: '1.5rem' }}>Public tracking page with real-time status updates.</p>
+    <div className="max-w-2xl mx-auto px-4 pt-28 sm:pt-32 pb-12">
+      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-[0_15px_40px_-10px_rgba(0,0,0,0.06)]">
+        <h2 className="text-2xl font-black text-slate-900 mb-1">📍 Live Parcel Tracking</h2>
+        <p className="text-sm text-slate-500 mb-6">Public tracking page with real-time status updates.</p>
 
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '2rem' }}>
-        <input
-          value={trackingNumber}
-          onChange={(e) => setTrackingNumber(e.target.value)}
-          placeholder="Enter tracking number"
-          style={{ flex: 1, padding: '0.7rem 1rem', borderRadius: 9999, background: '#f8fafc', color: '#0f172a', border: '1px solid #cbd5e1' }}
-        />
-        <button
-          onClick={() => alert(`Fetching tracking for ${trackingNumber}`)}
-          style={{ background: '#ff6600', color: '#fff', border: 'none', padding: '0.7rem 1.5rem', borderRadius: 9999, fontWeight: 600, cursor: 'pointer' }}
-        >
-          Track
-        </button>
-      </div>
+        <div className="flex gap-2 mb-8">
+          <input
+            value={trackingNumber}
+            onChange={(e) => setTrackingNumber(e.target.value)}
+            placeholder="Enter tracking number"
+            className="flex-1 px-4 py-2.5 rounded-full bg-slate-50 text-slate-900 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff6600]"
+          />
+          <button
+            onClick={() => alert(`Tracking parcel ${trackingNumber}`)}
+            className="px-6 py-2.5 bg-[#ff6600] hover:bg-[#ea580c] text-white rounded-full text-sm font-bold shadow-sm transition-all"
+          >
+            Track
+          </button>
+        </div>
 
-      <div style={{ padding: '1.5rem', background: '#f8fafc', borderRadius: 16, border: '1px solid #e2e8f0' }}>
+        <div style={{ padding: '1.5rem', background: '#f8fafc', borderRadius: 16, border: '1px solid #e2e8f0' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
           <div>
             <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Tracking ID</span>
@@ -66,6 +67,7 @@ function TrackingContent() {
         </div>
       </div>
     </div>
+  </div>
   );
 }
 

@@ -24,7 +24,7 @@ export default function CustomerDashboardPage() {
   const currentPrice = (priceMap[packageSize] || 12.50) + (addons.fragile ? 2.0 : 0) + (addons.signature ? 1.5 : 0) + (addons.express ? 5.0 : 0);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-24 sm:pt-28 pb-10">
       {/* Outer Dashboard Card matching reference UI */}
       <div className="bg-white rounded-[32px] p-6 lg:p-8 shadow-[0_15px_40px_-10px_rgba(0,0,0,0.06)] border border-slate-200/90">
         

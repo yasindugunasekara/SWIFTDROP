@@ -22,91 +22,97 @@ export default function HomePage() {
   return (
     <div className="w-full">
       {/* HERO SECTION */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 pt-6 pb-16">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center min-h-[520px]">
-          {/* Left Column: Typography, Search Bar & Stats */}
-          <div className="lg:col-span-7 flex flex-col gap-4 text-left">
-            <span className="text-[0.7rem] sm:text-xs font-bold tracking-[0.2em] text-slate-400 uppercase">
+      <section className="relative w-full min-h-[660px] sm:min-h-[720px] lg:min-h-[780px] flex items-center pt-28 sm:pt-36 pb-16 overflow-hidden bg-[#f4f5f7]">
+        {/* Full-bleed 3D Isometric Logistics Scene */}
+        <div className="absolute inset-0 z-0 pointer-events-none select-none">
+          <Image
+            src="/hero-clean-ref-2x.jpg"
+            alt="SwiftDrop 3D Smart Logistics Hub"
+            fill
+            priority
+            quality={95}
+            className="object-cover object-right md:object-right-center"
+          />
+          {/* Studio lighting gradient to ensure text readability on all viewports */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#f4f5f7] via-[#f4f5f7]/95 sm:via-[#f4f5f7]/80 md:via-[#f4f5f7]/40 to-transparent z-10" />
+        </div>
+
+        <div className="relative z-20 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+          {/* Left Column: Typography, Glassmorphism Search Bar & Stats */}
+          <div className="max-w-xl flex flex-col gap-4 sm:gap-5 text-left">
+            <span className="text-[11px] sm:text-xs font-bold tracking-[0.25em] text-slate-400 uppercase">
               DELIVERING A BRIGHTER TOMORROW
             </span>
             
-            <h1 className="text-5xl sm:text-6xl md:text-7xl font-black text-slate-900 tracking-tight leading-[1.05]">
+            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-[#111827] tracking-tight leading-[1.04]">
               Send<br />
               Anything.<br />
-              <span className="text-brand-orange">Anywhere.</span>
+              <span className="text-[#ff6600]">Anywhere.</span>
             </h1>
 
-            <p className="text-base sm:text-lg text-slate-600 max-w-lg leading-relaxed pt-1 pb-1">
-              Fast, reliable, and affordable delivery for individuals and businesses.
-              From your doorstep to anywhere in the country.
+            <p className="text-slate-600 text-sm sm:text-base md:text-lg max-w-md leading-relaxed font-normal">
+              Fast, reliable, and affordable delivery for individuals and businesses. From your doorstep to anywhere in the country.
             </p>
 
-            {/* Floating Pill Booking Bar */}
+            {/* Glassmorphism Floating Booking / Search Bar */}
             <form
               onSubmit={handleQuickShip}
-              className="flex items-center bg-white p-1.5 pl-5 rounded-full shadow-[0_10px_30px_-4px_rgba(0,0,0,0.08)] border border-slate-200/90 max-w-lg focus-within:ring-2 focus-within:ring-brand-orange/30 focus-within:border-brand-orange transition-all"
+              className="flex items-center bg-white/85 backdrop-blur-xl p-1.5 sm:p-2 pl-4 sm:pl-5 rounded-full shadow-[0_12px_36px_0_rgba(0,0,0,0.08)] border border-white/90 max-w-lg focus-within:ring-2 focus-within:ring-[#ff6600]/30 focus-within:border-[#ff6600] transition-all mt-1"
             >
-              <div className="flex items-center gap-2 flex-1">
-                <span className="text-base">📦</span>
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <div className="w-5 h-5 flex items-center justify-center flex-shrink-0 text-[#ff6600]">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                    <line x1="12" y1="22.08" x2="12" y2="12" />
+                  </svg>
+                </div>
                 <input
                   type="text"
                   placeholder="Enter pickup location"
                   value={pickup}
                   onChange={(e) => setPickup(e.target.value)}
-                  className="w-full bg-transparent border-none outline-none text-sm text-slate-800 placeholder-slate-400"
+                  className="w-full bg-transparent border-none outline-none text-xs sm:text-sm text-slate-800 placeholder-slate-400 font-medium"
                 />
               </div>
               
-              <div className="w-px h-7 bg-slate-200 mx-2"></div>
+              <div className="w-px h-6 bg-slate-200 mx-2 flex-shrink-0"></div>
 
-              <div className="flex items-center flex-1">
+              <div className="flex items-center flex-1 min-w-0">
                 <input
                   type="text"
                   placeholder="Enter delivery location"
                   value={delivery}
                   onChange={(e) => setDelivery(e.target.value)}
-                  className="w-full bg-transparent border-none outline-none text-sm text-slate-800 placeholder-slate-400"
+                  className="w-full bg-transparent border-none outline-none text-xs sm:text-sm text-slate-800 placeholder-slate-400 font-medium"
                 />
               </div>
 
               <button
                 type="submit"
-                className="w-11 h-11 bg-brand-orange hover:bg-brand-orange-dark rounded-full flex items-center justify-center text-white text-lg font-bold shadow-md hover:scale-105 transition-all flex-shrink-0 cursor-pointer"
+                className="w-10 h-10 sm:w-11 sm:h-11 bg-[#ff6600] hover:bg-[#ea580c] rounded-full flex items-center justify-center text-white text-base sm:text-lg font-bold shadow-md shadow-orange-500/30 hover:scale-105 active:scale-95 transition-all flex-shrink-0 cursor-pointer ml-1"
                 title="Calculate Fee & Ship"
               >
                 <span>&rarr;</span>
               </button>
             </form>
 
-            {/* Stats Metrics */}
-            <div className="flex items-center gap-6 sm:gap-8 pt-4">
+            {/* Key Metrics Stats Row */}
+            <div className="flex items-center gap-6 sm:gap-10 pt-3">
               <div className="flex flex-col">
-                <div className="text-2xl sm:text-3xl font-extrabold text-slate-900">1M+</div>
-                <div className="text-xs text-slate-500 font-medium">Packages Delivered</div>
+                <span className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">1M+</span>
+                <span className="text-xs text-slate-500 font-medium mt-0.5">Packages Delivered</span>
               </div>
-              <div className="w-px h-8 bg-slate-200"></div>
+              <div className="w-px h-8 bg-slate-300/70"></div>
               <div className="flex flex-col">
-                <div className="text-2xl sm:text-3xl font-extrabold text-slate-900">99%</div>
-                <div className="text-xs text-slate-500 font-medium">On-Time Delivery</div>
+                <span className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">99%</span>
+                <span className="text-xs text-slate-500 font-medium mt-0.5">On-Time Delivery</span>
               </div>
-              <div className="w-px h-8 bg-slate-200"></div>
+              <div className="w-px h-8 bg-slate-300/70"></div>
               <div className="flex flex-col">
-                <div className="text-2xl sm:text-3xl font-extrabold text-slate-900">24/7</div>
-                <div className="text-xs text-slate-500 font-medium">Customer Support</div>
+                <span className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">24/7</span>
+                <span className="text-xs text-slate-500 font-medium mt-0.5">Customer Support</span>
               </div>
-            </div>
-          </div>
-
-          {/* Right Column: 3D Isometric Logistics Hub Rendering */}
-          <div className="lg:col-span-5 relative flex items-center justify-center">
-            <div className="relative w-full max-w-lg aspect-[446/487] rounded-3xl overflow-hidden shadow-2xl border border-white/80 bg-white">
-              <Image
-                src="/hero-3d.png"
-                alt="SwiftDrop 3D Smart Logistics Hub"
-                fill
-                priority
-                className="object-cover object-center"
-              />
             </div>
           </div>
         </div>
