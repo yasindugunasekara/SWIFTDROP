@@ -138,25 +138,25 @@ export default function HomePage() {
               {
                 title: "Same-Day Express",
                 desc: "Urgent intra-city & province parcel delivery with priority rider dispatch in under 10 minutes.",
-                image: "/service-express.jpg",
+                image: "/service-express.jpg?v=3",
                 link: "/booking",
               },
               {
                 title: "Live GPS Tracking",
                 desc: "Real-time WebSocket milestone updates, live map coordinates, and dynamic arrival estimates.",
-                image: "/service-tracking.jpg",
+                image: "/service-tracking.jpg?v=3",
                 link: "/#process",
               },
               {
                 title: "Merchant Partner B2B",
                 desc: "Automated order injection APIs, bulk waybill generation, and event-driven HMAC webhooks.",
-                image: "/service-api.jpg",
+                image: "/service-api.jpg?v=3",
                 link: "/portal",
               },
               {
                 title: "Verified Delivery POD",
                 desc: "Doorstep camera verification, recipient digital signature, and instant VAT invoice generation.",
-                image: "/service-pod.jpg",
+                image: "/service-pod.jpg?v=3",
                 link: "/#coverage",
               },
             ].map((service, idx) => (
@@ -169,7 +169,7 @@ export default function HomePage() {
                 <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-orange-100/30 to-transparent pointer-events-none" />
 
                 {/* 3D Thematic Graphic Container */}
-                <div className="h-44 sm:h-48 w-full flex items-center justify-center p-2 mb-4 relative z-10">
+                <div className="h-48 sm:h-52 w-full flex items-center justify-center p-1 mb-4 relative z-10">
                   <img
                     src={service.image}
                     alt={service.title}
