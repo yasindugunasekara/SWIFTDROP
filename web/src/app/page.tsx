@@ -315,71 +315,149 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ISLAND-WIDE COVERAGE & BUSINESS SECTION */}
-      <section id="coverage" className="py-20 bg-white border-t border-slate-100">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <span className="text-xs font-bold tracking-widest text-brand-orange bg-orange-50 px-3 py-1 rounded-full uppercase">
-                ISLAND-WIDE COVERAGE
+      {/* ABOUT US / ISLAND-WIDE COVERAGE SECTION */}
+      <section id="coverage" className="py-24 bg-white border-t border-slate-100 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-14 items-center">
+            {/* Left Column: Heading & Connected Timeline Features */}
+            <div className="lg:col-span-5 flex flex-col">
+              <span className="text-xs font-black tracking-widest text-[#ff6600] uppercase mb-2">
+                ABOUT US
               </span>
-              <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mt-3 mb-4">
-                Connecting Every District with Dedicated Sorting Hubs
+              <h2 className="text-3xl sm:text-4xl lg:text-[44px] font-black text-slate-900 tracking-tight leading-[1.12] mb-4">
+                World&apos;s Leading Logistics &amp; Sorting Provider.
               </h2>
-              <p className="text-slate-600 text-sm sm:text-base leading-relaxed mb-6">
-                SwiftDrop operates high-capacity sorting hubs and automated courier stations spanning Western, Central, Southern, and Northern provinces.
-              </p>
-              
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <span className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs font-bold">✓</span>
-                  <span className="text-sm font-semibold text-slate-800">Colombo Urban & Greater Western Express (2-4 Hours)</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs font-bold">✓</span>
-                  <span className="text-sm font-semibold text-slate-800">Kandy Metro & Central Highlands Overnight Dispatch</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs font-bold">✓</span>
-                  <span className="text-sm font-semibold text-slate-800">Southern Coastal Highway & Northern Province Logistics</span>
-                </div>
+
+              {/* Decorative Divider */}
+              <div className="flex items-center gap-2 mb-8">
+                <div className="w-10 h-0.5 bg-[#ff6600]" />
+                <span className="text-xs font-black text-[#ff6600] tracking-widest">››</span>
+                <div className="w-6 h-0.5 bg-orange-200" />
               </div>
 
-              <div className="mt-8 flex gap-4">
+              {/* Connected Timeline Features */}
+              <div className="relative pl-2 space-y-7 mb-9">
+                {/* Vertical connecting line */}
+                <div className="absolute left-[26px] top-6 bottom-6 w-0.5 bg-orange-100" />
+
+                {[
+                  {
+                    title: "Global Standards & Hubs",
+                    desc: "High-capacity automated sorting facilities spanning Western, Central, Southern, and Northern provinces.",
+                    icon: (
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
+                    ),
+                  },
+                  {
+                    title: "Automated Fleet Dispatch",
+                    desc: "Intelligent algorithmic parcel matching balancing active on-road couriers and delivery workloads.",
+                    icon: (
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    ),
+                  },
+                  {
+                    title: "Verified Real-Time POD",
+                    desc: "Doorstep photo capture and digital recipient signature with instant tamper-proof VAT invoices.",
+                    icon: (
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    ),
+                  },
+                ].map((item, idx) => (
+                  <div key={idx} className="relative flex items-start gap-4">
+                    {/* Icon Circle */}
+                    <div className="relative z-10 w-11 h-11 rounded-full bg-[#ff6600] text-white flex items-center justify-center shadow-md shadow-orange-500/25 flex-shrink-0">
+                      {item.icon}
+                    </div>
+                    {/* Content */}
+                    <div className="pt-0.5">
+                      <h4 className="text-base font-extrabold text-slate-900 mb-1">
+                        {item.title}
+                      </h4>
+                      <p className="text-xs sm:text-sm text-slate-500 leading-relaxed font-normal">
+                        {item.desc}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Bottom Action Button */}
+              <div>
                 <Link
                   href="/booking"
-                  className="px-6 py-3 bg-brand-dark hover:bg-brand-dark-hover text-white text-sm font-bold rounded-full transition-all shadow-md"
+                  className="inline-flex items-center gap-2 px-7 py-3.5 bg-slate-900 hover:bg-[#ff6600] text-white text-xs sm:text-sm font-extrabold uppercase tracking-wider rounded-lg transition-all shadow-md group"
                 >
-                  Book a Delivery
-                </Link>
-                <Link
-                  href="/login"
-                  className="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-800 text-sm font-semibold rounded-full transition-all"
-                >
-                  Partner With Us
+                  <span>Learn More</span>
+                  <svg
+                    className="w-4 h-4 transform group-hover:translate-x-1 transition-transform"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2.5}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
                 </Link>
               </div>
             </div>
 
-            <div className="p-8 bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-3xl shadow-xl">
-              <div className="text-xs uppercase tracking-widest text-brand-orange font-bold mb-2">FOR BUSINESSES & MERCHANTS</div>
-              <h3 className="text-2xl font-extrabold mb-3">Scale Your E-Commerce Delivery</h3>
-              <p className="text-slate-300 text-xs sm:text-sm leading-relaxed mb-6">
-                Connect your store directly with SwiftDrop&apos;s Partner API. Automated tracking numbers, bulk labels, and webhooks straight to your ERP or store.
+            {/* Right Column: Top Explanatory Paragraph, Photo & Overlapping Stats Banner */}
+            <div className="lg:col-span-7 flex flex-col">
+              {/* Top Explanatory Paragraph */}
+              <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-normal mb-8 max-w-xl">
+                SwiftDrop operates high-capacity sorting facilities and express courier distribution centers spanning Western, Central, Southern, and Northern provinces. Our automated infrastructure synchronizes island-wide sorting with local last-mile courier routes.
               </p>
 
-              <div className="bg-slate-950/70 p-4 rounded-xl font-mono text-xs text-slate-300 border border-slate-700/50 mb-6 overflow-x-auto">
-                <span className="text-emerald-400">POST</span> /api/v1/merchant/partner/orders<br />
-                <span className="text-slate-500">Host:</span> api.swiftdrop.local<br />
-                <span className="text-slate-500">X-API-KEY:</span> sw_live_9a7d2e...
-              </div>
+              {/* Image Container with Floating Overlapping Banner */}
+              <div className="relative pt-6 sm:pt-8">
+                {/* Overlapping Floating Stats Banner */}
+                <div className="absolute top-0 left-4 sm:left-8 z-20 bg-gradient-to-r from-[#ff6600] to-[#ea580c] text-white px-6 sm:px-8 py-4 sm:py-5 rounded-2xl shadow-xl shadow-orange-500/30 flex items-center gap-6 sm:gap-8 border border-white/20">
+                  <div className="flex items-center gap-3">
+                    <span className="text-3xl sm:text-4xl font-black tracking-tight">25+</span>
+                    <div className="text-[11px] sm:text-xs font-bold text-white/90 uppercase leading-snug">
+                      Districts<br />Covered
+                    </div>
+                  </div>
+                  <div className="w-px h-10 bg-white/30" />
+                  <div className="flex items-center gap-3">
+                    <span className="text-3xl sm:text-4xl font-black tracking-tight">99.4%</span>
+                    <div className="text-[11px] sm:text-xs font-bold text-white/90 uppercase leading-snug">
+                      On-Time<br />Delivery
+                    </div>
+                  </div>
+                </div>
 
-              <Link
-                href="/login"
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-orange hover:bg-brand-orange-dark text-white text-xs font-bold rounded-full transition-all"
-              >
-                Sign In to Merchant Portal &rarr;
-              </Link>
+                {/* Main Photo Frame */}
+                <div className="relative rounded-[32px] overflow-hidden shadow-2xl border border-slate-100 h-[380px] sm:h-[440px] group">
+                  <img
+                    src="/coverage-warehouse.jpg"
+                    alt="SwiftDrop Modern Smart Logistics Operations"
+                    className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700"
+                  />
+                  {/* Subtle Gradient Vignette */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent pointer-events-none" />
+
+                  {/* Bottom Glassmorphic Badge */}
+                  <div className="absolute bottom-5 left-6 right-6 flex items-center justify-between pointer-events-none">
+                    <div className="bg-slate-900/80 backdrop-blur-md px-4 py-2 rounded-full text-white text-xs font-bold flex items-center gap-2 border border-white/10 shadow-lg">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                      <span>Island-Wide Line-Haul &amp; Hubs Active</span>
+                    </div>
+                    <Link
+                      href="/portal"
+                      className="pointer-events-auto text-xs font-bold text-white/90 hover:text-[#ff6600] underline underline-offset-4 transition-colors"
+                    >
+                      B2B Partner Portal &rarr;
+                    </Link>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
