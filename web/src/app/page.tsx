@@ -464,120 +464,197 @@ export default function HomePage() {
       </section>
 
       {/* TRANSPARENT PRICING SECTION */}
-      <section id="pricing" className="py-20 bg-[#e8e7e2] border-t border-slate-200/60">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="text-center max-w-xl mx-auto mb-14">
-            <span className="text-xs font-bold tracking-widest text-[#ff6600] bg-white border border-orange-200/80 px-3.5 py-1 rounded-full uppercase shadow-sm">
-              TRANSPARENT RATES
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mt-3 mb-2">
+      <section id="pricing" className="py-24 bg-[#e8e7e2] border-t border-slate-200/60 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Header */}
+          <div className="text-center max-w-2xl mx-auto mb-16">
+            <div className="flex items-center justify-center gap-4 max-w-xs mx-auto mb-3">
+              <div className="h-px bg-slate-300 flex-1" />
+              <span className="text-xs font-black tracking-[0.25em] text-[#ff6600] uppercase">
+                TRANSPARENT RATES
+              </span>
+              <div className="h-px bg-slate-300 flex-1" />
+            </div>
+            <h2 className="text-3xl sm:text-4xl lg:text-[42px] font-black text-slate-900 mt-2 mb-3 tracking-tight">
               Simple, Predictable Island-Wide Pricing
             </h2>
-            <p className="text-slate-600 text-sm">
-              No hidden fuel surcharges. Server-calculated transparent pricing based on real-time distance and weight.
+            <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
+              No hidden fuel surcharges. Real-time server-verified fee calculation based on actual distance and volumetric weight.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Tier 1 */}
-            <div className="bg-white p-8 rounded-3xl border border-slate-200/90 shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
+          {/* Pricing Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-7 lg:gap-8 items-stretch pt-2">
+            {/* Tier 1: Standard Delivery */}
+            <div className="bg-white/95 backdrop-blur-md p-8 sm:p-9 rounded-[32px] border border-white/90 shadow-[0_10px_35px_rgba(0,0,0,0.04)] hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between">
               <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Standard Delivery</span>
-                <div className="flex items-baseline gap-1 mt-3 mb-2">
-                  <span className="text-4xl font-black text-slate-900">$4.50</span>
-                  <span className="text-xs text-slate-500 font-medium">/ parcel</span>
+                <span className="inline-block text-[11px] font-black uppercase tracking-wider text-slate-500 bg-slate-100 px-3 py-1 rounded-full mb-4">
+                  Standard Delivery
+                </span>
+                <div className="flex items-baseline gap-1.5 mt-2 mb-2">
+                  <span className="text-4xl sm:text-5xl font-black text-slate-900">$4.50</span>
+                  <span className="text-xs sm:text-sm text-slate-500 font-semibold">/ parcel</span>
                 </div>
-                <p className="text-xs text-slate-600 leading-relaxed mb-6">
-                  Reliable next-day delivery across municipal and inter-district zones.
+                <p className="text-xs sm:text-sm text-slate-500 leading-relaxed mb-6">
+                  Reliable next-day delivery across municipal and inter-district zones island-wide.
                 </p>
-                <ul className="space-y-3 text-xs text-slate-700 pb-8 border-t border-slate-100 pt-6">
-                  <li className="flex items-center gap-2">
-                    <span className="text-[#ff6600] font-bold">✓</span> Up to 2 kg parcel weight included
+                <ul className="space-y-3.5 text-xs sm:text-sm text-slate-700 pb-8 border-t border-slate-100 pt-6">
+                  <li className="flex items-center gap-2.5">
+                    <span className="w-5 h-5 rounded-full bg-orange-100 text-[#ff6600] flex items-center justify-center font-bold text-xs flex-shrink-0">✓</span>
+                    <span>Up to 2 kg parcel weight included</span>
                   </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-[#ff6600] font-bold">✓</span> Real-time GPS & milestone tracking
+                  <li className="flex items-center gap-2.5">
+                    <span className="w-5 h-5 rounded-full bg-orange-100 text-[#ff6600] flex items-center justify-center font-bold text-xs flex-shrink-0">✓</span>
+                    <span>Real-time GPS &amp; milestone tracking</span>
                   </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-[#ff6600] font-bold">✓</span> Free doorstep pickup
+                  <li className="flex items-center gap-2.5">
+                    <span className="w-5 h-5 rounded-full bg-orange-100 text-[#ff6600] flex items-center justify-center font-bold text-xs flex-shrink-0">✓</span>
+                    <span>Free doorstep pickup &amp; SMS alerts</span>
                   </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-[#ff6600] font-bold">✓</span> SMS & WhatsApp recipient alerts
+                  <li className="flex items-center gap-2.5">
+                    <span className="w-5 h-5 rounded-full bg-orange-100 text-[#ff6600] flex items-center justify-center font-bold text-xs flex-shrink-0">✓</span>
+                    <span>Digital proof of delivery capture</span>
                   </li>
                 </ul>
               </div>
               <Link
                 href="/booking"
-                className="w-full py-3 text-center bg-white hover:bg-orange-50 text-[#ff6600] border border-orange-200/80 rounded-full font-bold text-xs transition-all"
+                className="w-full py-3.5 text-center bg-white hover:bg-orange-50 text-[#ff6600] border-2 border-orange-200/90 rounded-full font-extrabold text-xs sm:text-sm transition-all shadow-sm"
               >
-                Book Standard Parcel
+                Book Standard Parcel &rarr;
               </Link>
             </div>
 
-            {/* Tier 2 - Most Popular */}
-            <div className="bg-white p-8 rounded-3xl border-2 border-[#ff6600] shadow-xl relative flex flex-col justify-between">
-              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#ff6600] text-white px-3.5 py-1 rounded-full text-[10px] font-black tracking-wider uppercase shadow-md shadow-orange-500/20">
-                MOST POPULAR
+            {/* Tier 2: Same-Day Express (Most Popular / Highlighted) */}
+            <div className="bg-white p-8 sm:p-9 rounded-[32px] border-2 border-[#ff6600] shadow-[0_20px_50px_rgba(255,102,0,0.18)] relative flex flex-col justify-between hover:-translate-y-2 transition-all duration-300">
+              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#ff6600] text-white px-4 py-1 rounded-full text-[11px] font-black tracking-wider uppercase shadow-md shadow-orange-500/30">
+                ⭐ MOST POPULAR
               </div>
               <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-[#ff6600]">Same-Day Express</span>
-                <div className="flex items-baseline gap-1 mt-3 mb-2">
-                  <span className="text-4xl font-black text-slate-900">$8.50</span>
-                  <span className="text-xs text-slate-500 font-medium">/ parcel</span>
+                <span className="inline-block text-[11px] font-black uppercase tracking-wider text-[#ff6600] bg-orange-50 px-3 py-1 rounded-full mb-4">
+                  Same-Day Express
+                </span>
+                <div className="flex items-baseline gap-1.5 mt-2 mb-2">
+                  <span className="text-4xl sm:text-5xl font-black text-slate-900">$8.50</span>
+                  <span className="text-xs sm:text-sm text-slate-500 font-semibold">/ parcel</span>
                 </div>
-                <p className="text-xs text-slate-600 leading-relaxed mb-6">
-                  Urgent doorstep delivery within 2-4 hours anywhere in urban hubs.
+                <p className="text-xs sm:text-sm text-slate-500 leading-relaxed mb-6">
+                  Urgent doorstep delivery within 2–4 hours anywhere in urban hubs and metro corridors.
                 </p>
-                <ul className="space-y-3 text-xs text-slate-700 pb-8 border-t border-slate-100 pt-6">
-                  <li className="flex items-center gap-2">
-                    <span className="text-[#ff6600] font-bold">✓</span> Priority courier dispatch in 10 mins
+                <ul className="space-y-3.5 text-xs sm:text-sm text-slate-700 pb-8 border-t border-slate-100 pt-6">
+                  <li className="flex items-center gap-2.5">
+                    <span className="w-5 h-5 rounded-full bg-[#ff6600] text-white flex items-center justify-center font-bold text-xs flex-shrink-0">✓</span>
+                    <span>Priority courier dispatch under 10 mins</span>
                   </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-[#ff6600] font-bold">✓</span> Direct point-to-point transit
+                  <li className="flex items-center gap-2.5">
+                    <span className="w-5 h-5 rounded-full bg-[#ff6600] text-white flex items-center justify-center font-bold text-xs flex-shrink-0">✓</span>
+                    <span>Direct point-to-point transit routing</span>
                   </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-[#ff6600] font-bold">✓</span> Digital recipient signature & camera proof
+                  <li className="flex items-center gap-2.5">
+                    <span className="w-5 h-5 rounded-full bg-[#ff6600] text-white flex items-center justify-center font-bold text-xs flex-shrink-0">✓</span>
+                    <span>Digital signature &amp; camera verification</span>
                   </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-[#ff6600] font-bold">✓</span> $100 complimentary cargo guarantee
+                  <li className="flex items-center gap-2.5">
+                    <span className="w-5 h-5 rounded-full bg-[#ff6600] text-white flex items-center justify-center font-bold text-xs flex-shrink-0">✓</span>
+                    <span>$100 complimentary cargo guarantee</span>
                   </li>
                 </ul>
               </div>
               <Link
                 href="/booking"
-                className="w-full py-3 text-center bg-[#ff6600] hover:bg-[#ea580c] text-white rounded-full font-bold text-xs shadow-lg shadow-orange-500/25 transition-all"
+                className="w-full py-4 text-center bg-[#ff6600] hover:bg-[#ea580c] text-white rounded-full font-black text-xs sm:text-sm shadow-lg shadow-orange-500/30 transition-all flex items-center justify-center gap-2 group"
               >
-                Ship Express Now
+                <span>Ship Express Now</span>
+                <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>
               </Link>
             </div>
 
-            {/* Tier 3 */}
-            <div className="bg-white p-8 rounded-3xl border border-slate-200/90 shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
+            {/* Tier 3: Merchant B2B Volume */}
+            <div className="bg-white/95 backdrop-blur-md p-8 sm:p-9 rounded-[32px] border border-white/90 shadow-[0_10px_35px_rgba(0,0,0,0.04)] hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between">
               <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Merchant B2B Volume</span>
-                <div className="flex items-baseline gap-1 mt-3 mb-2">
-                  <span className="text-3xl font-black text-slate-900">Custom SLA</span>
+                <span className="inline-block text-[11px] font-black uppercase tracking-wider text-slate-500 bg-slate-100 px-3 py-1 rounded-full mb-4">
+                  Merchant B2B Volume
+                </span>
+                <div className="flex items-baseline gap-1.5 mt-2 mb-2">
+                  <span className="text-3xl sm:text-4xl font-black text-slate-900">Custom SLA</span>
                 </div>
-                <p className="text-xs text-slate-600 leading-relaxed mb-6">
-                  Dedicated volume pricing for high-throughput e-commerce stores.
+                <p className="text-xs sm:text-sm text-slate-500 leading-relaxed mb-6">
+                  Dedicated volume pricing and automated API injection for high-throughput e-commerce stores.
                 </p>
-                <ul className="space-y-3 text-xs text-slate-700 pb-8 border-t border-slate-100 pt-6">
-                  <li className="flex items-center gap-2">
-                    <span className="text-[#ff6600] font-bold">✓</span> Secured REST Partner APIs & Webhooks
+                <ul className="space-y-3.5 text-xs sm:text-sm text-slate-700 pb-8 border-t border-slate-100 pt-6">
+                  <li className="flex items-center gap-2.5">
+                    <span className="w-5 h-5 rounded-full bg-orange-100 text-[#ff6600] flex items-center justify-center font-bold text-xs flex-shrink-0">✓</span>
+                    <span>Secured REST Partner APIs &amp; Webhooks</span>
                   </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-[#ff6600] font-bold">✓</span> Bulk CSV automated waybill printing
+                  <li className="flex items-center gap-2.5">
+                    <span className="w-5 h-5 rounded-full bg-orange-100 text-[#ff6600] flex items-center justify-center font-bold text-xs flex-shrink-0">✓</span>
+                    <span>Bulk automated waybill label printing</span>
                   </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-[#ff6600] font-bold">✓</span> Dedicated fleet dispatch manager
+                  <li className="flex items-center gap-2.5">
+                    <span className="w-5 h-5 rounded-full bg-orange-100 text-[#ff6600] flex items-center justify-center font-bold text-xs flex-shrink-0">✓</span>
+                    <span>Dedicated fleet account manager</span>
                   </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-[#ff6600] font-bold">✓</span> Automated reconciliation & monthly billing
+                  <li className="flex items-center gap-2.5">
+                    <span className="w-5 h-5 rounded-full bg-orange-100 text-[#ff6600] flex items-center justify-center font-bold text-xs flex-shrink-0">✓</span>
+                    <span>Consolidated monthly invoicing &amp; SLA</span>
                   </li>
                 </ul>
               </div>
               <Link
                 href="/login"
-                className="w-full py-3 text-center bg-white hover:bg-orange-50 text-[#ff6600] border border-orange-200/80 rounded-full font-bold text-xs transition-all"
+                className="w-full py-3.5 text-center bg-white hover:bg-orange-50 text-[#ff6600] border-2 border-orange-200/90 rounded-full font-extrabold text-xs sm:text-sm transition-all shadow-sm"
+              >
+                Merchant Sign In &rarr;
+              </Link>
+            </div>
+          </div>
+
+          {/* Trust Guarantees */}
+          <div className="mt-14 flex flex-wrap items-center justify-center gap-6 sm:gap-10 text-xs sm:text-sm font-semibold text-slate-600">
+            <div className="flex items-center gap-2">
+              <span className="text-[#ff6600] font-bold">✓</span>
+              <span>100% Server-Verified Distance Rates</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[#ff6600] font-bold">✓</span>
+              <span>Instant Card &amp; COD Options</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[#ff6600] font-bold">✓</span>
+              <span>Complimentary Cargo Guarantee</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* PRE-FOOTER CTA BANNER */}
+      <section className="bg-white py-16 sm:py-20 relative">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="relative rounded-[32px] bg-gradient-to-br from-slate-950 via-[#111827] to-slate-950 p-8 sm:p-14 text-white overflow-hidden shadow-2xl border border-slate-800 flex flex-col lg:flex-row items-center justify-between gap-8">
+            {/* Orange ambient radial glow */}
+            <div className="absolute -right-20 -bottom-20 w-96 h-96 bg-[#ff6600]/15 rounded-full blur-3xl pointer-events-none" />
+            <div className="relative z-10 max-w-xl">
+              <span className="text-xs font-black tracking-widest text-[#ff6600] uppercase mb-2 inline-block">
+                GET STARTED IN MINUTES
+              </span>
+              <h3 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight mb-3">
+                Ready to experience the future of logistics?
+              </h3>
+              <p className="text-slate-400 text-sm sm:text-base leading-relaxed">
+                Send your first individual parcel in under 60 seconds or connect your enterprise store via our high-speed partner API.
+              </p>
+            </div>
+            <div className="relative z-10 flex flex-wrap gap-4 flex-shrink-0">
+              <Link
+                href="/booking"
+                className="px-8 py-4 bg-[#ff6600] hover:bg-[#ea580c] text-white font-black text-xs sm:text-sm uppercase tracking-wider rounded-full shadow-lg shadow-orange-500/30 transition-all flex items-center gap-2 group"
+              >
+                <span>Book Delivery Now</span>
+                <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>
+              </Link>
+              <Link
+                href="/login"
+                className="px-7 py-4 bg-white/10 hover:bg-white/20 text-white font-bold text-xs sm:text-sm rounded-full border border-white/20 backdrop-blur-md transition-all"
               >
                 Merchant Sign In
               </Link>
@@ -587,49 +664,87 @@ export default function HomePage() {
       </section>
 
       {/* FOOTER */}
-      <footer className="bg-slate-900 text-white py-12 border-t border-slate-800">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
-            <div>
-              <span className="text-2xl font-black tracking-tight">
-                swiftdrop<span className="text-brand-orange">.</span>
-              </span>
-              <p className="text-xs text-slate-400 mt-2 leading-relaxed">
-                Modern enterprise parcel delivery and logistics management system operating island-wide.
+      <footer className="bg-[#0b0f17] text-white pt-16 pb-12 border-t border-slate-800/80">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 mb-14">
+            {/* Brand Column */}
+            <div className="lg:col-span-2">
+              <Link href="/" className="inline-flex items-center gap-2 mb-4 group">
+                <span className="text-2xl font-black tracking-tight text-white">
+                  swiftdrop<span className="text-[#ff6600]">.</span>
+                </span>
+              </Link>
+              <p className="text-xs sm:text-sm text-slate-400 leading-relaxed max-w-sm mb-6 font-normal">
+                Next-generation automated parcel logistics network. Synchronizing island-wide sorting hubs with high-velocity courier dispatch and enterprise REST APIs.
               </p>
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900 border border-slate-800 text-xs font-semibold text-slate-300">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span>All Island Systems Operational</span>
+              </div>
             </div>
 
+            {/* Column 2: Solutions */}
             <div>
-              <h5 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Quick Navigation</h5>
-              <ul className="text-xs text-slate-300 space-y-2">
-                <li><Link href="/booking" className="hover:text-white transition-colors">Book Parcel</Link></li>
+              <h5 className="text-xs font-black uppercase tracking-widest text-[#ff6600] mb-4">
+                Services
+              </h5>
+              <ul className="text-xs sm:text-sm text-slate-400 space-y-2.5">
+                <li><a href="/#services" className="hover:text-white transition-colors">Same-Day Express</a></li>
+                <li><a href="/#services" className="hover:text-white transition-colors">Live GPS Tracking</a></li>
+                <li><a href="/#services" className="hover:text-white transition-colors">Merchant Partner API</a></li>
+                <li><a href="/#services" className="hover:text-white transition-colors">Verified Delivery POD</a></li>
+                <li><a href="/#coverage" className="hover:text-white transition-colors">Provincial Sorting Hubs</a></li>
+              </ul>
+            </div>
+
+            {/* Column 3: Dashboards & Links */}
+            <div>
+              <h5 className="text-xs font-black uppercase tracking-widest text-[#ff6600] mb-4">
+                Portals
+              </h5>
+              <ul className="text-xs sm:text-sm text-slate-400 space-y-2.5">
+                <li><Link href="/booking" className="hover:text-white transition-colors">Customer Booking</Link></li>
+                <li><Link href="/tasks" className="hover:text-white transition-colors">Courier Task Board</Link></li>
+                <li><Link href="/dispatch" className="hover:text-white transition-colors">Fleet Dispatcher</Link></li>
+                <li><Link href="/portal" className="hover:text-white transition-colors">Merchant Portal</Link></li>
                 <li><Link href="/tracking/SWIFT-DEMO" className="hover:text-white transition-colors">Public Tracking</Link></li>
-                <li><Link href="/login" className="hover:text-white transition-colors">Sign In Portal</Link></li>
-                <li><Link href="/exceptions" className="hover:text-white transition-colors">Customer Support</Link></li>
               </ul>
             </div>
 
+            {/* Column 4: Operations & Contact */}
             <div>
-              <h5 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Platform Tech</h5>
-              <ul className="text-xs text-slate-300 space-y-2">
-                <li>RabbitMQ Event Messaging</li>
-                <li>WebSocket Real-time Updates</li>
-                <li>Kubernetes Containerized</li>
-                <li>Gemini AI Smart Assistant</li>
-              </ul>
-            </div>
-
-            <div>
-              <h5 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Operations</h5>
-              <p className="text-xs text-slate-400">Headquarters: Colombo, Sri Lanka</p>
-              <p className="text-xs text-slate-400 mt-1">Dispatch Support: support@swiftdrop.com</p>
-              <p className="text-xs text-slate-400 mt-1">Hotline: +94 11 234 5678</p>
+              <h5 className="text-xs font-black uppercase tracking-widest text-[#ff6600] mb-4">
+                Operations
+              </h5>
+              <div className="space-y-3 text-xs sm:text-sm text-slate-400">
+                <p className="flex items-start gap-2">
+                  <span className="text-[#ff6600]">📍</span>
+                  <span>Colombo Urban Logistics Hub, Sri Lanka</span>
+                </p>
+                <p className="flex items-center gap-2">
+                  <span className="text-[#ff6600]">📞</span>
+                  <span>+94 11 234 5678</span>
+                </p>
+                <p className="flex items-center gap-2">
+                  <span className="text-[#ff6600]">✉️</span>
+                  <span>support@swiftdrop.lk</span>
+                </p>
+                <p className="flex items-center gap-2">
+                  <span className="text-[#ff6600]">⚡</span>
+                  <span>24/7 Island Dispatch Active</span>
+                </p>
+              </div>
             </div>
           </div>
 
-          <div className="border-t border-slate-800 pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500">
-            <p>&copy; 2026 SwiftDrop Logistics System. All rights reserved.</p>
-            <p>10-Member Enterprise Application Team Project</p>
+          {/* Bottom Bar */}
+          <div className="border-t border-slate-800/80 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+            <p>&copy; 2026 SwiftDrop Logistics Network. All rights reserved.</p>
+            <div className="flex items-center gap-6">
+              <Link href="/#coverage" className="hover:text-slate-300 transition-colors">Privacy Policy</Link>
+              <Link href="/#coverage" className="hover:text-slate-300 transition-colors">Terms of Service</Link>
+              <Link href="/#coverage" className="hover:text-slate-300 transition-colors">Security &amp; SLA</Link>
+            </div>
           </div>
         </div>
       </footer>
