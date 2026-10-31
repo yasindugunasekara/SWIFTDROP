@@ -119,68 +119,93 @@ export default function HomePage() {
       </section>
 
       {/* CORE SERVICES SECTION */}
-      <section id="services" className="bg-white py-20 border-t border-slate-100">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="text-center max-w-2xl mx-auto mb-14">
-            <span className="text-xs font-bold tracking-widest text-brand-orange bg-orange-50 px-3 py-1 rounded-full uppercase">
+      <section id="services" className="bg-white py-24 border-t border-slate-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-2xl mx-auto mb-16">
+            <span className="inline-block text-xs font-extrabold tracking-widest text-[#ff6600] bg-orange-50/90 border border-orange-200/80 px-4 py-1.5 rounded-full uppercase shadow-sm">
               OUR SERVICES
             </span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mt-3 mb-3">
-              Built for Speed, Engineered for Reliability
+            <h2 className="text-3xl sm:text-4xl lg:text-[42px] font-black text-slate-900 mt-4 mb-3 tracking-tight">
+              Solutions to Grow Your Business
             </h2>
-            <p className="text-slate-600 text-sm sm:text-base">
-              Whether you are an individual sending a gift or an enterprise shipping thousands of parcels daily, SwiftDrop connects your goods across the island.
+            <p className="text-slate-500 text-sm sm:text-base leading-relaxed">
+              We offer high-velocity logistics infrastructure to help individuals and businesses scale across the island.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Service 1 */}
-            <div className="p-8 rounded-2xl bg-slate-50 border border-slate-100 hover:border-slate-200 hover:shadow-lg transition-all flex flex-col">
-              <div className="w-12 h-12 rounded-xl bg-orange-100 text-brand-orange flex items-center justify-center text-2xl mb-5">
-                ⚡
-              </div>
-              <h3 className="text-xl font-bold text-slate-900 mb-2">Same-Day Express</h3>
-              <p className="text-sm text-slate-600 leading-relaxed mb-4 flex-1">
-                Urgent city-wide and inter-district parcel delivery with real-time pickup dispatch within minutes of booking.
-              </p>
-              <ul className="text-xs text-slate-500 space-y-1.5">
-                <li>✓ Doorstep pickup & drop-off</li>
-                <li>✓ Instant SMS & WhatsApp tracking links</li>
-                <li>✓ Server-calculated accurate distance rates</li>
-              </ul>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-7">
+            {[
+              {
+                title: "Same-Day Express",
+                desc: "Urgent intra-city & province parcel delivery with priority rider dispatch in under 10 minutes.",
+                image: "/service-express.jpg",
+                link: "/booking",
+              },
+              {
+                title: "Live GPS Tracking",
+                desc: "Real-time WebSocket milestone updates, live map coordinates, and dynamic arrival estimates.",
+                image: "/service-tracking.jpg",
+                link: "/#process",
+              },
+              {
+                title: "Merchant Partner B2B",
+                desc: "Automated order injection APIs, bulk waybill generation, and event-driven HMAC webhooks.",
+                image: "/service-api.jpg",
+                link: "/portal",
+              },
+              {
+                title: "Verified Delivery POD",
+                desc: "Doorstep camera verification, recipient digital signature, and instant VAT invoice generation.",
+                image: "/service-pod.jpg",
+                link: "/#coverage",
+              },
+            ].map((service, idx) => (
+              <a
+                key={idx}
+                href={service.link}
+                className="group relative bg-gradient-to-b from-[#fffaf4] via-white to-white rounded-[28px] p-6 sm:p-7 border border-slate-100/90 hover:border-orange-200/90 shadow-[0_8px_30px_rgb(0,0,0,0.03)] hover:shadow-[0_20px_45px_-10px_rgba(255,102,0,0.14)] hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between overflow-hidden"
+              >
+                {/* Subtle top warm spotlight */}
+                <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-orange-100/30 to-transparent pointer-events-none" />
 
-            {/* Service 2 */}
-            <div className="p-8 rounded-2xl bg-slate-50 border border-slate-100 hover:border-slate-200 hover:shadow-lg transition-all flex flex-col">
-              <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-2xl mb-5">
-                📍
-              </div>
-              <h3 className="text-xl font-bold text-slate-900 mb-2">Live GPS Tracking</h3>
-              <p className="text-sm text-slate-600 leading-relaxed mb-4 flex-1">
-                WebSocket-powered milestone updates for both senders and recipients with clear status history timelines.
-              </p>
-              <ul className="text-xs text-slate-500 space-y-1.5">
-                <li>✓ Live courier location coordinates</li>
-                <li>✓ Accurate estimated arrival times (ETA)</li>
-                <li>✓ Public mobile tracking with privacy protection</li>
-              </ul>
-            </div>
+                {/* 3D Thematic Graphic Container */}
+                <div className="h-44 sm:h-48 w-full flex items-center justify-center p-2 mb-4 relative z-10">
+                  <img
+                    src={service.image}
+                    alt={service.title}
+                    className="max-h-full max-w-full object-contain filter drop-shadow-sm group-hover:scale-105 transition-transform duration-500 rounded-2xl"
+                  />
+                </div>
 
-            {/* Service 3 */}
-            <div className="p-8 rounded-2xl bg-slate-50 border border-slate-100 hover:border-slate-200 hover:shadow-lg transition-all flex flex-col">
-              <div className="w-12 h-12 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center text-2xl mb-5">
-                🏢
-              </div>
-              <h3 className="text-xl font-bold text-slate-900 mb-2">Merchant Partner B2B</h3>
-              <p className="text-sm text-slate-600 leading-relaxed mb-4 flex-1">
-                Automated order injection APIs and event-driven webhooks for e-commerce platforms, Shopify, and WooCommerce.
-              </p>
-              <ul className="text-xs text-slate-500 space-y-1.5">
-                <li>✓ Secured REST Partner APIs (API Keys)</li>
-                <li>✓ HMAC SHA-256 signed status webhooks</li>
-                <li>✓ Automatic retries with Dead-Letter Queues (DLQ)</li>
-              </ul>
-            </div>
+                {/* Text Content */}
+                <div className="relative z-10 flex-1 flex flex-col">
+                  <h3 className="text-lg sm:text-xl font-black text-slate-900 group-hover:text-[#ff6600] transition-colors mb-2 leading-snug">
+                    {service.title}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-slate-500 leading-relaxed font-normal mb-6 flex-1">
+                    {service.desc}
+                  </p>
+
+                  {/* Bottom Action Row */}
+                  <div className="flex items-center justify-between pt-4 border-t border-slate-100/90 mt-auto">
+                    <span className="text-sm font-extrabold text-slate-900 group-hover:text-[#ff6600] transition-colors">
+                      Learn more
+                    </span>
+                    <div className="w-9 h-9 rounded-full bg-[#ff6600] group-hover:bg-[#e65c00] text-white flex items-center justify-center shadow-md shadow-orange-500/25 group-hover:scale-105 transition-all">
+                      <svg
+                        className="w-4 h-4 transform group-hover:translate-x-0.5 transition-transform"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2.5}
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </a>
+            ))}
           </div>
         </div>
       </section>
