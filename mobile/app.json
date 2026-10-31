@@ -1,14 +1,13 @@
 {
   "expo": {
-    "name": "SwiftDrop Courier & Tracking",
+    "name": "swiftdrop.",
     "slug": "swiftdrop-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "userInterfaceStyle": "dark",
+    "userInterfaceStyle": "light",
     "splash": {
       "resizeMode": "contain",
-      "backgroundColor": "#090d16"
+      "backgroundColor": "#ffffff"
     },
     "plugins": [
       [
