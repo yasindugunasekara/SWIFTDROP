@@ -210,53 +210,107 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* HOW IT WORKS SECTION */}
-      <section id="process" className="py-20 bg-[#e8e7e2] border-t border-slate-200/60">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="text-center max-w-xl mx-auto mb-14">
-            <span className="text-xs font-bold tracking-widest text-[#ff6600] bg-white border border-orange-200/80 px-3.5 py-1 rounded-full uppercase shadow-sm">
-              SIMPLE 4-STEP PROCESS
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mt-3 mb-2">
+      {/* HOW IT WORKS / INFOGRAPHIC SECTION */}
+      <section id="process" className="py-24 bg-[#e8e7e2] border-t border-slate-200/60 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Infographic Header */}
+          <div className="text-center max-w-2xl mx-auto mb-16">
+            <div className="flex items-center justify-center gap-4 max-w-xs mx-auto mb-3">
+              <div className="h-px bg-slate-300 flex-1" />
+              <span className="text-xs font-black tracking-[0.25em] text-[#ff6600] uppercase">
+                LOGISTICS INFOGRAPHIC
+              </span>
+              <div className="h-px bg-slate-300 flex-1" />
+            </div>
+            <h2 className="text-3xl sm:text-4xl lg:text-[42px] font-black text-slate-900 mt-2 mb-3 tracking-tight">
               How SwiftDrop Works
             </h2>
-            <p className="text-slate-600 text-sm">
+            <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
               From online booking to verified delivery, our system keeps every party informed.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white p-7 rounded-3xl border border-white/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative">
-              <div className="text-4xl font-black text-[#ff6600]/20 mb-2">01</div>
-              <h4 className="text-base font-bold text-slate-900 mb-1.5">Book or Inject</h4>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Enter parcel weight & dimensions for an instant server-verified fee quote, or inject via B2B API.
-              </p>
-            </div>
+          {/* 4 Steps Infographic Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-7 pt-4">
+            {[
+              {
+                step: "01",
+                title: "Book or Inject",
+                desc: "Enter parcel weight & dimensions for an instant server-verified fee quote, or inject directly via B2B REST API.",
+                icon: (
+                  <svg className="w-7 h-7 text-[#ff6600]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                  </svg>
+                ),
+              },
+              {
+                step: "02",
+                title: "Smart Dispatch",
+                desc: "Dispatchers match parcels to nearby couriers balancing active fleet workloads across regional delivery zones.",
+                icon: (
+                  <svg className="w-7 h-7 text-[#ff6600]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                ),
+              },
+              {
+                step: "03",
+                title: "Real-Time Transit",
+                desc: "RabbitMQ broker broadcasts status events triggering notifications and live WebSocket tracking timeline updates.",
+                icon: (
+                  <svg className="w-7 h-7 text-[#ff6600]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                ),
+              },
+              {
+                step: "04",
+                title: "Proof of Delivery",
+                desc: "Courier verifies delivery with doorstep camera photo or recipient signature, generating instant VAT receipts.",
+                icon: (
+                  <svg className="w-7 h-7 text-[#ff6600]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                ),
+              },
+            ].map((item, idx) => (
+              <div key={idx} className="group flex flex-col items-center">
+                {/* Top Arched Cap */}
+                <div className="w-24 h-11 bg-[#ff6600] text-white font-black text-base flex items-center justify-center rounded-t-2xl shadow-sm tracking-wider relative z-0 transition-transform duration-300 group-hover:-translate-y-1">
+                  {item.step}
+                </div>
 
-            <div className="bg-white p-7 rounded-3xl border border-white/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative">
-              <div className="text-4xl font-black text-[#ff6600]/20 mb-2">02</div>
-              <h4 className="text-base font-bold text-slate-900 mb-1.5">Smart Dispatch</h4>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Dispatchers match parcels to nearby couriers balancing active fleet workloads across delivery zones.
-              </p>
-            </div>
+                {/* Main Glassmorphic Card */}
+                <div className="w-full relative z-10 bg-white/95 backdrop-blur-md rounded-[28px] p-6 sm:p-7 border border-white/90 shadow-[0_12px_35px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_45px_rgba(255,102,0,0.13)] hover:-translate-y-1.5 transition-all duration-300 flex flex-col items-center text-center flex-1">
+                  {/* Subtle top warm ambient glow behind the icon */}
+                  <div className="w-24 h-24 rounded-full bg-gradient-to-b from-orange-100/70 via-orange-50/40 to-transparent flex items-center justify-center mb-5 p-1 transition-transform duration-300 group-hover:scale-105">
+                    {/* Elevated circular icon badge */}
+                    <div className="w-16 h-16 rounded-full bg-white shadow-[0_4px_16px_rgba(0,0,0,0.06)] border border-orange-100/80 flex items-center justify-center">
+                      {item.icon}
+                    </div>
+                  </div>
 
-            <div className="bg-white p-7 rounded-3xl border border-white/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative">
-              <div className="text-4xl font-black text-[#ff6600]/20 mb-2">03</div>
-              <h4 className="text-base font-bold text-slate-900 mb-1.5">Real-Time Transit</h4>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                RabbitMQ broker broadcasts status events triggering notifications and live tracking timeline updates.
-              </p>
-            </div>
+                  {/* Title */}
+                  <h3 className="text-base sm:text-lg font-black text-slate-900 uppercase tracking-wide mb-2 group-hover:text-[#ff6600] transition-colors">
+                    {item.title}
+                  </h3>
 
-            <div className="bg-white p-7 rounded-3xl border border-white/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative">
-              <div className="text-4xl font-black text-[#ff6600]/20 mb-2">04</div>
-              <h4 className="text-base font-bold text-slate-900 mb-1.5">Proof of Delivery</h4>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Courier verifies delivery with doorstep camera photo or recipient signature, generating instant VAT receipts.
-              </p>
-            </div>
+                  {/* Description */}
+                  <p className="text-xs sm:text-[13px] text-slate-500 leading-relaxed font-normal mb-6 flex-1">
+                    {item.desc}
+                  </p>
+
+                  {/* Bottom-right double chevron arrow */}
+                  <div className="w-full flex justify-end mt-auto pt-2">
+                    <div className="text-[#ff6600] opacity-80 group-hover:opacity-100 group-hover:translate-x-1 transition-all">
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
