@@ -10,7 +10,9 @@
     "worker": "tsx watch src/workers/index.ts",
     "migrate": "tsx src/database/migrate.ts",
     "lint": "eslint src --ext .ts",
-    "test": "jest"
+    "test": "jest",
+    "test:webhooks": "tsx src/modules/webhooks/webhook.test.ts",
+    "demo:webhooks": "tsx src/scripts/webhook-demo.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.14.0",
@@ -42,5 +44,6 @@
     "@types/ws": "^8.5.10",
     "tsx": "^4.16.2",
     "typescript": "^5.5.3"
-  }
+  },
+  "type": "module"
 }
