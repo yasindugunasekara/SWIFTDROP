@@ -53,11 +53,11 @@ export default function WebhookCenterPage() {
       response_code: 200,
       attempt_count: 1,
       is_dead_letter: false,
-      created_at: new Date(Date.now() - 720000).toISOString(),
+      created_at: "2026-11-12T16:45:00.000Z",
       response_body: '{"received": true, "ack": "ok"}',
       payload: {
         event: 'PARCEL_DELIVERED',
-        timestamp: new Date(Date.now() - 720000).toISOString(),
+        timestamp: "2026-11-12T16:45:00.000Z",
         parcel: {
           trackingNumber: 'SWIFT-782910',
           status: 'DELIVERED',
@@ -73,11 +73,11 @@ export default function WebhookCenterPage() {
       response_code: 500,
       attempt_count: 3,
       is_dead_letter: true,
-      created_at: new Date(Date.now() - 3600000).toISOString(),
+      created_at: "2026-11-12T15:30:00.000Z",
       response_body: 'Internal Server Error: Database connection refused on partner receiver',
       payload: {
         event: 'PARCEL_FAILED',
-        timestamp: new Date(Date.now() - 3600000).toISOString(),
+        timestamp: "2026-11-12T15:30:00.000Z",
         parcel: {
           trackingNumber: 'SWIFT-991122',
           status: 'FAILED',
@@ -92,11 +92,11 @@ export default function WebhookCenterPage() {
       response_code: 200,
       attempt_count: 1,
       is_dead_letter: false,
-      created_at: new Date(Date.now() - 1800000).toISOString(),
+      created_at: "2026-11-12T16:00:00.000Z",
       response_body: '{"status": "PROCESSED"}',
       payload: {
         event: 'PARCEL_STATUS_UPDATED',
-        timestamp: new Date(Date.now() - 1800000).toISOString(),
+        timestamp: "2026-11-12T16:00:00.000Z",
         parcel: {
           trackingNumber: 'SWIFT-445566',
           status: 'IN_TRANSIT',
