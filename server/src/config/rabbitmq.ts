@@ -2,7 +2,7 @@ import amqplib from 'amqplib';
 import { config } from './env.js';
 
 let channel: amqplib.Channel | null = null;
-let connection: amqplib.Connection | null = null;
+let connection: amqplib.ChannelModel | null = null;
 
 export const connectRabbitMQ = async () => {
   try {
