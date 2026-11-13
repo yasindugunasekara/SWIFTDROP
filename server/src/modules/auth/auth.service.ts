@@ -26,6 +26,9 @@ export interface AuthGateway {
 
 async function profileFor(accessToken: string, authUserId: string): Promise<AuthProfile> {
   const client = createSupabaseClient(accessToken);
+  const activeSession = await client.rpc('is_current_session_active');
+  if (activeSession.error) throw new AuthServiceError(503, 'SESSION_UNAVAILABLE', 'Unable to verify your session. Please retry.');
+  if (activeSession.data !== true) throw new AuthServiceError(401, 'SESSION_EXPIRED', 'Session expired. Please sign in again.');
   const { data, error } = await client.from('users')
     .select('id,auth_user_id,email,full_name,phone,role,is_active').eq('auth_user_id', authUserId).maybeSingle();
   if (error) throw new AuthServiceError(503, 'PROFILE_UNAVAILABLE', 'Unable to load your account. Please retry.');

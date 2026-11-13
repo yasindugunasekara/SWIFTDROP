@@ -42,6 +42,9 @@ before(async () => {
     CREATE TABLE auth.users(id UUID PRIMARY KEY,email TEXT,raw_user_meta_data JSONB DEFAULT '{}');
     CREATE FUNCTION auth.uid() RETURNS UUID LANGUAGE SQL STABLE AS
       'SELECT nullif(current_setting(''request.jwt.claim.sub'',true),'''')::uuid';
+    CREATE FUNCTION auth.jwt() RETURNS JSONB LANGUAGE SQL STABLE AS
+      'SELECT coalesce(nullif(current_setting(''request.jwt.claims'',true),''''),''{}'')::jsonb';
+    CREATE TABLE auth.sessions(id UUID PRIMARY KEY,user_id UUID REFERENCES auth.users(id),not_after TIMESTAMPTZ);
     GRANT USAGE ON SCHEMA auth TO authenticated;
     CREATE TYPE public.user_role AS ENUM ('CUSTOMER','COURIER','MERCHANT','DISPATCHER','ADMIN');
     CREATE TABLE public.users(id UUID PRIMARY KEY,email VARCHAR(255) UNIQUE NOT NULL,password_hash VARCHAR(255) NOT NULL,
@@ -52,8 +55,11 @@ before(async () => {
       VALUES ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','legacy@example.com','legacy-hash','Legacy Courier','COURIER');`);
   const migration = await readFile(new URL('../../database/migrations/20261113164606_use_supabase_auth.sql', import.meta.url), 'utf8');
   await database.exec(migration);
-  // The team's existing migration runner can rerun SQL files; this additive migration must remain safe to reapply.
+  // Reapply each migration in runner order, including the later session grants.
   await database.exec(migration);
+  const sessionMigration = await readFile(new URL('../../database/migrations/20261113174333_enforce_active_auth_sessions.sql', import.meta.url), 'utf8');
+  await database.exec(sessionMigration);
+  await database.exec(sessionMigration);
 });
 after(async () => {
   await Promise.all(servers.map(server => new Promise<void>((resolve, reject) => {
@@ -166,4 +172,30 @@ test('RLS allows only own profile reads and safe updates; role escalation and pa
     await assert.rejects(database.query('SELECT password_hash FROM public.users'));
     await assert.rejects(database.query('UPDATE public.users SET auth_user_id=$1::uuid WHERE id=$2::uuid', [secondId, firstId]));
   } finally { await database.exec('RESET ROLE'); }
+});
+
+test('session check rejects missing, expired, revoked and another user session without exposing session records', async () => {
+  const own = '66666666-6666-4666-8666-666666666666';
+  const other = '77777777-7777-4777-8777-777777777777';
+  await database.query('INSERT INTO auth.sessions(id,user_id) VALUES ($1::uuid,$2::uuid),($3::uuid,$4::uuid)', [own, firstId, other, secondId]);
+  await database.query("SELECT set_config('request.jwt.claim.sub',$1,false)", [firstId]);
+  const check = async (id: string | null) => {
+    await database.query("SELECT set_config('request.jwt.claims',$1,false)", [JSON.stringify(id ? { session_id: id } : {})]);
+    await database.exec('SET ROLE authenticated');
+    try {
+      await assert.rejects(database.query('SELECT * FROM auth.sessions'));
+      const { rows: [value] } = await database.query<{ active: boolean }>('SELECT public.is_current_session_active() AS active');
+      return value.active;
+    } finally { await database.exec('RESET ROLE'); }
+  };
+  assert.equal(await check(own), true);
+  assert.equal(await check(other), false);
+  assert.equal(await check(null), false);
+  await database.query("UPDATE auth.sessions SET not_after=now()-interval '1 minute' WHERE id=$1::uuid", [own]);
+  assert.equal(await check(own), false);
+  await database.query('DELETE FROM auth.sessions WHERE id=$1::uuid', [own]);
+  assert.equal(await check(own), false);
+  await database.exec('SET ROLE anon');
+  try { await assert.rejects(database.query('SELECT public.is_current_session_active()')); }
+  finally { await database.exec('RESET ROLE'); }
 });

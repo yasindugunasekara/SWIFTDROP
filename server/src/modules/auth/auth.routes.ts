@@ -37,6 +37,8 @@ export function createAuthRouter(gateway: AuthGateway = authGateway) {
     legacyHeaders: false, message: { error: 'Too many signup attempts. Please try again later.', code: 'RATE_LIMITED' } });
   const loginLimit = rateLimit({ windowMs: 15 * 60 * 1000, max: 20, skipSuccessfulRequests: true,
     standardHeaders: true, legacyHeaders: false, message: { error: 'Too many sign-in attempts. Please retry later.' } });
+  const refreshLimit = rateLimit({ windowMs: 60 * 1000, max: 60, standardHeaders: true,
+    legacyHeaders: false, message: { error: 'Too many session refresh attempts. Please retry shortly.', code: 'RATE_LIMITED' } });
 
   router.get('/config', (_req, res) => {
     try { res.json(publicAuthConfig()); }
@@ -52,7 +54,7 @@ export function createAuthRouter(gateway: AuthGateway = authGateway) {
     const input = z.object({ email, password: z.string().min(1).max(256) }).strict().parse(req.body);
     res.json(await gateway.login(input.email, input.password));
   }));
-  router.post('/refresh', run(async (req, res) => {
+  router.post('/refresh', refreshLimit, run(async (req, res) => {
     const input = z.object({ refreshToken: z.string().min(1).max(8192) }).strict().parse(req.body);
     res.json(await gateway.refresh(input.refreshToken));
   }));

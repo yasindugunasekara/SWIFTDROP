@@ -137,16 +137,41 @@ Supabase Dashboard setup:
 - Authentication > Providers > Google: supply Google OAuth credentials and enable
   the provider. The code uses the real provider flow; Google is currently disabled
   in the hosted project's settings.
-- Native Android integration can use the same /auth/login, /auth/refresh, /auth/google
-  and /auth/me endpoints with Supabase tokens. The Android UI still needs its own
-  session integration; this web migration does not change its demo login screens.
+- Native mobile login now uses the real /auth/login and /auth/me endpoints. The
+  backend profile decides whether the account is a customer or courier; the role
+  selector and demo email shortcuts cannot grant access. Merchant/dispatcher
+  accounts use the web portal. Mobile social login and signup screens are still
+  separate follow-up work.
 
 The web Supabase SDK owns browser session persistence and automatic refresh.
 Old mock/local token keys are removed. Backend APIs call Supabase getUser to verify
-access tokens and read current profile roles/status under RLS. Logout invalidates
-refresh sessions; an already issued access JWT can remain valid until its expiry.
+access tokens and read current profile roles/status under RLS. The additional
+`20261113174333_enforce_active_auth_sessions.sql` migration checks ownership and
+expiry of the caller's `auth.sessions` row through a restricted boolean RPC.
+Every backend authenticated request and successful login/refresh checks this row,
+so a logged-out session's JWT is rejected immediately by the application API.
+This is not a change to Supabase's general JWT lifetime: direct Data API policies
+still enforce their own access rules, and JWTs expire according to project settings.
+Web API calls retry a 401 once through a shared refresh operation, preserve the
+session on transient network failures, and discard stale responses after logout.
 Google/confirmation redirects are handled at /auth/callback. Protect against XSS,
 because the browser SDK persists sessions in browser storage.
+
+Mobile refresh tokens and session data use Expo SecureStore (encrypted chunks
+with an atomic manifest for SDK 51's item size limits). The mobile web preview
+uses sessionStorage. The SDK owns token rotation; the app starts/stops automatic
+refresh with foreground/background transitions and revalidates the profile on
+resume. Concurrent API failures share a refresh and retry once. Logout revokes
+the current session and removes secure storage. No passwords are persisted by
+the mobile app. Configure `EXPO_PUBLIC_API_URL` in `mobile/.env` for your server:
+Android emulator defaults to `http://10.0.2.2:5000/api/v1`; a physical phone needs
+your computer's LAN address. Use HTTPS for deployed servers. Rebuild native apps
+after adding the SecureStore config plugin.
+
+Supabase owns JWT signing keys, access-token expiry and refresh-token reuse
+detection; the old JWT_ACCESS_SECRET/JWT_REFRESH_SECRET sample variables are not
+used for application login. No second custom JWT issuer or refresh-token table
+is needed. Keep the provider's refresh-token rotation/reuse protection enabled.
 
 Verification commands from server/:
 
@@ -155,6 +180,10 @@ Verification commands from server/:
 - npm run test:signup: API and isolated PostgreSQL migration/RLS tests, including
   validation, forbidden roles, legacy-ID preservation and prevention of password
   reads/role escalation. No confirmation emails are sent by these tests.
+- From web/: npm run test:auth checks refresh concurrency, one retry, network
+  failures, logout races and profile restoration.
+- From mobile/: npm run test:auth checks session lifecycle and secure storage;
+  npx tsc --noEmit checks the native UI integration.
 
 Live registration is checked through /register using an email controlled by the
 operator. Confirmation email delivery and the browser confirmation step require
