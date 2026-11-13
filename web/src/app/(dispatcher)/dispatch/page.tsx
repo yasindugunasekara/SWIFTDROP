@@ -103,22 +103,36 @@ export default function DispatcherDashboardPage() {
                   </svg>
                 ),
               },
-            ].map((item) => (
-              <button
-                key={item.id}
-                onClick={() => setActiveNav(item.id)}
-                className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-                  activeNav === item.id
-                    ? 'bg-[#ff6600] text-white shadow-md shadow-orange-500/20'
-                    : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
-                }`}
-              >
-                <span className={activeNav === item.id ? 'text-white' : 'text-slate-400'}>
-                  {item.icon}
-                </span>
-                <span>{item.label}</span>
-              </button>
-            ))}
+            ].map((item) => {
+              if (item.id === 'analytics') {
+                return (
+                  <Link
+                    key={item.id}
+                    href="/analytics"
+                    className="w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl text-xs sm:text-sm font-bold transition-all cursor-pointer text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+                  >
+                    <span className="text-slate-400">{item.icon}</span>
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              }
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveNav(item.id)}
+                  className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                    activeNav === item.id
+                      ? 'bg-[#ff6600] text-white shadow-md shadow-orange-500/20'
+                      : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                  }`}
+                >
+                  <span className={activeNav === item.id ? 'text-white' : 'text-slate-400'}>
+                    {item.icon}
+                  </span>
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
           </nav>
         </div>
 
