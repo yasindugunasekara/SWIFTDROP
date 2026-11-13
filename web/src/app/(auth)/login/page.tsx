@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { saveAuthSession, type UserRole } from '../../../lib/auth';
+import { dashboardFor, signIn, signInWithGoogle, type UserRole } from '../../../lib/auth';
 import styles from '../auth.module.css';
 import AuthBackButton from '../AuthBackButton';
 import AuthInputIcon from '../AuthInputIcon';
@@ -18,15 +18,6 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-
-  // Target dashboard routes for each role
-  const dashboardRoutes: Record<UserRole, string> = {
-    CUSTOMER: '/booking',
-    COURIER: '/tasks',
-    MERCHANT: '/portal',
-    DISPATCHER: '/dispatch',
-    ADMIN: '/dispatch'
-  };
 
   const handleRoleTabChange = (role: UserRole) => {
     setActiveRole(role);
@@ -45,22 +36,9 @@ export default function LoginPage() {
         return;
       }
 
-      // Generate session for the selected role
-      saveAuthSession(
-        {
-          id: `usr-${activeRole.toLowerCase()}-${Date.now()}`,
-          email: email.trim(),
-          fullName: email.split('@')[0].replace('.', ' '),
-          role: activeRole,
-          ...(activeRole === 'MERCHANT' ? { merchantId: 'm-100', approvalStatus: 'APPROVED' } : {})
-        },
-        `swiftdrop_jwt_access_${activeRole.toLowerCase()}`,
-        `swiftdrop_jwt_refresh_${activeRole.toLowerCase()}`
-      );
-
-      // Navigate ONLY to the relevant dashboard for that role
-      const targetDashboard = dashboardRoutes[activeRole] || '/';
-      router.push(targetDashboard);
+      const user = await signIn(email.trim(), password);
+      // The verified account role determines access, never the selected presentation tab.
+      router.replace(dashboardFor(user));
     } catch (err: unknown) {
       setErrorMsg(err instanceof Error ? err.message : 'Login failed. Please check your credentials.');
     } finally {
@@ -68,18 +46,11 @@ export default function LoginPage() {
     }
   };
 
-  const handleGoogleLogin = () => {
-    saveAuthSession(
-      {
-        id: 'usr-google-customer',
-        email: 'customer@gmail.com',
-        fullName: 'Google User',
-        role: 'CUSTOMER'
-      },
-      'swiftdrop_jwt_google_oauth'
-    );
-    // Route Customer to Customer Dashboard
-    router.push('/booking');
+  const handleGoogleLogin = async () => {
+    setErrorMsg(''); setLoading(true);
+    try { await signInWithGoogle(); }
+    catch (error) { setErrorMsg(error instanceof Error ? error.message : 'Google sign-in failed.'); }
+    finally { setLoading(false); }
   };
 
   return (
@@ -91,7 +62,7 @@ export default function LoginPage() {
         </div>
         <header className={`${styles.header} ${styles.loginHeader}`}>
           <h1 id="login-title" className={styles.title}>Welcome back</h1>
-          <p className={styles.subtitle}>Sign in to your SwiftDrop workspace.</p>
+          <p className={styles.subtitle}>Sign in to your account. Your role opens the right workspace.</p>
         </header>
 
         <div className={styles.roles} role="group" aria-label="Choose your workspace">
@@ -140,7 +111,7 @@ export default function LoginPage() {
         <div className={styles.social}>
           {activeRole === 'CUSTOMER' ? <>
             <div className={styles.divider}>or continue with</div>
-            <button type="button" onClick={handleGoogleLogin} className={styles.google}>
+            <button type="button" onClick={handleGoogleLogin} disabled={loading} className={styles.google}>
               <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
                 <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.65v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.14z"/>
                 <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.24v3.15C3.26 21.36 7.33 24 12 24z"/>

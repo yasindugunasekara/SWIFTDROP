@@ -1,31 +1,24 @@
-import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
-import { config } from '../config/env.js';
+import type { Request, Response, NextFunction } from 'express';
+import { AuthServiceError, authGateway, type AuthGateway, type AuthProfile, type UserRole } from '../modules/auth/auth.service.js';
 
 export interface AuthenticatedUser {
-  id: string;
-  email: string;
-  role: 'CUSTOMER' | 'COURIER' | 'DISPATCHER' | 'ADMIN' | 'MERCHANT';
-  merchantId?: string;
+  id: string; email: string; role: UserRole; merchantId?: string; approvalStatus?: string;
+  authUserId?: string; fullName?: string; phone?: string | null;
 }
+export interface AuthRequest extends Request { user?: AuthenticatedUser; }
 
-export interface AuthRequest extends Request {
-  user?: AuthenticatedUser;
+export function createAuthenticationMiddleware(gateway: Pick<AuthGateway, 'authenticate'> = authGateway) {
+  return async (req: AuthRequest, res: Response, next: NextFunction) => {
+    const header = req.headers.authorization;
+    if (!header || !/^Bearer \S+$/i.test(header)) return res.status(401).json({ error: 'Access token required' });
+    try {
+      req.user = await gateway.authenticate(header.slice(7));
+      next();
+    } catch (error) {
+      const status = error instanceof AuthServiceError ? error.status : 503;
+      res.status(status).json({ error: error instanceof AuthServiceError ? error.message : 'Authentication service unavailable.' });
+    }
+  };
 }
-
-export const authenticateToken = (req: AuthRequest, res: Response, next: NextFunction) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-
-  if (!token) {
-    return res.status(401).json({ error: 'Access token required' });
-  }
-
-  try {
-    const decoded = jwt.verify(token, config.jwt.accessSecret) as AuthenticatedUser;
-    req.user = decoded;
-    next();
-  } catch (err) {
-    return res.status(403).json({ error: 'Invalid or expired token' });
-  }
-};
+export const authenticateToken = createAuthenticationMiddleware();
+export type { AuthProfile };

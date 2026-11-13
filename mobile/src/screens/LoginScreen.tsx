@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -12,32 +12,46 @@ import {
   ScrollView,
 } from 'react-native';
 import { Colors } from '../theme/colors';
+import { loginMobile, type MobileUser } from '../services/auth';
 
 interface Props {
-  onLoginSuccess: (userRole: 'customer' | 'courier', userName: string) => void;
+  onLoginSuccess: (user: MobileUser) => void;
   onBack: () => void;
 }
 
 export default function LoginScreen({ onLoginSuccess, onBack }: Props) {
   const [role, setRole] = useState<'customer' | 'courier'>('customer');
-  const [email, setEmail] = useState('alex@swiftdrop.io');
-  const [password, setPassword] = useState('••••••••');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const pending = useRef(false);
 
   const handleQuickCustomer = () => {
     setRole('customer');
-    setEmail('alex@swiftdrop.io');
-    onLoginSuccess('customer', 'Alex Silva');
+    setEmail('customer@swiftdrop.com');
+    setPassword('');
   };
 
   const handleQuickCourier = () => {
     setRole('courier');
-    setEmail('sunil.courier@swiftdrop.io');
-    onLoginSuccess('courier', 'Sunil Silva');
+    setEmail('courier@swiftdrop.com');
+    setPassword('');
   };
 
-  const handleSubmit = () => {
-    const name = role === 'courier' ? 'Sunil Silva' : 'Alex Silva';
-    onLoginSuccess(role, name);
+  const handleSubmit = async () => {
+    if (pending.current) return;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) || !password) {
+      setError('Enter your email address and password.'); return;
+    }
+    pending.current = true; setBusy(true); setError('');
+    try {
+      const profile = await loginMobile(email, password);
+      setPassword('');
+      onLoginSuccess(profile);
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : 'Sign-in failed. Please retry.');
+    } finally { pending.current = false; setBusy(false); }
   };
 
   return (
@@ -94,12 +108,15 @@ export default function LoginScreen({ onLoginSuccess, onBack }: Props) {
           {/* Form Fields */}
           <View style={styles.formSection}>
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>EMAIL OR MOBILE NUMBER</Text>
+              <Text style={styles.label}>EMAIL ADDRESS</Text>
               <TextInput
                 style={styles.input}
                 value={email}
                 onChangeText={setEmail}
-                placeholder="Enter your email or phone"
+                placeholder="Enter your email address"
+                keyboardType="email-address"
+                autoComplete="email"
+                editable={!busy}
                 placeholderTextColor="#94a3b8"
                 autoCapitalize="none"
               />
@@ -108,7 +125,7 @@ export default function LoginScreen({ onLoginSuccess, onBack }: Props) {
             <View style={styles.inputGroup}>
               <View style={styles.passwordRow}>
                 <Text style={styles.label}>PASSWORD</Text>
-                <TouchableOpacity onPress={() => alert('Password reset link sent')}>
+                <TouchableOpacity onPress={() => alert('Contact SwiftDrop support to reset your password.')}>
                   <Text style={styles.forgotLink}>Forgot?</Text>
                 </TouchableOpacity>
               </View>
@@ -117,6 +134,8 @@ export default function LoginScreen({ onLoginSuccess, onBack }: Props) {
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
+                autoComplete="current-password"
+                editable={!busy}
                 placeholder="Enter your password"
                 placeholderTextColor="#94a3b8"
               />
@@ -126,24 +145,27 @@ export default function LoginScreen({ onLoginSuccess, onBack }: Props) {
             <TouchableOpacity
               style={styles.loginButton}
               onPress={handleSubmit}
+              disabled={busy}
+              accessibilityState={{ busy, disabled: busy }}
               activeOpacity={0.85}
             >
               <Text style={styles.loginButtonText}>
-                Log In as {role === 'courier' ? 'Courier Rider' : 'Customer'} &rarr;
+                {busy ? 'Signing in...' : 'Log In'}
               </Text>
             </TouchableOpacity>
+            {error ? <Text accessibilityRole="alert" style={{ marginTop: 12, color: '#b91c1c' }}>{error}</Text> : null}
           </View>
 
           {/* Quick 1-Click Demo Login Bar */}
           <View style={styles.demoSection}>
-            <Text style={styles.demoLabel}>⚡ ONE-CLICK DEMO LOGIN</Text>
+            <Text style={styles.demoLabel}>TEST ACCOUNTS — ENTER THE DEMO PASSWORD</Text>
             <View style={styles.demoButtonsRow}>
               <TouchableOpacity
                 style={styles.demoButton}
                 onPress={handleQuickCustomer}
                 activeOpacity={0.7}
               >
-                <Text style={styles.demoButtonTitle}>Alex Silva</Text>
+                <Text style={styles.demoButtonTitle}>Customer</Text>
                 <Text style={styles.demoButtonRole}>Customer Portal</Text>
               </TouchableOpacity>
 

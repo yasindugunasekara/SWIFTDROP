@@ -11,6 +11,8 @@
     "migrate": "tsx src/database/migrate.ts",
     "lint": "eslint src --ext .ts",
     "test": "jest",
+    "test:signup": "tsx --test src/modules/auth/auth.test.ts",
+    "db:check": "tsx src/scripts/check-database.ts",
     "test:webhooks": "tsx src/modules/webhooks/webhook.test.ts",
     "demo:webhooks": "tsx src/scripts/webhook-demo.ts",
     "test:courier": "tsx src/modules/courier/courier.test.ts",
@@ -18,6 +20,7 @@
   },
   "dependencies": {
     "@google/generative-ai": "^0.14.0",
+    "@supabase/supabase-js": "2.119.0",
     "amqplib": "^0.10.4",
     "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
@@ -34,6 +37,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.16",
     "@types/amqplib": "^0.10.5",
     "@types/bcrypt": "^5.0.2",
     "@types/cors": "^2.8.17",

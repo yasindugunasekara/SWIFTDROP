@@ -8,6 +8,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- -----------------------------------------------------------------------------
 -- MEMBER 1: Identity & Account Security
 -- -----------------------------------------------------------------------------
+-- After the base schema, apply migrations/20261113164606_use_supabase_auth.sql for managed Auth/profile linking.
 CREATE TYPE user_role AS ENUM ('CUSTOMER', 'COURIER', 'DISPATCHER', 'ADMIN', 'MERCHANT');
 
 CREATE TABLE IF NOT EXISTS users (
@@ -30,6 +31,20 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
     expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Member 1: Express identities are private to the backend, not the public Data API.
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+DO $protect_users$
+DECLARE api_role TEXT;
+BEGIN
+    FOREACH api_role IN ARRAY ARRAY['anon', 'authenticated'] LOOP
+        IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = api_role) THEN
+            EXECUTE format('REVOKE ALL PRIVILEGES ON TABLE public.users FROM %I', api_role);
+            EXECUTE format('REVOKE SELECT (password_hash) ON public.users FROM %I', api_role);
+        END IF;
+    END LOOP;
+END
+$protect_users$;
 
 -- -----------------------------------------------------------------------------
 -- MEMBER 6: Merchant Account, Orders & Partner API

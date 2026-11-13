@@ -12,9 +12,9 @@ export default function MerchantDashboardPage() {
   const [apiKey] = useState('sw_live_9a7d2e81c04f4a3b8e7c1d');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const handleLogout = () => {
-    clearAuthSession();
-    window.location.href = '/login';
+  const handleLogout = async () => {
+    try { await clearAuthSession(); window.location.href = '/login'; }
+    catch { alert('Unable to sign out securely. Check your connection and retry.'); }
   };
 
   return (
