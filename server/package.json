@@ -12,7 +12,9 @@
     "lint": "eslint src --ext .ts",
     "test": "jest",
     "test:webhooks": "tsx src/modules/webhooks/webhook.test.ts",
-    "demo:webhooks": "tsx src/scripts/webhook-demo.ts"
+    "demo:webhooks": "tsx src/scripts/webhook-demo.ts",
+    "test:courier": "tsx src/modules/courier/courier.test.ts",
+    "demo:courier": "tsx src/scripts/courier-demo.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.14.0",
