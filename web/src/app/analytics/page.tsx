@@ -355,7 +355,7 @@ export default function AnalyticsDashboardPage() {
                     <div className="text-[10px] font-bold text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">
                       {total}
                     </div>
-                    <div className="w-full max-w-[42px] flex flex-col rounded-t-xl overflow-hidden bg-slate-100">
+                    <div className="w-full max-w-[42px] h-48 flex flex-col justify-end rounded-t-xl overflow-hidden bg-slate-100">
                       <div
                         style={{ height: `${failedHeight}%` }}
                         className="w-full bg-rose-400 transition-all duration-500"
