@@ -1,48 +1,29 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { usePathname } from 'next/navigation';
-import { getStoredUser, clearAuthSession, User } from '../../lib/auth';
+import { useSyncExternalStore } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { getStoredUser, clearAuthSession, subscribeAuth, dashboardFor } from '../../lib/auth';
 
 export default function Navbar() {
   const pathname = usePathname();
-  const [user, setUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    setUser(getStoredUser());
-  }, []);
+  const router = useRouter();
+  const user = useSyncExternalStore(subscribeAuth, getStoredUser, () => null);
 
   // Remove the public marketing navbar completely when inside any dashboard route
   const isDashboardRoute = ['/booking', '/tasks', '/portal', '/webhooks', '/dispatch', '/analytics', '/inbox', '/config'].some(
     (prefix) => pathname === prefix || pathname.startsWith(prefix + '/')
   );
 
-  const isAuthRoute = pathname === '/login' || pathname === '/register';
+  const isAuthRoute = pathname === '/login' || pathname === '/register' || pathname === '/auth/callback' || pathname === '/approval';
 
   if (isDashboardRoute || isAuthRoute) {
     return null;
   }
 
-  const handleLogout = () => {
-    clearAuthSession();
-    setUser(null);
-    window.location.href = '/login';
-  };
-
-  const getDashboardLink = (role: string) => {
-    switch (role) {
-      case 'COURIER':
-        return '/tasks';
-      case 'MERCHANT':
-        return '/portal';
-      case 'DISPATCHER':
-      case 'ADMIN':
-        return '/dispatch';
-      case 'CUSTOMER':
-      default:
-        return '/booking';
-    }
+  const handleLogout = async () => {
+    try { await clearAuthSession(); router.replace('/login'); }
+    catch { alert('Unable to sign out securely. Check your connection and retry.'); }
   };
 
   return (
@@ -78,7 +59,7 @@ export default function Navbar() {
           {user ? (
             <div className="flex items-center gap-3">
               <Link
-                href={getDashboardLink(user.role)}
+                href={dashboardFor(user)}
                 className="px-4 py-1.5 text-xs sm:text-sm font-bold text-white bg-[#ff6600] hover:bg-[#ea580c] rounded-full shadow-sm transition-all"
               >
                 Dashboard &rarr;

@@ -1,6 +1,7 @@
 import { Router, Response } from 'express';
 import { authenticateToken, AuthRequest } from '../../middleware/auth.js';
 import { requireRoles } from '../../middleware/rbac.js';
+import { z } from 'zod';
 import {
   webhookService,
   validateEndpointUrl,
@@ -14,6 +15,12 @@ const router = Router();
 // Authenticate token and enforce RBAC: Only MERCHANT and ADMIN roles
 router.use(authenticateToken);
 router.use(requireRoles(['MERCHANT', 'ADMIN']));
+router.use((req: AuthRequest, res: Response, next) => {
+  if (req.user?.role === 'ADMIN' && !z.string().uuid().safeParse(req.query.merchantId).success) {
+    return res.status(400).json({ error: 'Admin requests require an explicit valid merchantId' });
+  }
+  next();
+});
 
 // Helper to resolve the authenticated merchant ID
 const getMerchantId = (req: AuthRequest): string => {
@@ -21,8 +28,7 @@ const getMerchantId = (req: AuthRequest): string => {
   if (req.query.merchantId && req.user?.role === 'ADMIN') {
     return req.query.merchantId as string;
   }
-  // Default to seeded merchant (Apex Electronics) for standard authenticated merchant logins
-  return '55555555-5555-5555-5555-555555555555';
+  throw new Error('Merchant identity is required');
 };
 
 // -----------------------------------------------------------------------------

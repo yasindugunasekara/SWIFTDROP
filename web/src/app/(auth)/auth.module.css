@@ -100,6 +100,10 @@
 .input::placeholder { color: #94a3b8; font-size: 14px; }
 .input:hover { border-color: #b8c3d1; }
 .input:focus { background: #fff; border-color: #ff6600; box-shadow: 0 0 0 3px rgb(255 102 0 / 10%); }
+.input:disabled { opacity: .65; cursor: wait; }
+.signupNotice { grid-column: 1 / -1; }
+.signupSuccess { padding: 12px 0 24px; text-align: center; }
+.signupSuccess .primary { margin-top: 28px; text-decoration: none; }
 .password { position: relative; }
 .password .input { padding-right: 64px; }
 .toggle { position: absolute; top: 2px; right: 4px; min-width: 48px; height: 44px; border: 0; border-radius: 8px; background: none; color: #64748b; font-size: 12px; font-weight: 600; cursor: pointer; }
