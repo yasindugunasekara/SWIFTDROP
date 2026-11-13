@@ -351,9 +351,9 @@ export default function CourierDashboardPage() {
     setSuccessBanner(`⚠️ Delivery marked as FAILED with reason: ${failureReason}`);
   };
 
-  const handleLogout = () => {
-    clearAuthSession();
-    window.location.href = '/login';
+  const handleLogout = async () => {
+    try { await clearAuthSession(); window.location.href = '/login'; }
+    catch { alert('Unable to sign out securely. Check your connection and retry.'); }
   };
 
   // Filter Jobs

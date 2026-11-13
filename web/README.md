@@ -1,5 +1,13 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Customer profile and logout
+
+After signing in as a customer, open `/booking` and select the avatar in the right panel. The profile dialog reads the signed-in customer's name, email and phone from the authenticated `/auth/me` endpoint. Missing phone numbers display as "Not provided". Escape, the close button or the backdrop closes the dialog.
+
+Logout is available in the sidebar and profile dialog. It signs out the current Supabase browser session, clears the displayed account and replaces the current page with `/login`. Failed logout requests show a retry message. Check that reloading `/booking` or returning with the browser Back button requires signing in again.
+
+Run `npm run test:auth` for the isolated authentication tests, including late profile responses, queued auth callbacks, repeated logout clicks and logout failure/retry.
+
 ## Getting Started
 
 First, run the development server:

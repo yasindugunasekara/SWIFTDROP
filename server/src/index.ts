@@ -5,6 +5,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
 import { WebSocketServer } from 'ws';
+import { errorHandler } from './middleware/error-handler.js';
 
 dotenv.config();
 
@@ -18,6 +19,7 @@ app.use(cors({
   origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
   credentials: true
 }));
+app.use('/api/v1/auth', express.json({ limit: '16kb' }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
@@ -55,6 +57,7 @@ app.use('/api/v1/webhooks', webhookRoutes);
 app.use('/api/v1/analytics', analyticsRoutes);
 app.use('/api/v1/support', supportRoutes);
 app.use('/api/v1/ai', aiRoutes);
+app.use(errorHandler);
 
 // WebSocket Server for Real-Time Tracking & Notifications
 export const wss = new WebSocketServer({ server });

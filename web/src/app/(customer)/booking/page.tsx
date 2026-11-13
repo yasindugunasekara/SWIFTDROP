@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
-import { clearAuthSession } from '../../../lib/auth';
+import { clearAuthSession, getStoredUser, subscribeAuth } from '../../../lib/auth';
+import CustomerProfileMenu from '../../../components/layout/CustomerProfileMenu';
 
 interface CartItem {
   id: string;
@@ -15,6 +16,10 @@ interface CartItem {
 }
 
 export default function CustomerDashboardPage() {
+  const user = useSyncExternalStore(subscribeAuth, getStoredUser, () => null);
+  const logoutPending = useRef(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+  const [logoutError, setLogoutError] = useState('');
   const [activeNav, setActiveNav] = useState('dashboard');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -55,9 +60,19 @@ export default function CustomerDashboardPage() {
     },
   ]);
 
-  const handleLogout = () => {
-    clearAuthSession();
-    window.location.href = '/login';
+  const handleLogout = async () => {
+    if (logoutPending.current) return;
+    logoutPending.current = true;
+    setLoggingOut(true);
+    setLogoutError('');
+    try {
+      await clearAuthSession();
+      window.location.replace('/login');
+    } catch {
+      setLogoutError('Unable to sign out securely. Check your connection and retry.');
+      logoutPending.current = false;
+      setLoggingOut(false);
+    }
   };
 
   const toggleFavorite = (id: string) => {
@@ -273,13 +288,15 @@ export default function CustomerDashboardPage() {
           {/* Logout Button */}
           <button
             onClick={handleLogout}
+            disabled={loggingOut}
             className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:text-white hover:bg-[#ff6600] hover:border-[#ff6600] transition-all cursor-pointer"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>
-            <span>Logout</span>
+            <span>{loggingOut ? 'Logging out...' : 'Logout'}</span>
           </button>
+          {logoutError && <p role="alert" className="mt-3 text-xs text-red-700">{logoutError}</p>}
         </div>
       </aside>
 
@@ -291,7 +308,7 @@ export default function CustomerDashboardPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-              Hello, Patricia
+              Hello, {user?.fullName.trim().split(/\s+/)[0] || 'Customer'}
             </h1>
             <p className="text-xs text-slate-400 mt-0.5">
               Ready to dispatch or track your island deliveries today?
@@ -628,9 +645,7 @@ export default function CustomerDashboardPage() {
             </div>
 
             {/* User Avatar */}
-            <div className="w-10 h-10 rounded-full bg-[#ff7a00] text-white flex items-center justify-center font-black text-sm shadow-sm ring-2 ring-orange-100">
-              P
-            </div>
+            <CustomerProfileMenu onLogout={handleLogout} loggingOut={loggingOut} logoutError={logoutError} />
           </div>
 
           {/* Your Balance Card matching GoMeal Layout */}
