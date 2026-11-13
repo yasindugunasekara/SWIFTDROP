@@ -18,7 +18,9 @@ export default function Navbar() {
     (prefix) => pathname === prefix || pathname.startsWith(prefix + '/')
   );
 
-  if (isDashboardRoute) {
+  const isAuthRoute = pathname === '/login' || pathname === '/register';
+
+  if (isDashboardRoute || isAuthRoute) {
     return null;
   }
 
