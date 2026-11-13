@@ -1,0 +1,167 @@
+.page {
+  min-height: 100svh;
+  padding: 48px 20px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  background: radial-gradient(ellipse at 12% 0%, #fff1e8 0%, transparent 45%),
+    radial-gradient(ellipse at 95% 100%, #edf2f8 0%, transparent 45%), #f8fafc;
+}
+
+.card {
+  width: 100%;
+  max-width: 440px;
+  padding: 32px;
+  border: 1px solid #e4e9f0;
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: 0 24px 72px -32px rgb(15 23 42 / 20%), 0 2px 8px rgb(15 23 42 / 3%);
+}
+
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-bottom: 16px; margin-bottom: 24px; border-bottom: 1px solid #edf0f4; }
+.header { margin-bottom: 28px; text-align: left; }
+.back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  margin: -6px 0 -6px -10px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color .15s, background-color .15s;
+}
+.back:hover { background: #fff7ed; color: #d95200; }
+.back:focus-visible { outline: 2px solid #ff6600; outline-offset: 3px; }
+.brand { color: #0f172a; font-size: 23px; font-weight: 900; letter-spacing: -1px; text-decoration: none; }
+.brand span { color: #ff6600; }
+.title { margin: 0 0 8px; color: #0f172a; font-size: 28px; font-weight: 750; letter-spacing: -.9px; line-height: 1.25; }
+.subtitle { margin: 0; color: #64748b; font-size: 14px; line-height: 1.6; }
+
+.roles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  margin-bottom: 24px;
+  border: 1px solid #edf0f4;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+.registerRoles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.role {
+  min-width: 0;
+  min-height: 44px;
+  padding: 8px 2px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: #64748b;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color .15s, background-color .15s, border-color .15s, box-shadow .15s;
+}
+.role:hover { color: #0f172a; }
+.role[aria-pressed="true"] { color: #c84a00; background: #fff7ed; border-color: #ffd9bd; box-shadow: 0 1px 3px rgb(15 23 42 / 4%); }
+.role:focus-visible, .primary:focus-visible, .google:focus-visible, .toggle:focus-visible, .footer a:focus-visible, .brand:focus-visible { outline: 2px solid #ff6600; outline-offset: 3px; }
+
+.form { display: flex; flex-direction: column; gap: 18px; }
+.field { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.inputControl { position: relative; }
+.inputControl .input { padding-left: 42px; }
+.inputIcon { display: flex; align-items: center; position: absolute; left: 14px; top: 15px; color: #94a3b8; pointer-events: none; transition: color .15s; }
+.inputControl:focus-within .inputIcon { color: #e65c00; }
+.label { color: #334155; font-size: 13px; font-weight: 600; line-height: 20px; }
+.labelRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.labelRow a { color: #64748b; font-size: 12px; text-decoration: none; }
+.labelRow a:hover { color: #d95200; }
+.input {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  height: 48px;
+  padding: 12px 14px;
+  border: 1px solid #dce2e9;
+  border-radius: 10px;
+  background: #fafbfc;
+  color: #0f172a;
+  font-size: 16px;
+  line-height: 22px;
+  outline: none;
+  transition: border-color .15s, box-shadow .15s, background-color .15s;
+}
+.input::placeholder { color: #94a3b8; font-size: 14px; }
+.input:hover { border-color: #b8c3d1; }
+.input:focus { background: #fff; border-color: #ff6600; box-shadow: 0 0 0 3px rgb(255 102 0 / 10%); }
+.password { position: relative; }
+.password .input { padding-right: 64px; }
+.toggle { position: absolute; top: 2px; right: 4px; min-width: 48px; height: 44px; border: 0; border-radius: 8px; background: none; color: #64748b; font-size: 12px; font-weight: 600; cursor: pointer; }
+.hint { color: #64748b; font-size: 12px; line-height: 18px; }
+.primary { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; min-height: 48px; margin-top: 4px; padding: 12px 16px; border: 1px solid #111827; border-radius: 10px; background: #111827; color: white; font-size: 14px; line-height: 22px; font-weight: 600; cursor: pointer; box-shadow: 0 3px 8px rgb(15 23 42 / 10%); transition: background-color .15s, box-shadow .15s; }
+.primary:hover { background: #253044; box-shadow: 0 4px 12px rgb(15 23 42 / 16%); }
+.primary:active { background: #0f172a; }
+.buttonArrow { font-size: 19px; line-height: 18px; font-weight: 400; }
+.primary:disabled { opacity: .6; cursor: wait; }
+.signupActions, .loginActions {
+  width: 100%;
+  max-width: 360px;
+  height: 48px;
+  margin-inline: auto;
+  align-self: center;
+  justify-self: center;
+}
+
+/* Each role uses the same space: changing roles never moves the form or card. */
+.social { width: 100%; max-width: 360px; height: 92px; margin: 18px auto 0; }
+.divider { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; color: #94a3b8; font-size: 12px; }
+.divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: #edf0f4; }
+.google { display: flex; width: 100%; height: 48px; align-items: center; justify-content: center; gap: 10px; padding: 10px; border: 1px solid #dce2e9; border-radius: 10px; background: white; color: #334155; font-size: 14px; font-weight: 500; cursor: pointer; transition: background-color .15s; }
+.google:hover { background: #f8fafc; }
+.roleNote { display: flex; height: 48px; align-items: center; justify-content: center; margin: 0; padding: 8px 12px; border: 1px solid #edf0f4; border-radius: 10px; background: #fafbfc; color: #64748b; font-size: 12px; line-height: 18px; text-align: center; }
+.footer { margin-top: 20px; padding-top: 18px; border-top: 1px solid #edf0f4; color: #64748b; font-size: 13px; line-height: 22px; text-align: center; }
+.footer a { color: #d95200; font-weight: 600; text-decoration: none; }
+.footer a:hover { text-decoration: underline; }
+.registerFooter { margin-top: 24px; }
+.alertSlot { min-height: 8px; margin-top: -12px; }
+.alert { margin: 0; padding: 10px 12px; border: 1px solid #fecdd3; border-radius: 8px; background: #fff1f2; color: #b91c1c; font-size: 12px; line-height: 18px; }
+
+/* Wider auth cards keep both forms compact on desktop and tablets. */
+.signupPage, .loginPage { padding-block: 24px; }
+@media (min-width: 640px) {
+  .signupCard, .loginCard { max-width: 740px; padding: 24px 32px; }
+  .signupHeader, .loginHeader { margin-bottom: 20px; }
+  .signupHeader .title, .loginHeader .title { margin-top: 0; }
+  .signupForm, .loginForm {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: 18px 24px;
+  }
+  .wideField, .signupActions, .loginActions, .loginForm .alertSlot { grid-column: 1 / -1; }
+  .signupCard .registerFooter { margin-top: 20px; }
+}
+
+@media (max-width: 480px) {
+  .page { padding: 24px 16px 32px; }
+  .card { padding: 26px 22px; border-radius: 20px; }
+  .header { margin-bottom: 24px; }
+  .title { font-size: 25px; }
+  .role { font-size: 11px; }
+}
+@media (max-width: 350px) {
+  .page { padding-inline: 12px; }
+  .card { padding-inline: 16px; }
+  .roles { gap: 2px; padding: 3px; }
+  .role { font-size: 10px; }
+  .footer { font-size: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .role, .input, .inputIcon, .primary, .google, .back { transition: none; }
+}
