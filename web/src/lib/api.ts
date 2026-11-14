@@ -1,5 +1,5 @@
 import { clearAuthSession, discardAuthSession, getAccessToken, getSessionRevision, isSessionCurrent, refreshAccessToken } from './auth';
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+const API_BASE_URL = '/api/v1';
 
 // Existing dashboard callers supply heterogeneous response shapes.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

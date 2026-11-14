@@ -106,10 +106,32 @@ SUPABASE_URL and SUPABASE_ANON_KEY in server/.env. DATABASE_URL is not required
 for signup or login; other members' direct PostgreSQL business queries still use it.
 Never put a service-role/secret key in the anon-key setting or frontend variables.
 
-Start the API from server/ with npm run dev and the web app from web/ with npm run dev.
+Install dependencies in both `server/` and `web/`, then run `npm run dev` from
+`web/`. Next.js serves both the pages and the existing API at `/api/v1/*` through
+`web/src/pages/api/[...path].ts`; a separate port-5000 process is optional for
+native mobile development. The web predev/prebuild scripts compile the shared
+backend first. Run them again after changing shared backend code.
 The web client obtains public Supabase configuration from /api/v1/auth/config,
-so a separate web environment file is optional. NEXT_PUBLIC_API_URL overrides
-its default http://localhost:5000/api/v1 API address.
+so a separate web environment file is optional. Browser API requests always use
+the same-origin `/api/v1` address, including login and signup. The old
+`NEXT_PUBLIC_API_URL` setting is no longer used by the web app.
+
+### One Vercel deployment for web and API
+
+- Set the Vercel project Root Directory to `web` and enable inclusion of source
+  files outside that root directory. `web/vercel.json` installs dependencies in
+  both packages; `npm run build` compiles the backend before building Next.js.
+- Set `SUPABASE_URL` and `SUPABASE_ANON_KEY` in the Vercel project's environment.
+  Local `server/.env` files are not uploaded or used on Vercel.
+- Set `APP_URL` to the public site origin, for example
+  `https://swiftdrop-livid.vercel.app`, and allow its `/auth/callback` URL in
+  Supabase Auth. Set `DATABASE_URL` for modules that use PostgreSQL directly.
+- Redeploy after these changes. Verify `/api/v1/health` and
+  `/api/v1/auth/config` on the deployed origin. Browser requests must stay on
+  that origin rather than `localhost:5000`.
+- This mounts the existing HTTP routes without starting an Express listener.
+  The standalone WebSocket server and RabbitMQ workers remain separate
+  long-running processes; this deployment change covers the web HTTP API.
 
 Credentials are stored privately in auth.users by Supabase. A database trigger
 creates a linked customer profile in the existing public.users table. New mapped

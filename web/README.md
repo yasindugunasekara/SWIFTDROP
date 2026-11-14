@@ -12,6 +12,12 @@ Run `npm run test:auth` for the isolated authentication tests, including late pr
 
 First, run the development server:
 
+Install dependencies in both `../server` and this directory first. The `predev`
+and `prebuild` scripts compile the shared backend. Next serves its HTTP routes
+at `/api/v1/*` in the same process as the frontend; a separate API process is
+not needed for the web app. Local API configuration is read from `server/.env`.
+Re-run `npm run dev` after changing shared backend code.
+
 ```bash
 npm run dev
 # or
@@ -38,6 +44,19 @@ To learn more about Next.js, take a look at the following resources:
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
 ## Deploy on Vercel
+
+Use `web` as the project Root Directory and enable source files outside the
+root directory. The included `vercel.json` installs both packages before the
+build. Configure `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and the public `APP_URL` in
+Vercel; configure `DATABASE_URL` for business modules. Requests use `/api/v1`
+on the site's origin, so `NEXT_PUBLIC_API_URL` is no longer used by the web app.
+Check `/api/v1/health` after deploying. See the repository README for callback
+configuration and the scope of the HTTP deployment.
+
+To test the built HTTP integration, run `npm run build`, start it with
+`npm start -- -p 3101`, then run `npm run test:api` in a second terminal. This
+checks same-origin API routing, JSON parsing and limits, and auth guards without
+creating accounts. `SWIFTDROP_TEST_ORIGIN` can select another test origin.
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 

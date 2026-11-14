@@ -7,7 +7,10 @@
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
-    "test:auth": "node --test tests/auth-session.test.mjs"
+    "test:auth": "node --test tests/auth-session.test.mjs",
+    "predev": "npm --prefix ../server run build",
+    "prebuild": "npm --prefix ../server run build",
+    "test:api": "node --test tests/same-origin-api.test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.119.0",
