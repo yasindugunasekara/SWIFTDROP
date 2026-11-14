@@ -1,5 +1,6 @@
 
 import express, { Express, Request, Response } from 'express';
+import path from 'node:path';
 import cors from 'cors';
 import helmet from 'helmet';
 import { config } from './config/env.js';
@@ -18,6 +19,7 @@ app.use(cors({
 app.use('/api/v1/auth', express.json({ limit: '16kb' }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // Health Check Endpoint
 app.get(['/health', '/api/v1/health'], (req: Request, res: Response) => {

@@ -10,6 +10,18 @@ if (!process.env.VERCEL) {
 }
 
 const nextConfig: NextConfig = {
+  // The shared merchant module imports a native addon from the sibling package.
+  // Resolve it at runtime from web/node_modules instead of bundling its installer.
+  webpack(config, { isServer }) {
+    if (isServer) {
+      const existing = config.externals;
+      config.externals = [
+        { bcrypt: 'commonjs bcrypt' },
+        ...(Array.isArray(existing) ? existing : existing ? [existing] : []),
+      ];
+    }
+    return config;
+  },
   outputFileTracingRoot: path.resolve(process.cwd(), ".."),
   outputFileTracingExcludes: {
     '/api/*': ['../server/.env*', '.env*'],

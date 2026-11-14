@@ -62,3 +62,13 @@ test('unknown API routes return JSON rather than the frontend HTML page', async 
   assert.equal(response.status, 404);
   assert.equal((await response.json()).error, 'API endpoint not found.');
 });
+
+test('merchant and courier modules remain mounted behind the same Next API', async () => {
+  const merchant = await request('/api/v1/merchant/login', post({}));
+  assert.equal(merchant.status, 400);
+  for (const path of ['/api/v1/merchant/profile', '/api/v1/courier/jobs']) {
+    const response = await request(path);
+    assert.equal(response.status, 401);
+    assert.equal((await response.json()).error, 'Access token required');
+  }
+});
