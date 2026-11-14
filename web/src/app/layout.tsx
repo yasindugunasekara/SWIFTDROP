@@ -1,3 +1,4 @@
+import LoadingState from '../components/ui/LoadingState';
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import Navbar from "../components/layout/Navbar";
@@ -21,7 +22,7 @@ export default function RootLayout({
           <Navbar />
         </Suspense>
         <main>
-          <Suspense fallback={<p className="p-12 text-center" role="status">Loading your workspace...</p>}>
+          <Suspense fallback={<LoadingState fullScreen />}>
             <AuthBoundary>{children}</AuthBoundary>
           </Suspense>
         </main>

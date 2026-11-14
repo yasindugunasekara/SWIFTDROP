@@ -1,4 +1,6 @@
 'use client';
+import LoadingState from '../../../../components/ui/LoadingState';
+
 
 import { useEffect, useState } from 'react';
 import {
@@ -294,7 +296,7 @@ export default function OrdersPanel({
             </button>
           </div>
         ) : loading && orders.length === 0 ? (
-          <div className="p-10 text-center text-sm text-slate-400">Loading orders…</div>
+          <LoadingState label="Loading orders..." />
         ) : orders.length === 0 ? (
           <div className="p-10 text-center">
             <p className="text-sm font-bold text-slate-900">{debounced || filter !== 'all' ? 'No matching orders' : 'No orders yet'}</p>

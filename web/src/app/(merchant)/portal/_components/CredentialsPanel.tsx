@@ -1,4 +1,6 @@
 'use client';
+import LoadingState from '../../../../components/ui/LoadingState';
+
 
 import { useEffect, useState } from 'react';
 import { API_DOCS_BASE, ApiKeyRecord, MerchantProfile, formatDate, merchantApi } from './merchant-api';
@@ -166,7 +168,7 @@ export default function CredentialsPanel({
       {/* Key list */}
       <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
         {loading && keys.length === 0 ? (
-          <p className="p-8 text-center text-sm text-slate-400">Loading keys…</p>
+          <LoadingState label="Loading keys..." />
         ) : keys.length === 0 ? (
           <p className="p-8 text-center text-sm text-slate-500">No API keys yet.</p>
         ) : (

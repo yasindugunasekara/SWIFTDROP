@@ -2,7 +2,6 @@
 
 import { useRef, useState } from 'react';
 import Link from 'next/link';
-import { type UserRole } from '../../../lib/auth';
 import styles from '../auth.module.css';
 import AuthBackButton from '../AuthBackButton';
 import AuthInputIcon from '../AuthInputIcon';
@@ -14,8 +13,7 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [role, setRole] = useState<UserRole>('CUSTOMER');
-  const [companyName, setCompanyName] = useState('');
+  const [role, setRole] = useState<'CUSTOMER' | 'COURIER' | 'MERCHANT'>('CUSTOMER');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -26,7 +24,7 @@ export default function RegisterPage() {
     e.preventDefault();
     if (submitting.current) return;
     setError('');
-    if (role !== 'CUSTOMER') { setError('This form currently supports customer signup. Contact SwiftDrop for courier or business access.'); return; }
+    if (role !== 'CUSTOMER') return;
     if (fullName.trim().length < 2 || /[\u0000-\u001f\u007f]/.test(fullName)) { setError('Enter a valid full name with at least 2 characters.'); return; }
     if (new TextEncoder().encode(password).length > 72) { setError('Password must be at most 72 UTF-8 bytes.'); return; }
     if (password !== confirmPassword) { setError('Passwords do not match.'); return; }
@@ -76,20 +74,22 @@ export default function RegisterPage() {
         </div>
         <header className={`${styles.header} ${styles.signupHeader}`}>
           <h1 id="register-title" className={styles.title}>Create an account</h1>
-          <p className={styles.subtitle}>A simpler way to send and track deliveries.</p>
         </header>
 
-        <div className={`${styles.roles} ${styles.registerRoles}`} role="group" aria-label="Choose account type">
-          {(['CUSTOMER', 'COURIER', 'MERCHANT'] as UserRole[]).map((accountRole) => (
-            <button key={accountRole} type="button" className={styles.role} aria-pressed={role === accountRole} disabled={busy}
+        <div className={styles.signupRoles} role="group" aria-label="Account type">
+          {(['CUSTOMER', 'COURIER', 'MERCHANT'] as const).map(accountRole => (
+            <button key={accountRole} type="button" className={styles.signupRole}
+              aria-pressed={role === accountRole} disabled={busy}
               onClick={() => { setRole(accountRole); setError(''); }}>
-              {accountRole === 'MERCHANT' ? 'Business' : accountRole.charAt(0) + accountRole.slice(1).toLowerCase()}
+              {accountRole === 'MERCHANT' ? 'Business' : accountRole === 'COURIER' ? 'Courier' : 'Customer'}
             </button>
           ))}
         </div>
-
+        {role !== 'CUSTOMER' && <p className={styles.signupRoleNotice} role="status">
+          {role === 'MERCHANT' ? <>For business registration, <Link href="/portal">open the merchant portal</Link>.</>
+            : 'Contact SwiftDrop to create a courier account.'}
+        </p>}
         <form onSubmit={handleRegister} className={`${styles.form} ${styles.signupForm}`} aria-label="Create account" aria-busy={busy}>
-          {role !== 'CUSTOMER' && <p className={`${styles.hint} ${styles.signupNotice}`}>Customer signup is available here. Contact SwiftDrop for courier or business account access.</p>}
           {error && <p className={`${styles.alert} ${styles.signupNotice}`} role="alert">{error}</p>}
           <div className={styles.field}>
             <label htmlFor="register-name" className={styles.label}>Full name</label>
@@ -120,7 +120,7 @@ export default function RegisterPage() {
               <button type="button" className={styles.toggle} disabled={busy} aria-label={showPassword ? 'Hide passwords' : 'Show passwords'}
                 aria-pressed={showPassword} onClick={() => setShowPassword(!showPassword)}>{showPassword ? 'Hide' : 'Show'}</button>
             </div>
-            <p id="password-hint" className={styles.hint}>At least 8 characters; maximum 72 UTF-8 bytes.</p>
+            <p id="password-hint" className={styles.hint}>At least 8 characters.</p>
           </div>
           <div className={styles.field}>
             <label htmlFor="register-confirm-password" className={styles.label}>Confirm password</label>
@@ -131,15 +131,6 @@ export default function RegisterPage() {
                 placeholder="Repeat your password" className={styles.input} />
             </div>
           </div>
-          {role === 'MERCHANT' && <div className={styles.field}>
-            <label htmlFor="register-company" className={styles.label}>Company name</label>
-            <div className={styles.inputControl}>
-              <span className={styles.inputIcon}><AuthInputIcon kind="company" /></span>
-            <input id="register-company" name="companyName" type="text" autoComplete="organization" required
-              value={companyName} onChange={(e) => setCompanyName(e.target.value)}
-              placeholder="Your registered business name" className={styles.input} />
-            </div>
-          </div>}
           <button type="submit" disabled={busy || role !== 'CUSTOMER'} className={`${styles.primary} ${styles.signupActions}`}>{busy ? 'Creating account...' : 'Create account'}{!busy && <span className={styles.buttonArrow} aria-hidden="true">&#8594;</span>}</button>
         </form>
         <p className={`${styles.footer} ${styles.registerFooter}`}>Already have an account? <Link href="/login">Sign in</Link></p>

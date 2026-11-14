@@ -1,4 +1,6 @@
 'use client';
+import LoadingState from '../ui/LoadingState';
+
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -29,10 +31,10 @@ export default function AuthBoundary({ children }: { children: React.ReactNode }
     else if (user.role === 'MERCHANT' && user.approvalStatus !== 'APPROVED' && pathname !== '/approval') router.replace('/approval');
   }, [allowed, checkedPath, pathname, error, router, user]);
   if (!allowed) return <>{children}</>;
-  if (checkedPath !== pathname) return <p className="p-12 text-center" role="status">Checking your session...</p>;
+  if (checkedPath !== pathname) return <LoadingState fullScreen label="Getting your workspace ready..." />;
   if (error) return <div className="p-12 text-center" role="alert"><p>{error}</p><button className="mt-4 underline" onClick={() => location.reload()}>Retry</button><Link className="block mt-4 underline" href="/login">Back to sign in</Link></div>;
-  if (!user) return <p className="p-12 text-center" role="status">Please sign in...</p>;
+  if (!user) return <LoadingState fullScreen label="Opening sign in..." />;
   if (!allowed.includes(user.role)) return <div className="p-12 text-center"><h1 className="text-xl font-bold">Access denied</h1><p>This workspace is unavailable for your account.</p><Link className="underline" href={dashboardFor(user)}>Go to your workspace</Link></div>;
-  if (user.role === 'MERCHANT' && user.approvalStatus !== 'APPROVED' && pathname !== '/approval') return null;
+  if (user.role === 'MERCHANT' && user.approvalStatus !== 'APPROVED' && pathname !== '/approval') return <LoadingState fullScreen />;
   return <>{children}</>;
 }

@@ -1,4 +1,5 @@
 'use client';
+import LoadingState from '../../../../components/ui/LoadingState';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -17,6 +18,7 @@ export default function AuthCallbackPage() {
     })().catch(failure => { if (active) setError(failure instanceof Error ? failure.message : 'Unable to complete sign-in.'); });
     return () => { active = false; };
   }, [router]);
+  if (!error) return <LoadingState fullScreen label="Completing sign-in..." />;
   return <div className={styles.page}><section className={styles.card}>
     <h1 className={styles.title}>{error ? 'Sign-in could not finish' : 'Completing sign-in'}</h1>
     <p className={styles.subtitle} role={error ? 'alert' : 'status'}>{error || 'Please wait while we verify your account...'}</p>
