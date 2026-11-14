@@ -185,6 +185,17 @@ export default function AnalyticsDashboardPage() {
               <span>Operational KPIs</span>
             </div>
 
+            {/* EXCEPTIONS DESK */}
+            <Link
+              href="/exceptions"
+              className="w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl text-xs sm:text-sm font-bold text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-all cursor-pointer"
+            >
+              <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <span>Exceptions Desk</span>
+            </Link>
+
             <button
               onClick={() => alert('RabbitMQ Broker: 42 events/sec, 0 DLQ')}
               className="w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl text-xs sm:text-sm font-bold text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-all cursor-pointer"
