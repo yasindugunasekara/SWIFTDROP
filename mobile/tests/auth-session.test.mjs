@@ -87,7 +87,7 @@ function authHarness({ profile = customer, refresh = async () => ({ data: { sess
   };
   const exports = {};
   vm.runInNewContext(compile('../src/services/auth.ts'), {
-    exports, process: { env: {} }, fetch, setTimeout: () => undefined,
+    exports, process: { env: {} }, fetch, AbortSignal, setTimeout: () => undefined,
     require: name => {
       if (name === 'react-native') return { Platform: { OS: 'android' } };
       if (name === '@supabase/supabase-js') return { createClient: () => ({ auth }), processLock: () => undefined };
@@ -158,4 +158,22 @@ test('mobile profile restoration retries a 401 once with a rotated token', async
   h.seed({ access_token: 'test-token' });
   assert.equal(await h.api.loadMobileProfile(), customer);
   assert.equal(requests, 2);
+});
+
+
+test('Google customer session is persisted only after the backend verifies its role', async () => {
+  const h = authHarness();
+  assert.equal(await h.api.acceptMobileGoogleSession('google-access', 'google-refresh'), customer);
+  const me = h.requests.find(value => value.url.endsWith('/auth/me'));
+  assert.equal(me.options.headers.Authorization, 'Bearer google-access');
+  assert.equal(h.saved.access_token, 'google-access');
+});
+
+test('Google sign-in cannot promote a courier or merchant into the customer dashboard', async () => {
+  for (const role of ['COURIER', 'MERCHANT']) {
+    const h = authHarness({ profile: { ...customer, role } });
+    await assert.rejects(h.api.acceptMobileGoogleSession('google-access', 'google-refresh'), /Customer accounts only/);
+    assert.equal(h.saved, null);
+    assert.equal(h.api.getMobileUser(), null);
+  }
 });

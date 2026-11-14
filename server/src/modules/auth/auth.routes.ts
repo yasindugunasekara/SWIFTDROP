@@ -18,6 +18,15 @@ export const customerSignupSchema = z.object({ fullName: name, email,
     path: ['confirmPassword'], message: 'Passwords do not match.' });
 });
 
+// Requests are onboarding data, never authorization claims. The existing Auth
+// trigger still creates a CUSTOMER; staff must review and provision access.
+const applicationSchema = z.discriminatedUnion('role', [
+  z.object({ role: z.literal('COURIER'), phone: z.string().trim().min(7).max(30), address: z.string().trim().min(3).max(300),
+    vehicleType: z.enum(['Motorcycle', 'Car', 'Van', 'Bicycle']), vehicleNumber: z.string().trim().max(30).optional() }).strict(),
+  z.object({ role: z.literal('MERCHANT'), phone: z.string().trim().min(7).max(30), address: z.string().trim().min(5).max(300),
+    companyName: z.string().trim().min(2).max(255), registrationNumber: z.string().trim().min(2).max(100) }).strict(),
+]);
+
 export function createAuthRouter(gateway: AuthGateway = authGateway) {
   const router = Router();
   const authenticate = createAuthenticationMiddleware(gateway);
@@ -49,6 +58,16 @@ export function createAuthRouter(gateway: AuthGateway = authGateway) {
     const result = await gateway.register(input);
     res.status(result.requiresEmailConfirmation ? 202 : 201).json({ ...result,
       message: result.requiresEmailConfirmation ? 'Check your email to confirm your account. If it already exists, sign in instead.' : 'Your customer account has been created. You can now sign in.' });
+  }));
+  router.post('/register-application', signupLimit, run(async (req, res) => {
+    const payload = z.object({ fullName: z.unknown(), email: z.unknown(), password: z.unknown(), confirmPassword: z.unknown(), application: z.unknown() }).strict().parse(req.body);
+    const credentials = customerSignupSchema.parse({ fullName: payload.fullName, email: payload.email, password: payload.password, confirmPassword: payload.confirmPassword });
+    const { role, ...details } = applicationSchema.parse(payload.application);
+    if (role === 'COURIER' && ('vehicleType' in details ? details.vehicleType : undefined) !== 'Bicycle' && !('vehicleNumber' in details && details.vehicleNumber)) {
+      throw new AuthServiceError(400, 'VALIDATION_ERROR', 'Enter your vehicle registration number.');
+    }
+    const result = await gateway.register({ ...credentials, application: { ...details, requestedRole: role } });
+    res.status(202).json({ ...result, requiresApproval: true, message: 'Confirm your email. SwiftDrop must review your application before courier or business access is enabled.' });
   }));
   router.post('/login', loginLimit, run(async (req, res) => {
     const input = z.object({ email, password: z.string().min(1).max(256) }).strict().parse(req.body);

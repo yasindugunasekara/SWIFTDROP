@@ -23,6 +23,7 @@
           "locationWhenInUsePermission": "Allow SwiftDrop to access your location to track live deliveries."
         }
       ]
-    ]
+    ],
+    "scheme": "swiftdrop"
   }
 }

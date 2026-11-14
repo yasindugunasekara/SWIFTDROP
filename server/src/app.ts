@@ -12,8 +12,12 @@ if (process.env.VERCEL) app.set('trust proxy', 1);
 
 // Security & Parsing Middleware
 app.use(helmet());
+const allowedOrigins = config.corsOrigin.split(',').map(origin => origin.trim()).filter(Boolean);
+if (config.nodeEnv === 'development' && !process.env.VERCEL) {
+  allowedOrigins.push('http://localhost:8081', 'http://127.0.0.1:8081');
+}
 app.use(cors({
-  origin: config.corsOrigin,
+  origin: allowedOrigins,
   credentials: true
 }));
 app.use('/api/v1/auth', express.json({ limit: '16kb' }));

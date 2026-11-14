@@ -199,3 +199,33 @@ test('session check rejects missing, expired, revoked and another user session w
   try { await assert.rejects(database.query('SELECT public.is_current_session_active()')); }
   finally { await database.exec('RESET ROLE'); }
 });
+
+
+test('courier and business signup requests preserve details without granting an operational role', async () => {
+  for (const application of [
+    { role: 'COURIER', phone: '0771234567', address: 'Colombo', vehicleType: 'Motorcycle', vehicleNumber: 'ABC-1234' },
+    { role: 'MERCHANT', phone: '0771234567', address: 'Colombo business address', companyName: 'Test Business', registrationNumber: 'BR-1234' },
+  ]) {
+    let saved: Parameters<AuthGateway['register']>[0] | undefined;
+    const request = await app({ async register(value) { saved = value; return { requiresEmailConfirmation: true }; } });
+    const { role: ignored, ...credentials } = input;
+    const result = await request('/api/v1/auth/register-application', { ...credentials, application });
+    assert.equal(result.status, 202);
+    assert.equal(result.body.requiresApproval, true);
+    assert.equal(saved?.application?.requestedRole, application.role);
+    assert.equal(saved?.application?.phone, application.phone);
+    assert.equal(result.body.accessToken, undefined);
+    assert.equal((saved as unknown as Record<string, unknown>).role, undefined);
+  }
+});
+
+test('applications reject missing role details and privileged role requests before signup', async () => {
+  let called = false;
+  const request = await app({ async register() { called = true; return { requiresEmailConfirmation: true }; } });
+  const { role: ignored, ...credentials } = input;
+  for (const application of [
+    { role: 'ADMIN' }, { role: 'COURIER', phone: '0771234567', address: 'Colombo', vehicleType: 'Motorcycle' },
+    { role: 'MERCHANT', phone: '0771234567', address: 'Colombo' },
+  ]) assert.equal((await request('/api/v1/auth/register-application', { ...credentials, application })).status, 400);
+  assert.equal(called, false);
+});

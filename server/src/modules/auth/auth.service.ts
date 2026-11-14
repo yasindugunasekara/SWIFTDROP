@@ -15,7 +15,7 @@ export interface AuthSession {
   user: AuthProfile; accessToken: string; refreshToken: string; expiresAt: number | undefined;
 }
 export interface AuthGateway {
-  register(input: { email: string; password: string; fullName: string }): Promise<{ requiresEmailConfirmation: boolean }>;
+  register(input: { email: string; password: string; fullName: string; application?: { requestedRole: 'COURIER' | 'MERCHANT'; phone: string; address: string; vehicleType?: string; vehicleNumber?: string; companyName?: string; registrationNumber?: string } }): Promise<{ requiresEmailConfirmation: boolean }>;
   login(email: string, password: string): Promise<AuthSession>;
   refresh(refreshToken: string): Promise<AuthSession>;
   authenticate(accessToken: string): Promise<AuthProfile>;
@@ -55,7 +55,7 @@ async function sessionResponse(session: Session | null): Promise<AuthSession> {
 export const authGateway: AuthGateway = {
   async register(input) {
     const { data, error } = await createSupabaseClient().auth.signUp({ email: input.email, password: input.password,
-      options: { data: { full_name: input.fullName }, emailRedirectTo: `${config.appUrl}/auth/callback` } });
+      options: { data: { full_name: input.fullName, ...(input.application ? { registration_application: input.application } : {}) }, emailRedirectTo: `${config.appUrl}/auth/callback` } });
     if (error) {
       if (error.status === 429) throw new AuthServiceError(429, 'RATE_LIMITED', 'Too many signup emails. Please wait and try again.');
       if (error.code === 'user_already_exists') throw new AuthServiceError(409, 'EMAIL_EXISTS', 'This account already exists. Please sign in.');

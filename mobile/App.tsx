@@ -1,3 +1,5 @@
+import AppLoading, { LoadingOverlay } from './src/components/AppLoading';
+import { completeMobileGoogleLogin, isMobileGoogleCallback, RegistrationRequired } from './src/services/google-auth';
 import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import {
   View,
@@ -12,6 +14,7 @@ import {
 } from 'react-native';
 import SplashScreen from './src/screens/SplashScreen';
 import LoginScreen from './src/screens/LoginScreen';
+import RegisterScreen from './src/screens/RegisterScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import TrackScreen from './src/screens/TrackScreen';
 import OrdersScreen from './src/screens/OrdersScreen';
@@ -25,12 +28,14 @@ import TaskListScreen from './src/screens/courier/TaskListScreen';
 const { width } = Dimensions.get('window');
 
 export default function App() {
-  const [currentScreen, setCurrentScreen] = useState<'splash' | 'login' | 'main'>('splash');
+  const [currentScreen, setCurrentScreen] = useState<'splash' | 'login' | 'register' | 'main'>('splash');
   const [activeTab, setActiveTab] = useState<TabKey>('home');
   const user = useSyncExternalStore(subscribeMobileAuth, getMobileUser, () => null);
   const userRole = user?.role === 'COURIER' ? 'courier' : 'customer';
   const [restoring, setRestoring] = useState(true);
   const [sessionError, setSessionError] = useState('');
+  const [registrationNotice, setRegistrationNotice] = useState('');
+  const [loginNotice, setLoginNotice] = useState('');
   const [loggingOut, setLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState('');
   const logoutPending = useRef(false);
@@ -44,7 +49,27 @@ export default function App() {
 
   useEffect(() => {
     let mounted = true;
-    initializeMobileAuth().catch(() => { if (mounted) setSessionError('Unable to verify your session. Check your connection and retry.'); })
+    const restore = async () => {
+      if (isMobileGoogleCallback()) {
+        try {
+          await initializeMobileAuth();
+          const profile = await completeMobileGoogleLogin(window.location.href);
+          window.history.replaceState(null, '', '/');
+          if (mounted) handleLoginSuccess(profile);
+        } catch (failure) {
+          window.history.replaceState(null, '', '/');
+          if (!mounted) return;
+          if (failure instanceof RegistrationRequired) {
+            setRegistrationNotice(failure.message); setCurrentScreen('register');
+          } else {
+            setLoginNotice(failure instanceof Error ? failure.message : 'Google sign-in failed.'); setCurrentScreen('login');
+          }
+        }
+        return;
+      }
+      await initializeMobileAuth();
+    };
+    restore().catch(() => { if (mounted) setSessionError('Unable to verify your session. Check your connection and retry.'); })
       .finally(() => { if (mounted) setRestoring(false); });
     const subscription = AppState.addEventListener('change', state => {
       void setMobileAuthActive(state === 'active').then(() => { if (mounted) setSessionError(''); })
@@ -121,7 +146,8 @@ export default function App() {
     }
   };
 
-  if (restoring || sessionError) return <SafeAreaView style={styles.outerContainer}>
+  if (restoring) return <AppLoading label="Getting your workspace ready..." />;
+  if (sessionError) return <SafeAreaView style={styles.outerContainer}>
     <Text accessibilityRole={sessionError ? 'alert' : 'text'}>{sessionError || 'Restoring your session...'}</Text>
     {sessionError ? <TouchableOpacity onPress={() => {
       setSessionError(''); setRestoring(true);
@@ -133,11 +159,12 @@ export default function App() {
     <SafeAreaView style={styles.outerContainer}>
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
 
+      <LoadingOverlay visible={loggingOut} label="Signing out..." />
       {/* Responsive Device Wrapper for Web / Desktop */}
       <View style={styles.phoneFrame}>
         {currentScreen === 'splash' && (
           <SplashScreen
-            onGetStarted={() => setCurrentScreen('login')}
+            onGetStarted={() => { setRegistrationNotice(''); setCurrentScreen('register'); }}
             onLogin={() => setCurrentScreen('login')}
           />
         )}
@@ -146,8 +173,12 @@ export default function App() {
           <LoginScreen
             onLoginSuccess={handleLoginSuccess}
             onBack={() => setCurrentScreen('splash')}
+            notice={loginNotice}
+            onRegister={(notice) => { setRegistrationNotice(notice || ''); setCurrentScreen('register'); }}
           />
         )}
+
+        {currentScreen === 'register' && <RegisterScreen notice={registrationNotice} onBack={() => { setLoginNotice(''); setCurrentScreen('login'); }} />}
 
         {currentScreen === 'main' && user && (
           <View style={styles.appShell}>
