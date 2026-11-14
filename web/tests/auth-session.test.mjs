@@ -42,7 +42,7 @@ test('profile request uses the authenticated token and stores the returned custo
     return { ok: true, json: async () => ({ user: customer }) };
   } });
   await api.loadAuthenticatedUser();
-  assert.equal(request.url.endsWith('/auth/me'), true);
+  assert.equal(request.url, '/api/v1/auth/me');
   assert.equal(request.options.headers.Authorization, 'Bearer test-token');
   assert.equal(request.options.cache, 'no-store');
   assert.equal(api.getStoredUser(), customer);

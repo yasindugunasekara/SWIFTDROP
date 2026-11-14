@@ -7,7 +7,7 @@ export function getSupabaseClient(): Promise<SupabaseClient> {
     let url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     let anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     if (!url || !anonKey) {
-      const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+      const base = '/api/v1';
       const response = await fetch(`${base}/auth/config`, { cache: 'no-store', signal: AbortSignal.timeout(10000) });
       if (!response.ok) throw new Error('Sign-in service is unavailable. Please retry.');
       const data = await response.json(); url = data.url; anonKey = data.anonKey;

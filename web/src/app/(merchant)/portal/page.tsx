@@ -96,7 +96,7 @@ export default function MerchantPortalPage() {
   }, []);
 
   const onSession = (s: SessionResponse) => {
-    saveAuthSession(s.user, s.accessToken);
+    saveAuthSession(s.user);
     setMerchant(s.merchant);
     setNotice('');
     setSection(s.merchant.status === 'APPROVED' ? 'orders' : 'onboarding');

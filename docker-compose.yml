@@ -117,21 +117,27 @@ services:
   # ----------------------------------------------------------------------------
   web:
     build:
-      context: ./web
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: web/Dockerfile
     container_name: swiftdrop-web
     restart: unless-stopped
     depends_on:
       - server
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:5000/api/v1
+      SUPABASE_URL: ${SUPABASE_URL:-}
+      SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY:-}
+      DATABASE_URL: postgresql://${DATABASE_USER:-postgres}:${DATABASE_PASSWORD:-postgres_password_example}@postgres:5432/${DATABASE_NAME:-swiftdrop_db}?schema=public
+      APP_URL: http://localhost:3000
       NEXT_PUBLIC_WS_URL: ws://localhost:5000
     ports:
       - "3000:3000"
     volumes:
-      - ./web:/app
-      - /app/node_modules
-      - /app/.next
+      - ./web:/app/web
+      - ./server:/app/server
+      - /app/server/node_modules
+      - /app/server/dist
+      - /app/web/node_modules
+      - /app/web/.next
 
 volumes:
   postgres_data:

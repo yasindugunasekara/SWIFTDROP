@@ -12,7 +12,7 @@ const access: Record<string, UserRole[]> = {
 };
 export default function AuthBoundary({ children }: { children: React.ReactNode }) {
   const user = useSyncExternalStore(subscribeAuth, getStoredUser, () => null);
-  const pathname = usePathname();
+  const pathname = usePathname() ?? '';
   const router = useRouter();
   const [checkedPath, setCheckedPath] = useState('');
   const [error, setError] = useState('');

@@ -12,7 +12,7 @@ let sessionRevision = 0;
 let signOutTask: Promise<void> | null = null;
 let refreshTask: Promise<string | null> | null = null;
 const listeners = new Set<() => void>();
-const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+const base = '/api/v1';
 export const getStoredUser = () => currentUser;
 export const subscribeAuth = (listener: () => void) => { listeners.add(listener); return () => { listeners.delete(listener); }; };
 export function saveAuthSession(user: User) { currentUser = user; listeners.forEach(listener => listener()); }

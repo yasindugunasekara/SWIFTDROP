@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { getStoredUser, clearAuthSession, subscribeAuth, dashboardFor } from '../../lib/auth';
 
 export default function Navbar() {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? '';
   const router = useRouter();
   const user = useSyncExternalStore(subscribeAuth, getStoredUser, () => null);
 

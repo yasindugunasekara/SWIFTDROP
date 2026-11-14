@@ -1,6 +1,6 @@
 // Member 6 — typed client for the merchant API (/api/v1/merchant/*).
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+const API_BASE_URL = '/api/v1';
 const TOKEN_KEY = 'swiftdrop_access_token';
 
 export type ApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
