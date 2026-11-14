@@ -16,6 +16,7 @@ services:
       - "${DATABASE_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./server/src/database/migrations:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER:-postgres} -d ${DATABASE_NAME:-swiftdrop_db}"]
       interval: 5s
@@ -98,7 +99,7 @@ services:
     build:
       context: ./server
       dockerfile: Dockerfile
-    command: ["npm", "run", "worker"]
+    command: ["node", "dist/workers/index.js"]
     container_name: swiftdrop-worker
     restart: unless-stopped
     depends_on:

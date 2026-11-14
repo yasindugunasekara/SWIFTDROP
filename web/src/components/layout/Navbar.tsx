@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -11,7 +12,7 @@ export default function Navbar() {
   const user = useSyncExternalStore(subscribeAuth, getStoredUser, () => null);
 
   // Remove the public marketing navbar completely when inside any dashboard route
-  const isDashboardRoute = ['/booking', '/tasks', '/portal', '/webhooks', '/dispatch', '/analytics', '/inbox', '/config'].some(
+  const isDashboardRoute = ['/booking', '/tasks', '/portal', '/webhooks', '/dispatch', '/analytics', '/inbox', '/config', '/exceptions'].some(
     (prefix) => pathname === prefix || pathname.startsWith(prefix + '/')
   );
 

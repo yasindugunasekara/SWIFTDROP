@@ -8,6 +8,7 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "worker": "tsx watch src/workers/index.ts",
+    "worker:prod": "node dist/workers/index.js",
     "migrate": "tsx src/database/migrate.ts",
     "lint": "eslint src --ext .ts",
     "test": "jest",
@@ -17,6 +18,8 @@
     "demo:webhooks": "tsx src/scripts/webhook-demo.ts",
     "test:courier": "tsx src/modules/courier/courier.test.ts",
     "demo:courier": "tsx src/scripts/courier-demo.ts",
+    "test:support": "tsx src/modules/support/support.test.ts",
+    "demo:support": "tsx src/scripts/support-demo.ts",
     "test:merchant": "tsx src/modules/merchant/merchant.test.ts"
   },
   "dependencies": {
