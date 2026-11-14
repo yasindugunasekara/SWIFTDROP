@@ -28,15 +28,7 @@ export function getMobileAuthClient(): Promise<SupabaseClient> {
     if (!response.ok) throw new Error('Sign-in service is unavailable. Please retry.');
     const { url, anonKey } = await response.json();
     if (!url || !anonKey || anonKey.startsWith('sb_secret_')) throw new Error('Public authentication configuration is invalid.');
-    const storage = Platform.OS === 'web' ? {
-      getItem: (key: string) => sessionStorage.getItem(key),
-      setItem: (key: string, value: string) => sessionStorage.setItem(key, value),
-      removeItem: (key: string) => sessionStorage.removeItem(key),
-    } : createSecureSessionStorage({
-      getItemAsync: key => SecureStore.getItemAsync(key),
-      setItemAsync: (key, value) => SecureStore.setItemAsync(key, value, { keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY }),
-      deleteItemAsync: key => SecureStore.deleteItemAsync(key),
-    });
+    const storage = createMobileAuthStorage();
     return createClient(url, anonKey, { auth: { storage, storageKey: 'swiftdrop_mobile_auth',
       persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, lock: processLock } });
   })().catch(error => { clientTask = null; throw error; });
@@ -156,4 +148,35 @@ export async function setMobileAuthActive(active: boolean) {
   const client = await getMobileAuthClient();
   if (active) { await client.auth.startAutoRefresh(); await loadMobileProfile(); }
   else await client.auth.stopAutoRefresh();
+}
+
+export function createMobileAuthStorage() {
+  return Platform.OS === 'web' ? {
+      getItem: (key: string) => sessionStorage.getItem(key),
+      setItem: (key: string, value: string) => sessionStorage.setItem(key, value),
+      removeItem: (key: string) => sessionStorage.removeItem(key),
+    } : createSecureSessionStorage({
+      getItemAsync: key => SecureStore.getItemAsync(key),
+      setItemAsync: (key, value) => SecureStore.setItemAsync(key, value, { keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY }),
+      deleteItemAsync: key => SecureStore.deleteItemAsync(key),
+    });
+}
+
+// A Google session is promoted into the app only after the backend verifies a
+// current customer profile. Other roles never enter the mobile customer shell.
+export async function acceptMobileGoogleSession(accessToken: string, refreshToken: string): Promise<MobileUser> {
+  if (signingOut) await signingOut;
+  revision++;
+  const version = revision;
+  const response = await fetch(API_URL + '/auth/me', { headers: { Authorization: 'Bearer ' + accessToken }, signal: typeof AbortSignal.timeout === 'function' ? AbortSignal.timeout(15000) : undefined });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || 'Unable to verify your Google account.');
+  if (data.user?.role !== 'CUSTOMER') throw new Error('Google sign-in is available for Customer accounts only.');
+  if (!isMobileSessionCurrent(version)) throw new Error('Your session changed. Please sign in again.');
+  const client = await getMobileAuthClient();
+  const result = await client.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+  if (result.error) throw new Error('Unable to save your session. Please retry.');
+  if (!isMobileSessionCurrent(version)) throw new Error('Your session changed. Please sign in again.');
+  saveUser(data.user);
+  return data.user;
 }
