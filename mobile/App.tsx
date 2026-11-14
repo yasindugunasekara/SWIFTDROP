@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import AppLoading, { LoadingOverlay } from './src/components/AppLoading';
+import { completeMobileGoogleLogin, isMobileGoogleCallback, RegistrationRequired } from './src/services/google-auth';
+import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import {
   View,
   SafeAreaView,
@@ -6,9 +8,13 @@ import {
   StatusBar,
   Platform,
   Dimensions,
+  AppState,
+  Text,
+  TouchableOpacity,
 } from 'react-native';
 import SplashScreen from './src/screens/SplashScreen';
 import LoginScreen from './src/screens/LoginScreen';
+import RegisterScreen from './src/screens/RegisterScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import TrackScreen from './src/screens/TrackScreen';
 import OrdersScreen from './src/screens/OrdersScreen';
@@ -16,23 +22,72 @@ import AccountScreen from './src/screens/AccountScreen';
 import BookDeliveryModal from './src/screens/BookDeliveryModal';
 import BottomNavBar, { TabKey } from './src/components/BottomNavBar';
 import { Colors } from './src/theme/colors';
+import { getMobileUser, initializeMobileAuth, logoutMobile, setMobileAuthActive, subscribeMobileAuth, type MobileUser } from './src/services/auth';
+import TaskListScreen from './src/screens/courier/TaskListScreen';
 
 const { width } = Dimensions.get('window');
 
 export default function App() {
-  const [currentScreen, setCurrentScreen] = useState<'splash' | 'login' | 'main'>('splash');
+  const [currentScreen, setCurrentScreen] = useState<'splash' | 'login' | 'register' | 'main'>('splash');
   const [activeTab, setActiveTab] = useState<TabKey>('home');
-  const [userRole, setUserRole] = useState<'customer' | 'courier'>('customer');
-  const [userName, setUserName] = useState('Alex Silva');
+  const user = useSyncExternalStore(subscribeMobileAuth, getMobileUser, () => null);
+  const userRole = user?.role === 'COURIER' ? 'courier' : 'customer';
+  const [restoring, setRestoring] = useState(true);
+  const [sessionError, setSessionError] = useState('');
+  const [registrationNotice, setRegistrationNotice] = useState('');
+  const [loginNotice, setLoginNotice] = useState('');
+  const [loggingOut, setLoggingOut] = useState(false);
+  const [logoutError, setLogoutError] = useState('');
+  const logoutPending = useRef(false);
   const [bookModalVisible, setBookModalVisible] = useState(false);
   const [activeTrackingId, setActiveTrackingId] = useState('SWIFT-991122');
 
-  const handleLoginSuccess = (role: 'customer' | 'courier', name: string) => {
-    setUserRole(role);
-    setUserName(name);
+  const handleLoginSuccess = (profile: MobileUser) => {
     setCurrentScreen('main');
-    setActiveTab(role === 'courier' ? 'track' : 'home');
+    setActiveTab(profile.role === 'COURIER' ? 'orders' : 'home');
   };
+
+  useEffect(() => {
+    let mounted = true;
+    const restore = async () => {
+      if (isMobileGoogleCallback()) {
+        try {
+          await initializeMobileAuth();
+          const profile = await completeMobileGoogleLogin(window.location.href);
+          window.history.replaceState(null, '', '/');
+          if (mounted) handleLoginSuccess(profile);
+        } catch (failure) {
+          window.history.replaceState(null, '', '/');
+          if (!mounted) return;
+          if (failure instanceof RegistrationRequired) {
+            setRegistrationNotice(failure.message); setCurrentScreen('register');
+          } else {
+            setLoginNotice(failure instanceof Error ? failure.message : 'Google sign-in failed.'); setCurrentScreen('login');
+          }
+        }
+        return;
+      }
+      await initializeMobileAuth();
+    };
+    restore().catch(() => { if (mounted) setSessionError('Unable to verify your session. Check your connection and retry.'); })
+      .finally(() => { if (mounted) setRestoring(false); });
+    const subscription = AppState.addEventListener('change', state => {
+      void setMobileAuthActive(state === 'active').then(() => { if (mounted) setSessionError(''); })
+        .catch(() => { if (mounted) setSessionError('Unable to verify your session. Check your connection and retry.'); });
+    });
+    return () => { mounted = false; subscription.remove(); void setMobileAuthActive(false).catch(() => undefined); };
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      setCurrentScreen('main');
+      setActiveTab(user.role === 'COURIER' ? 'orders' : 'home');
+    } else {
+      setCurrentScreen(previous => previous === 'main' ? 'login' : previous);
+      setBookModalVisible(false);
+      setActiveTrackingId('');
+    }
+  }, [user?.id]);
 
   const handleTrackPress = (id?: string) => {
     if (id) setActiveTrackingId(id);
@@ -45,15 +100,22 @@ export default function App() {
     setActiveTab('track');
   };
 
-  const handleLogout = () => {
-    setCurrentScreen('splash');
-    setActiveTab('home');
+  const handleLogout = async () => {
+    if (logoutPending.current) return;
+    logoutPending.current = true; setLoggingOut(true); setLogoutError('');
+    try {
+      await logoutMobile();
+      setCurrentScreen('login'); setActiveTab('home'); setBookModalVisible(false);
+    } catch (failure) {
+      setLogoutError(failure instanceof Error ? failure.message : 'Unable to sign out. Please retry.');
+    } finally { logoutPending.current = false; setLoggingOut(false); }
   };
 
   // Render active content
   const renderMainContent = () => {
     switch (activeTab) {
       case 'home':
+        if (userRole === 'courier') return <TaskListScreen navigation={undefined} />;
         return (
           <HomeScreen
             onBookNow={() => setBookModalVisible(true)}
@@ -62,14 +124,19 @@ export default function App() {
           />
         );
       case 'orders':
+        if (userRole === 'courier') return <TaskListScreen navigation={undefined} />;
         return <OrdersScreen onTrackOrder={handleTrackPress} />;
       case 'track':
         return <TrackScreen initialTrackingId={activeTrackingId} />;
       case 'account':
         return (
           <AccountScreen
-            userName={userName}
+            userName={user?.fullName || ''}
+            userEmail={user?.email || ''}
+            userPhone={user?.phone || null}
             userRole={userRole}
+            loggingOut={loggingOut}
+            logoutError={logoutError}
             onLogout={handleLogout}
             onNavigateOrders={() => setActiveTab('orders')}
           />
@@ -79,15 +146,25 @@ export default function App() {
     }
   };
 
+  if (restoring) return <AppLoading label="Getting your workspace ready..." />;
+  if (sessionError) return <SafeAreaView style={styles.outerContainer}>
+    <Text accessibilityRole={sessionError ? 'alert' : 'text'}>{sessionError || 'Restoring your session...'}</Text>
+    {sessionError ? <TouchableOpacity onPress={() => {
+      setSessionError(''); setRestoring(true);
+      void initializeMobileAuth().catch(() => setSessionError('Unable to verify your session. Check your connection and retry.')).finally(() => setRestoring(false));
+    }}><Text style={{ marginTop: 20, color: Colors.primary }}>Retry</Text></TouchableOpacity> : null}
+  </SafeAreaView>;
+
   return (
     <SafeAreaView style={styles.outerContainer}>
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
 
+      <LoadingOverlay visible={loggingOut} label="Signing out..." />
       {/* Responsive Device Wrapper for Web / Desktop */}
       <View style={styles.phoneFrame}>
         {currentScreen === 'splash' && (
           <SplashScreen
-            onGetStarted={() => setCurrentScreen('login')}
+            onGetStarted={() => { setRegistrationNotice(''); setCurrentScreen('register'); }}
             onLogin={() => setCurrentScreen('login')}
           />
         )}
@@ -96,20 +173,24 @@ export default function App() {
           <LoginScreen
             onLoginSuccess={handleLoginSuccess}
             onBack={() => setCurrentScreen('splash')}
+            notice={loginNotice}
+            onRegister={(notice) => { setRegistrationNotice(notice || ''); setCurrentScreen('register'); }}
           />
         )}
 
-        {currentScreen === 'main' && (
+        {currentScreen === 'register' && <RegisterScreen notice={registrationNotice} onBack={() => { setLoginNotice(''); setCurrentScreen('login'); }} />}
+
+        {currentScreen === 'main' && user && (
           <View style={styles.appShell}>
             <View style={styles.screenArea}>{renderMainContent()}</View>
             <BottomNavBar activeTab={activeTab} onTabChange={setActiveTab} />
 
             {/* Global 3-Step Booking Wizard Modal */}
-            <BookDeliveryModal
+            {userRole === 'customer' && <BookDeliveryModal
               visible={bookModalVisible}
               onClose={() => setBookModalVisible(false)}
               onBookingComplete={handleBookingComplete}
-            />
+            />}
           </View>
         )}
       </View>

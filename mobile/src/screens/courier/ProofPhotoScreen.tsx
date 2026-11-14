@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, ScrollView 
 
 export default function ProofPhotoScreen({ route, navigation }: any) {
   const { parcelId, isFailure } = route?.params || { parcelId: 'SWIFT-991122', isFailure: false };
-  
+
   const [photoTaken, setPhotoTaken] = useState(false);
   const [signed, setSigned] = useState(false);
   const [failureReason, setFailureReason] = useState('RECIPIENT_UNAVAILABLE');

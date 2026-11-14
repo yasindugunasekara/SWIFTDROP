@@ -10,12 +10,16 @@ import { Colors } from '../theme/colors';
 
 interface Props {
   userName: string;
+  userEmail: string;
+  userPhone: string | null;
   userRole: 'customer' | 'courier';
+  loggingOut: boolean;
+  logoutError: string;
   onLogout: () => void;
   onNavigateOrders: () => void;
 }
 
-export default function AccountScreen({ userName, userRole, onLogout, onNavigateOrders }: Props) {
+export default function AccountScreen({ userName, userEmail, userPhone, userRole, loggingOut, logoutError, onLogout, onNavigateOrders }: Props) {
   const menuItems = [
     { id: 'orders', label: 'My Orders', icon: '📦', action: onNavigateOrders },
     { id: 'addr', label: 'Saved Addresses', icon: '📍', action: () => alert('Saved Addresses: Home, Office') },
@@ -45,11 +49,12 @@ export default function AccountScreen({ userName, userRole, onLogout, onNavigate
           <View style={styles.userInfo}>
             <Text style={styles.userName}>{userName}</Text>
             <Text style={styles.userEmail}>
-              {userRole === 'courier' ? 'sunil.courier@swiftdrop.io' : 'alex.silva@swiftdrop.io'}
+              {userEmail}
             </Text>
+            <Text style={styles.userEmail}>{userPhone || 'Phone not provided'}</Text>
             <View style={styles.roleTag}>
               <Text style={styles.roleTagText}>
-                {userRole === 'courier' ? '⚡ Courier Rider #101' : '★ Customer Pro Member'}
+                {userRole === 'courier' ? 'Courier' : 'Customer'}
               </Text>
             </View>
           </View>
@@ -95,10 +100,12 @@ export default function AccountScreen({ userName, userRole, onLogout, onNavigate
         <TouchableOpacity
           style={styles.logoutButton}
           onPress={onLogout}
+          disabled={loggingOut}
           activeOpacity={0.8}
         >
-          <Text style={styles.logoutButtonText}>Log Out</Text>
+          <Text style={styles.logoutButtonText}>{loggingOut ? 'Logging out...' : 'Log Out'}</Text>
         </TouchableOpacity>
+        {logoutError ? <Text accessibilityRole="alert" style={{ marginTop: 12, color: '#b91c1c' }}>{logoutError}</Text> : null}
 
       </ScrollView>
     </View>

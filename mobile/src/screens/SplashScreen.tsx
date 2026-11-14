@@ -1,172 +1,57 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  TouchableOpacity,
-  SafeAreaView,
-  StatusBar,
-  Dimensions,
-} from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, SafeAreaView, StatusBar, ScrollView, useWindowDimensions } from 'react-native';
 import { Colors } from '../theme/colors';
 
-const { width } = Dimensions.get('window');
-
-interface Props {
-  onGetStarted: () => void;
-  onLogin: () => void;
-}
+interface Props { onGetStarted: () => void; onLogin: () => void; }
 
 export default function SplashScreen({ onGetStarted, onLogin }: Props) {
-  return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
-      <View style={styles.container}>
-        
-        {/* Brand Header */}
-        <View style={styles.header}>
-          <Text style={styles.logoText}>
-            swiftdrop<Text style={styles.logoDot}>.</Text>
-          </Text>
-          <Text style={styles.tagline}>Fast. Safe. Everywhere.</Text>
-        </View>
-
-        {/* Hero Visual Container */}
-        <View style={styles.heroContainer}>
-          <Image
-            source={require('../../assets/service-express.jpg')}
-            style={styles.heroImage}
-            resizeMode="contain"
-          />
-        </View>
-
-        {/* Bottom Content Card */}
-        <View style={styles.contentCard}>
-          <Text style={styles.headline}>Your Packages,{'\n'}Our Priority</Text>
-          <Text style={styles.subtext}>
-            Send and receive your packages with speed and security, anywhere across the island.
-          </Text>
-
-          {/* Primary CTA */}
-          <TouchableOpacity
-            style={styles.primaryButton}
-            onPress={onGetStarted}
-            activeOpacity={0.85}
-          >
-            <Text style={styles.primaryButtonText}>Get Started</Text>
-          </TouchableOpacity>
-
-          {/* Login Link */}
-          <View style={styles.loginRow}>
-            <Text style={styles.alreadyText}>Already have an account? </Text>
-            <TouchableOpacity onPress={onLogin} activeOpacity={0.7}>
-              <Text style={styles.loginLink}>Log In</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
+  const { width, height } = useWindowDimensions();
+  const compact = height < 700;
+  const visualSize = Math.max(120, Math.min(width - 80, height * 0.34, 300));
+  return <SafeAreaView style={styles.safeArea}>
+    <StatusBar barStyle="dark-content" backgroundColor="#f2f2f7" />
+    <ScrollView contentContainerStyle={[styles.container, compact && styles.compact]} showsVerticalScrollIndicator={false} bounces={false}>
+      <View style={styles.header}>
+        <Text style={styles.brand}>swiftdrop<Text style={styles.orange}>.</Text></Text>
       </View>
-    </SafeAreaView>
-  );
+      <View style={styles.hero}>
+        <View style={[styles.visual, { width: visualSize, height: visualSize }]}>
+          <Image source={require('../../assets/hero-3d.png')} style={styles.image} resizeMode="cover" accessible={false} />
+        </View>
+      </View>
+      <View style={styles.content}>
+        <Text style={[styles.title, compact && styles.compactTitle]}>Delivery, simplified.</Text>
+        <Text style={styles.subtitle}>Send, track and manage your parcels.{ '\n' }All in one place.</Text>
+        <View style={styles.actions}>
+          <TouchableOpacity onPress={onGetStarted} activeOpacity={0.8} style={styles.primary} accessibilityRole="button">
+            <Text style={styles.primaryText}>Get started</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={onLogin} activeOpacity={0.7} style={styles.secondary} accessibilityRole="button">
+            <Text style={styles.secondaryText}>Sign in</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </ScrollView>
+  </SafeAreaView>;
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-  },
-  container: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-    justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 20,
-  },
-  header: {
-    alignItems: 'center',
-    paddingVertical: 12,
-  },
-  logoText: {
-    fontSize: 28,
-    fontWeight: '900',
-    color: '#0f172a',
-    letterSpacing: -0.5,
-  },
-  logoDot: {
-    color: Colors.primary,
-  },
-  tagline: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#94a3b8',
-    marginTop: 4,
-    letterSpacing: 0.2,
-  },
-  heroContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    maxHeight: 320,
-    marginVertical: 12,
-  },
-  heroImage: {
-    width: width * 0.85,
-    height: 260,
-    borderRadius: 24,
-  },
-  contentCard: {
-    width: '100%',
-    paddingBottom: 8,
-  },
-  headline: {
-    fontSize: 32,
-    fontWeight: '900',
-    color: '#0f172a',
-    lineHeight: 38,
-    letterSpacing: -0.5,
-    marginBottom: 10,
-  },
-  subtext: {
-    fontSize: 14,
-    color: '#64748b',
-    lineHeight: 20,
-    marginBottom: 28,
-  },
-  primaryButton: {
-    backgroundColor: Colors.primary,
-    borderRadius: 20,
-    paddingVertical: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.28,
-    shadowRadius: 12,
-    elevation: 4,
-    marginBottom: 16,
-  },
-  primaryButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '800',
-    letterSpacing: 0.2,
-  },
-  loginRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 6,
-  },
-  alreadyText: {
-    fontSize: 13,
-    color: '#94a3b8',
-    fontWeight: '500',
-  },
-  loginLink: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: Colors.primary,
-  },
+  safeArea: { flex: 1, backgroundColor: '#f2f2f7' },
+  container: { flexGrow: 1, width: '100%', maxWidth: 440, alignSelf: 'center', paddingHorizontal: 28, paddingTop: 28, paddingBottom: 24, justifyContent: 'space-between', gap: 24 },
+  compact: { paddingTop: 16, paddingBottom: 16, gap: 16 },
+  header: { alignItems: 'center', paddingVertical: 4 },
+  brand: { fontSize: 26, fontWeight: '800', color: '#1c1c1e', letterSpacing: -1 },
+  orange: { color: Colors.primary },
+  hero: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 8 },
+  visual: { borderRadius: 34, overflow: 'hidden', backgroundColor: '#fff7ed', shadowColor: '#1c1c1e', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.04, shadowRadius: 22 },
+  image: { width: '100%', height: '100%' },
+  content: { alignItems: 'center' },
+  title: { fontSize: 32, lineHeight: 39, letterSpacing: -1.3, fontWeight: '700', color: '#1c1c1e', textAlign: 'center' },
+  compactTitle: { fontSize: 28, lineHeight: 34 },
+  subtitle: { fontSize: 14, lineHeight: 22, color: '#8e8e93', textAlign: 'center', marginTop: 10 },
+  actions: { width: '100%', gap: 10, marginTop: 28 },
+  primary: { minHeight: 52, borderRadius: 15, backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center' },
+  primaryText: { fontSize: 16, fontWeight: '600', color: '#ffffff' },
+  secondary: { minHeight: 50, borderRadius: 15, backgroundColor: '#ffffff', alignItems: 'center', justifyContent: 'center' },
+  secondaryText: { fontSize: 15, fontWeight: '600', color: '#1c1c1e' },
 });

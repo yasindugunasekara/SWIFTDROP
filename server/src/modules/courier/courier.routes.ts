@@ -8,16 +8,19 @@ import { courierService, ParcelStatus, inMemoryCourierStore } from './courier.se
 
 const router = Router();
 
-// Ensure uploads directory exists
+// Create local storage only for an actual upload, not when importing the API
+// into Next/Vercel's read-only function filesystem.
 const uploadDir = path.join(process.cwd(), 'uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
 
 // Configure Multer for Proof of Delivery Photo Uploads
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => {
-    cb(null, uploadDir);
+    try {
+      fs.mkdirSync(uploadDir, { recursive: true });
+      cb(null, uploadDir);
+    } catch (error) {
+      cb(error instanceof Error ? error : new Error('Upload storage unavailable'), uploadDir);
+    }
   },
   filename: (_req, file, cb) => {
     const ext = path.extname(file.originalname) || '.jpg';

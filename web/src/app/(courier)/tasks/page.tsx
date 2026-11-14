@@ -163,20 +163,20 @@ export default function CourierDashboardPage() {
   const [activeNav, setActiveNav] = useState('tasks');
   const [activeFilter, setActiveFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   const [jobs, setJobs] = useState<Job[]>(INITIAL_JOBS);
   const [selectedJobId, setSelectedJobId] = useState<string>('p1111111-1111-1111-1111-111111111111');
-  
+
   // Execution Form State
   const [recipientNotes, setRecipientNotes] = useState('');
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [signatureSigned, setSignatureSigned] = useState(false);
-  
+
   // Failure Modal
   const [showFailModal, setShowFailModal] = useState(false);
   const [failureReason, setFailureReason] = useState('RECIPIENT_UNAVAILABLE');
   const [failureDetails, setFailureDetails] = useState('');
-  
+
   // Alerts
   const [securityAlert, setSecurityAlert] = useState<string | null>(null);
   const [successBanner, setSuccessBanner] = useState<string | null>(null);
@@ -185,7 +185,7 @@ export default function CourierDashboardPage() {
   useEffect(() => {
     async function loadBackendJobs() {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+        const apiUrl = '/api/v1';
         const res = await fetch(`${apiUrl}/courier/jobs`, {
           headers: {
             'Authorization': 'Bearer sample_token_bypass'
@@ -241,7 +241,7 @@ export default function CourierDashboardPage() {
 
     // Try backend PATCH
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+      const apiUrl = '/api/v1';
       await fetch(`${apiUrl}/courier/jobs/${selectedJob.trackingNumber}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -308,7 +308,7 @@ export default function CourierDashboardPage() {
 
     // Try backend fail endpoint
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+      const apiUrl = '/api/v1';
       await fetch(`${apiUrl}/courier/jobs/${selectedJob.trackingNumber}/fail`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -351,9 +351,9 @@ export default function CourierDashboardPage() {
     setSuccessBanner(`⚠️ Delivery marked as FAILED with reason: ${failureReason}`);
   };
 
-  const handleLogout = () => {
-    clearAuthSession();
-    window.location.href = '/login';
+  const handleLogout = async () => {
+    try { await clearAuthSession(); window.location.href = '/login'; }
+    catch { alert('Unable to sign out securely. Check your connection and retry.'); }
   };
 
   // Filter Jobs
@@ -372,7 +372,7 @@ export default function CourierDashboardPage() {
 
   return (
     <div className="w-full min-h-screen bg-slate-50 flex flex-col lg:flex-row font-sans antialiased text-slate-800">
-      
+
       {/* ========================================================================= */}
       {/* COLUMN 1: LEFT SIDEBAR & COURIER IDENTITY SWITCHER */}
       {/* ========================================================================= */}
@@ -477,7 +477,7 @@ export default function CourierDashboardPage() {
       {/* COLUMN 2: CENTER WORKSPACE (Stops List, Details, Controls) */}
       {/* ========================================================================= */}
       <main className="flex-1 p-6 sm:p-8 bg-slate-50 flex flex-col gap-6 overflow-y-auto">
-        
+
         {/* Security & Success Notification Banners */}
         {securityAlert && (
           <div className="p-4 bg-red-50 border-l-4 border-red-500 rounded-r-2xl text-xs text-red-800 font-bold flex items-center justify-between shadow-sm animate-pulse">
@@ -545,7 +545,7 @@ export default function CourierDashboardPage() {
         {/* ===================================================================== */}
         {selectedJob && (
           <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-sm flex flex-col md:flex-row gap-8">
-            
+
             {/* Left: Parcel Specs & Stop Info */}
             <div className="w-full md:w-5/12 flex flex-col justify-between p-6 bg-orange-50/60 rounded-2xl border border-orange-100">
               <div>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { clearAuthSession } from '../../lib/auth';
+import { fetchApi } from '../../lib/api';
 
 interface AnalyticsKPIs {
   totalDispatched: number;
@@ -61,9 +62,9 @@ export default function AnalyticsDashboardPage() {
     { id: 'c-104', name: 'Nimal Jayasooriya', phone: '+94 78 555 1199', completedRuns: 138, activeRuns: 1, successRate: 96.2, avgTimeMins: 49 },
   ]);
 
-  const handleLogout = () => {
-    clearAuthSession();
-    window.location.href = '/login';
+  const handleLogout = async () => {
+    try { await clearAuthSession(); window.location.href = '/login'; }
+    catch { alert('Unable to sign out securely. Check your connection and retry.'); }
   };
 
   // Fetch telemetry from backend API
@@ -71,28 +72,21 @@ export default function AnalyticsDashboardPage() {
     const fetchAnalyticsData = async () => {
       setIsLoading(true);
       try {
-        const token = typeof window !== 'undefined' ? localStorage.getItem('swiftdrop_access_token') : null;
-        const headers: Record<string, string> = {};
-        if (token) headers['Authorization'] = `Bearer ${token}`;
-
-        const [kpiRes, dailyRes, courierRes] = await Promise.all([
-          fetch(`http://localhost:5000/api/v1/analytics/summary?range=${dateRange}`, { headers }).catch(() => null),
-          fetch(`http://localhost:5000/api/v1/analytics/daily-deliveries?range=${dateRange}`, { headers }).catch(() => null),
-          fetch(`http://localhost:5000/api/v1/analytics/courier-performance`, { headers }).catch(() => null),
+        const [kpiData, dailyData, courierData] = await Promise.all([
+          fetchApi(`/analytics/summary?range=${dateRange}`),
+          fetchApi(`/analytics/daily-deliveries?range=${dateRange}`),
+          fetchApi('/analytics/courier-performance'),
         ]);
 
-        if (kpiRes && kpiRes.ok) {
-          const kpiData = await kpiRes.json();
+        if (kpiData) {
           if (kpiData.kpis) setKpis(kpiData.kpis);
         }
-        if (dailyRes && dailyRes.ok) {
-          const dailyData = await dailyRes.json();
+        if (dailyData) {
           if (dailyData.dailyCounts && dailyData.dailyCounts.length > 0) {
             setDailyVolumes(dailyData.dailyCounts);
           }
         }
-        if (courierRes && courierRes.ok) {
-          const courierData = await courierRes.json();
+        if (courierData) {
           if (courierData.couriers && courierData.couriers.length > 0) {
             setCouriers(courierData.couriers);
           }

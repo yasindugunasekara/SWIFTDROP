@@ -1,6 +1,8 @@
+import LoadingState from '../components/ui/LoadingState';
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import Navbar from "../components/layout/Navbar";
+import AuthBoundary from "../components/layout/AuthBoundary";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -19,7 +21,11 @@ export default function RootLayout({
         <Suspense fallback={null}>
           <Navbar />
         </Suspense>
-        <main>{children}</main>
+        <main>
+          <Suspense fallback={<LoadingState fullScreen />}>
+            <AuthBoundary>{children}</AuthBoundary>
+          </Suspense>
+        </main>
       </body>
     </html>
   );

@@ -13,6 +13,9 @@ export const requireRoles = (allowedRoles: Array<'CUSTOMER' | 'COURIER' | 'DISPA
       });
     }
 
+    if (req.user.role === 'MERCHANT' && (!req.user.merchantId || req.user.approvalStatus !== 'APPROVED')) {
+      return res.status(403).json({ error: 'Merchant approval is required' });
+    }
     next();
   };
 };

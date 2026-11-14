@@ -1,26 +1,34 @@
 FROM node:20-alpine AS builder
 
-WORKDIR /app
+WORKDIR /app/server
 
-COPY package*.json ./
+COPY server/package*.json ./
 RUN npm ci
 
-COPY . .
+WORKDIR /app/web
+COPY web/package*.json ./
+RUN npm ci
+
+COPY server /app/server
+COPY web /app/web
 RUN npm run build
 
 FROM node:20-alpine AS runner
 
-WORKDIR /app
+WORKDIR /app/server
 
 ENV NODE_ENV=production
 
-COPY package*.json ./
-RUN npm ci --only=production
+COPY server/package*.json ./
+RUN npm ci --omit=dev
+COPY --from=builder /app/server/dist ./dist
 
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/package.json ./package.json
-COPY --from=builder /app/next.config.ts ./
+WORKDIR /app/web
+COPY web/package*.json ./
+RUN npm ci --omit=dev
+COPY --from=builder /app/web/.next ./.next
+COPY --from=builder /app/web/public ./public
+COPY --from=builder /app/web/next.config.ts ./next.config.ts
 
 EXPOSE 3000
 

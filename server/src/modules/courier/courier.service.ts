@@ -511,7 +511,7 @@ export class CourierService {
   public async getAssignedJobs(courierId: string, filter?: string): Promise<AssignedJob[]> {
     try {
       const query = `
-        SELECT 
+        SELECT
           p.id,
           p.tracking_number AS "trackingNumber",
           p.sender_name AS "senderName",
@@ -557,7 +557,7 @@ export class CourierService {
     const memoryJob = inMemoryCourierStore.getJobById(parcelIdOrTracking);
     try {
       const query = `
-        SELECT 
+        SELECT
           p.id,
           p.tracking_number AS "trackingNumber",
           p.sender_name AS "senderName",
@@ -741,4 +741,3 @@ export class CourierService {
 }
 
 export const courierService = new CourierService();
-

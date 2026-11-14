@@ -1,131 +1,140 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { saveAuthSession, UserRole } from '../../../lib/auth';
+import styles from '../auth.module.css';
+import AuthBackButton from '../AuthBackButton';
+import AuthInputIcon from '../AuthInputIcon';
 
 export default function RegisterPage() {
-  const router = useRouter();
+  const submitting = useRef(false);
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<UserRole>('CUSTOMER');
-  const [companyName, setCompanyName] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [role, setRole] = useState<'CUSTOMER' | 'COURIER' | 'MERCHANT'>('CUSTOMER');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+  const [requiresConfirmation, setRequiresConfirmation] = useState(true);
+  const [successMessage, setSuccessMessage] = useState('');
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    saveAuthSession(
-      {
-        id: `usr-${Date.now()}`,
-        email,
-        fullName,
-        role,
-        ...(role === 'MERCHANT' ? { approvalStatus: 'PENDING' } : {})
-      },
-      'mock_jwt_registration_token'
-    );
-
-    if (role === 'CUSTOMER') router.push('/booking');
-    else if (role === 'COURIER') router.push('/tasks');
-    else if (role === 'MERCHANT') router.push('/portal?status=pending_approval');
-    else router.push('/dispatch');
+    if (submitting.current) return;
+    setError('');
+    if (role !== 'CUSTOMER') return;
+    if (fullName.trim().length < 2 || /[\u0000-\u001f\u007f]/.test(fullName)) { setError('Enter a valid full name with at least 2 characters.'); return; }
+    if (new TextEncoder().encode(password).length > 72) { setError('Password must be at most 72 UTF-8 bytes.'); return; }
+    if (password !== confirmPassword) { setError('Passwords do not match.'); return; }
+    submitting.current = true; setBusy(true);
+    try {
+      const base = '/api/v1';
+      const response = await fetch(`${base}/auth/register`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, cache: 'no-store',
+        body: JSON.stringify({ fullName, email, password, confirmPassword, role: 'CUSTOMER' }),
+        signal: AbortSignal.timeout(20000),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const messages = ['fullName', 'email', 'password', 'confirmPassword'].flatMap(name =>
+          Array.isArray(result.fields?.[name]) ? result.fields[name].slice(0, 1) : []);
+        setError(messages.length ? messages.join(' ') : result.error || 'Unable to create your account. Please try again.');
+        return;
+      }
+      setPassword(''); setConfirmPassword('');
+      setRequiresConfirmation(result.requiresEmailConfirmation !== false);
+      setSuccessMessage(result.message || 'Check your email to confirm your account.');
+      setSuccess(true);
+    } catch {
+      setError('We could not reach the signup service. Check your connection and try again.');
+    } finally { submitting.current = false; setBusy(false); }
   };
 
+  if (success) return (
+    <div className={`${styles.page} ${styles.signupPage}`}>
+      <section className={`${styles.card} ${styles.signupCard}`} aria-labelledby="register-title">
+        <div className={styles.topbar}><AuthBackButton /><Link href="/" className={styles.brand}>swiftdrop<span>.</span></Link></div>
+        <div className={styles.signupSuccess} role="status">
+          <h1 id="register-title" className={styles.title}>{requiresConfirmation ? 'Check your email' : 'Account created'}</h1>
+          <p className={styles.subtitle}>{successMessage}</p>
+          <Link href="/login" className={`${styles.primary} ${styles.signupActions}`}>Continue to sign in<span className={styles.buttonArrow} aria-hidden="true">&#8594;</span></Link>
+        </div>
+      </section>
+    </div>
+  );
+
   return (
-    <div className="min-h-[calc(100vh-130px)] flex items-center justify-center px-4 py-8">
-      <div className="w-full max-w-md bg-white rounded-3xl p-7 sm:p-8 shadow-xl border border-slate-200/80">
-        <div className="text-center mb-6">
-          <Link href="/" className="inline-block text-3xl font-extrabold text-slate-900 tracking-tight mb-1">
-            swiftdrop<span className="text-brand-orange">.</span>
-          </Link>
-          <h2 className="text-xl font-bold text-slate-900">Create Account</h2>
-          <p className="text-xs text-slate-500 mt-0.5">Join SwiftDrop to send, track, or manage deliveries.</p>
+    <div className={`${styles.page} ${styles.signupPage}`}>
+      <section className={`${styles.card} ${styles.signupCard}`} aria-labelledby="register-title">
+        <div className={styles.topbar}>
+          <AuthBackButton />
+          <Link href="/" className={styles.brand} aria-label="SwiftDrop home">swiftdrop<span>.</span></Link>
         </div>
+        <header className={`${styles.header} ${styles.signupHeader}`}>
+          <h1 id="register-title" className={styles.title}>Create an account</h1>
+        </header>
 
-        <form onSubmit={handleRegister} className="flex flex-col gap-3.5">
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-slate-700">Account Type</label>
-            <div className="grid grid-cols-3 gap-1 bg-slate-100 p-1 rounded-xl">
-              {(['CUSTOMER', 'COURIER', 'MERCHANT'] as UserRole[]).map((r) => (
-                <button
-                  key={r}
-                  type="button"
-                  className={`py-2 text-xs font-semibold rounded-lg transition-all capitalize cursor-pointer ${
-                    role === r
-                      ? 'bg-white text-brand-orange shadow-sm'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                  onClick={() => setRole(r)}
-                >
-                  {r === 'MERCHANT' ? 'Business' : r.toLowerCase()}
-                </button>
-              ))}
+        <div className={styles.signupRoles} role="group" aria-label="Account type">
+          {(['CUSTOMER', 'COURIER', 'MERCHANT'] as const).map(accountRole => (
+            <button key={accountRole} type="button" className={styles.signupRole}
+              aria-pressed={role === accountRole} disabled={busy}
+              onClick={() => { setRole(accountRole); setError(''); }}>
+              {accountRole === 'MERCHANT' ? 'Business' : accountRole === 'COURIER' ? 'Courier' : 'Customer'}
+            </button>
+          ))}
+        </div>
+        {role !== 'CUSTOMER' && <p className={styles.signupRoleNotice} role="status">
+          {role === 'MERCHANT' ? <>For business registration, <Link href="/portal">open the merchant portal</Link>.</>
+            : 'Contact SwiftDrop to create a courier account.'}
+        </p>}
+        <form onSubmit={handleRegister} className={`${styles.form} ${styles.signupForm}`} aria-label="Create account" aria-busy={busy}>
+          {error && <p className={`${styles.alert} ${styles.signupNotice}`} role="alert">{error}</p>}
+          <div className={styles.field}>
+            <label htmlFor="register-name" className={styles.label}>Full name</label>
+            <div className={styles.inputControl}>
+              <span className={styles.inputIcon}><AuthInputIcon kind="name" /></span>
+            <input id="register-name" name="fullName" type="text" autoComplete="name" required minLength={2} maxLength={150} disabled={busy}
+              value={fullName} onChange={(e) => setFullName(e.target.value)}
+              placeholder="Your full name" className={styles.input} />
             </div>
           </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-slate-700">Full Name</label>
-            <input
-              type="text"
-              required
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              placeholder="e.g. Kasun Perera"
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm text-slate-900 focus:outline-none focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/20 transition-all"
-            />
-          </div>
-
-          {role === 'MERCHANT' && (
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-slate-700">Registered Business / Company Name</label>
-              <input
-                type="text"
-                required
-                value={companyName}
-                onChange={(e) => setCompanyName(e.target.value)}
-                placeholder="e.g. Apex Electronics Ltd"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm text-slate-900 focus:outline-none focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/20 transition-all"
-              />
+          <div className={styles.field}>
+            <label htmlFor="register-email" className={styles.label}>Email address</label>
+            <div className={styles.inputControl}>
+              <span className={styles.inputIcon}><AuthInputIcon kind="email" /></span>
+            <input id="register-email" name="email" type="email" autoComplete="email" required maxLength={255} disabled={busy}
+              value={email} onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com" className={styles.input} />
             </div>
-          )}
-
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-slate-700">Email Address</label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="name@company.com"
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm text-slate-900 focus:outline-none focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/20 transition-all"
-            />
           </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-slate-700">Password</label>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Min. 8 characters"
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm text-slate-900 focus:outline-none focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/20 transition-all"
-            />
+          <div className={styles.field}>
+            <label htmlFor="register-password" className={styles.label}>Password</label>
+            <div className={`${styles.password} ${styles.inputControl}`}>
+              <span className={styles.inputIcon}><AuthInputIcon kind="password" /></span>
+              <input id="register-password" name="password" type={showPassword ? 'text' : 'password'}
+                autoComplete="new-password" required minLength={8} maxLength={72} disabled={busy} value={password}
+                onChange={(e) => setPassword(e.target.value)} placeholder="Create a password"
+                aria-describedby="password-hint" className={styles.input} />
+              <button type="button" className={styles.toggle} disabled={busy} aria-label={showPassword ? 'Hide passwords' : 'Show passwords'}
+                aria-pressed={showPassword} onClick={() => setShowPassword(!showPassword)}>{showPassword ? 'Hide' : 'Show'}</button>
+            </div>
+            <p id="password-hint" className={styles.hint}>At least 8 characters.</p>
           </div>
-
-          <button
-            type="submit"
-            className="w-full mt-2 py-3 bg-brand-dark hover:bg-brand-dark-hover text-white rounded-full font-semibold text-sm transition-all shadow-md hover:-translate-y-0.5 cursor-pointer"
-          >
-            Create {role.charAt(0) + role.slice(1).toLowerCase()} Account
-          </button>
+          <div className={styles.field}>
+            <label htmlFor="register-confirm-password" className={styles.label}>Confirm password</label>
+            <div className={styles.inputControl}>
+              <span className={styles.inputIcon}><AuthInputIcon kind="password" /></span>
+              <input id="register-confirm-password" name="confirmPassword" type={showPassword ? 'text' : 'password'} autoComplete="new-password"
+                required maxLength={72} disabled={busy} value={confirmPassword} onChange={event => setConfirmPassword(event.target.value)}
+                placeholder="Repeat your password" className={styles.input} />
+            </div>
+          </div>
+          <button type="submit" disabled={busy || role !== 'CUSTOMER'} className={`${styles.primary} ${styles.signupActions}`}>{busy ? 'Creating account...' : 'Create account'}{!busy && <span className={styles.buttonArrow} aria-hidden="true">&#8594;</span>}</button>
         </form>
-
-        <div className="mt-6 text-center text-xs text-slate-500">
-          <p>Already have an account? <Link href="/login" className="text-brand-orange font-semibold hover:underline">Sign in</Link></p>
-        </div>
-      </div>
+        <p className={`${styles.footer} ${styles.registerFooter}`}>Already have an account? <Link href="/login">Sign in</Link></p>
+      </section>
     </div>
   );
 }
