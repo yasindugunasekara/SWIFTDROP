@@ -136,20 +136,60 @@
 .alertSlot { min-height: 8px; margin-top: -12px; }
 .alert { margin: 0; padding: 10px 12px; border: 1px solid #fecdd3; border-radius: 8px; background: #fff1f2; color: #b91c1c; font-size: 12px; line-height: 18px; }
 
-/* Wider auth cards keep both forms compact on desktop and tablets. */
-.signupPage, .loginPage { padding-block: 24px; }
+/* Portrait cards on desktop and tablets. */
+.signupPage, .loginPage {
+  height: 100dvh;
+  min-height: 0;
+  padding-block: 16px;
+  align-items: center;
+  overflow: hidden;
+}
+
+:global(html):has(.loginPage),
+:global(html):has(.signupPage),
+:global(body):has(.loginPage),
+:global(body):has(.signupPage) {
+  overflow: hidden;
+}
+
+.loginCard, .signupCard {
+  max-height: 100%;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.loginCard::-webkit-scrollbar, .signupCard::-webkit-scrollbar { display: none; }
+/* Keep touch/keyboard scrolling available without a visible mobile scrollbar. */
+@media (max-width: 639px) {
+  :global(html):has(.loginPage),
+  :global(html):has(.signupPage),
+  :global(body):has(.loginPage),
+  :global(body):has(.signupPage) {
+    scrollbar-width: none;
+  }
+
+  :global(html):has(.loginPage)::-webkit-scrollbar,
+  :global(html):has(.signupPage)::-webkit-scrollbar,
+  :global(body):has(.loginPage)::-webkit-scrollbar,
+  :global(body):has(.signupPage)::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 @media (min-width: 640px) {
-  .signupCard, .loginCard { max-width: 740px; padding: 24px 32px; }
-  .signupHeader, .loginHeader { margin-bottom: 20px; }
+  .signupCard, .loginCard { max-width: 440px; padding: 20px 28px; }
+  .signupCard .topbar, .loginCard .topbar { padding-bottom: 10px; margin-bottom: 14px; }
+  .signupCard .roles, .loginCard .roles { margin-bottom: 16px; }
+  .signupHeader, .loginHeader { margin-bottom: 14px; }
+  .signupCard .hint { margin: 0; }
   .signupHeader .title, .loginHeader .title { margin-top: 0; }
   .signupForm, .loginForm {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
     align-items: start;
-    gap: 18px 24px;
+    gap: 10px;
   }
   .wideField, .signupActions, .loginActions, .loginForm .alertSlot { grid-column: 1 / -1; }
-  .signupCard .registerFooter { margin-top: 20px; }
+  .signupCard .registerFooter, .loginCard .footer { margin-top: 14px; padding-top: 12px; }
 }
 
 @media (max-width: 480px) {
@@ -166,6 +206,82 @@
   .role { font-size: 10px; }
   .footer { font-size: 12px; }
 }
+/* Compact mobile layout without forcing a tall card. */
+@media (max-width: 639px) {
+  .loginPage, .signupPage { padding: 12px; align-items: center; }
+  .loginCard, .signupCard { width: 100%; max-width: 440px; min-height: 0; padding: 18px; }
+  .loginCard .topbar, .signupCard .topbar { padding-bottom: 10px; margin-bottom: 14px; }
+  .loginHeader, .signupHeader { margin-bottom: 14px; }
+  .loginHeader .title, .signupHeader .title { margin-bottom: 4px; font-size: 24px; }
+  .signupHeader .subtitle { font-size: 12px; }
+  .loginCard .roles, .signupCard .roles { margin-bottom: 16px; }
+  .loginForm, .signupForm {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: 12px 10px;
+  }
+  .wideField, .signupActions, .loginActions, .loginForm .alertSlot { grid-column: 1 / -1; }
+  .loginCard .field, .signupCard .field { gap: 5px; }
+  .loginCard .inputIcon, .signupCard .inputIcon { display: none; }
+  .loginCard .input, .signupCard .input { padding-left: 10px; padding-right: 10px; }
+  .loginCard .password .input, .signupCard .password .input { padding-right: 48px; }
+  .loginCard .toggle, .signupCard .toggle { min-width: 40px; right: 2px; }
+  .loginCard .input::placeholder, .signupCard .input::placeholder { font-size: 12px; }
+  .loginCard .labelRow { flex-wrap: wrap; gap: 0 4px; }
+  .loginCard .label, .signupCard .label { font-size: 12px; }
+  .signupCard .hint { margin: 0; font-size: 11px; line-height: 16px; }
+  .loginCard .social { height: 86px; margin-top: 14px; }
+  .loginCard .footer, .signupCard .footer { margin-top: 14px; padding-top: 12px; }
+}
+/* Shared portrait auth theme using the site's orange accent. */
+.signupCard, .loginCard { max-width: 420px; border-radius: 20px; }
+.signupCard .topbar, .loginCard .topbar { border-bottom: 0; padding-bottom: 0; margin-bottom: 20px; }
+.signupCard .signupHeader, .loginCard .loginHeader { margin-bottom: 20px; }
+.signupCard .title, .loginCard .title { font-size: 26px; letter-spacing: -.7px; }
+.signupCard .signupForm, .loginCard .loginForm { display: flex; flex-direction: column; gap: 12px; }
+.signupCard .field, .loginCard .field { width: 100%; gap: 6px; }
+.signupCard .input, .loginCard .input { background: #fff; border-radius: 10px; }
+.signupCard .hint { margin: 0; font-size: 11px; }
+.signupCard .signupActions, .loginCard .loginActions {
+  max-width: none;
+  margin-top: 6px;
+  background: #ff6600;
+  border-color: #ff6600;
+  box-shadow: 0 3px 10px rgb(255 102 0 / 16%);
+}
+.signupCard .signupActions:hover, .loginCard .loginActions:hover { background: #e65c00; border-color: #e65c00; }
+.signupCard .registerFooter, .loginCard .footer { border-top: 0; margin-top: 18px; padding-top: 0; }
+.signupRoles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  margin-bottom: 18px;
+  padding: 4px;
+  border: 1px solid #e4e9f0;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+.loginRoles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.signupRole {
+  min-width: 0;
+  min-height: 44px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color .15s, color .15s;
+}
+.signupRole:hover { color: #c84a00; background: #fff7ed; }
+.signupRole[aria-pressed="true"] { color: #c84a00; background: #fff; border-color: #ffd9bd; box-shadow: 0 2px 4px rgb(15 23 42 / 5%); }
+.signupRole:focus-visible { outline: 2px solid #ff6600; outline-offset: 2px; }
+.signupRole:disabled { opacity: .6; cursor: wait; }
+.signupRoleNotice { margin: -6px 0 16px; font-size: 12px; line-height: 1.5; color: #64748b; }
+.signupRoleNotice a { color: #c84a00; text-underline-offset: 3px; }
+
 @media (prefers-reduced-motion: reduce) {
-  .role, .input, .inputIcon, .primary, .google, .back { transition: none; }
+  .role, .signupRole, .input, .inputIcon, .primary, .google, .back { transition: none; }
 }

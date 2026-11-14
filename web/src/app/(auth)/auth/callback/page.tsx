@@ -1,8 +1,9 @@
 'use client';
+import LoadingState from '../../../../components/ui/LoadingState';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { dashboardFor, initializeAuth } from '../../../../lib/auth';
+import { completeAuthRedirect, dashboardFor } from '../../../../lib/auth';
 import styles from '../../auth.module.css';
 
 export default function AuthCallbackPage() {
@@ -11,16 +12,13 @@ export default function AuthCallbackPage() {
   useEffect(() => {
     let active = true;
     (async () => {
-      const hash = new URLSearchParams(window.location.hash.slice(1));
-      if (hash.has('error') || new URLSearchParams(window.location.search).has('error')) {
-        throw new Error('The confirmation link expired or sign-in was cancelled. Please try signing in again.');
-      }
-      const user = await initializeAuth();
+      const user = await completeAuthRedirect();
       if (!active) return;
-      router.replace(user ? dashboardFor(user) : '/login');
+      router.replace(dashboardFor(user));
     })().catch(failure => { if (active) setError(failure instanceof Error ? failure.message : 'Unable to complete sign-in.'); });
     return () => { active = false; };
   }, [router]);
+  if (!error) return <LoadingState fullScreen label="Completing sign-in..." />;
   return <div className={styles.page}><section className={styles.card}>
     <h1 className={styles.title}>{error ? 'Sign-in could not finish' : 'Completing sign-in'}</h1>
     <p className={styles.subtitle} role={error ? 'alert' : 'status'}>{error || 'Please wait while we verify your account...'}</p>

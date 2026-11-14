@@ -1,4 +1,6 @@
 'use client';
+import LoadingState from '../../../components/ui/LoadingState';
+
 
 import { useState, Suspense } from 'react';
 import { useParams } from 'next/navigation';
@@ -73,7 +75,7 @@ function TrackingContent() {
 
 export default function TrackingPage() {
   return (
-    <Suspense fallback={<div style={{ padding: '3rem', textAlign: 'center' }}>Loading tracking data...</div>}>
+    <Suspense fallback={<LoadingState label="Loading tracking..." />}>
       <TrackingContent />
     </Suspense>
   );

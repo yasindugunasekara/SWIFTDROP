@@ -62,13 +62,12 @@ export default function LoginPage() {
         </div>
         <header className={`${styles.header} ${styles.loginHeader}`}>
           <h1 id="login-title" className={styles.title}>Welcome back</h1>
-          <p className={styles.subtitle}>Sign in to your account. Your role opens the right workspace.</p>
         </header>
 
-        <div className={styles.roles} role="group" aria-label="Choose your workspace">
+        <div className={`${styles.signupRoles} ${styles.loginRoles}`} role="group" aria-label="Choose your workspace">
           {(['CUSTOMER', 'COURIER', 'MERCHANT', 'DISPATCHER'] as UserRole[]).map((role) => (
-            <button key={role} type="button" className={styles.role}
-              aria-pressed={activeRole === role} onClick={() => handleRoleTabChange(role)}>
+            <button key={role} type="button" className={styles.signupRole}
+              disabled={loading} aria-pressed={activeRole === role} onClick={() => handleRoleTabChange(role)}>
               {role.charAt(0) + role.slice(1).toLowerCase()}
             </button>
           ))}

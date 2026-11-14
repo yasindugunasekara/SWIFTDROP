@@ -116,9 +116,26 @@ export async function signIn(email: string, password: string): Promise<User> {
   saveAuthSession(data.user); return data.user;
 }
 export async function signInWithGoogle() {
+  if (signOutTask) await signOutTask;
   const client = await getSupabaseClient();
-  const { data, error } = await client.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${window.location.origin}/auth/callback` } });
+  const { data, error } = await client.auth.signInWithOAuth({ provider: 'google', options: {
+    redirectTo: `${window.location.origin}/auth/callback`, queryParams: { prompt: 'select_account' },
+  } });
   if (error || !data.url) throw new Error('Google sign-in could not start. Contact your administrator if it is not enabled.');
+}
+
+export async function completeAuthRedirect(): Promise<User> {
+  const query = new URLSearchParams(window.location.search);
+  const hash = new URLSearchParams(window.location.hash.slice(1));
+  if ([query, hash].some(params => params.has('error') || params.has('error_code'))) {
+    // Provider error descriptions are untrusted and may include internal details.
+    throw new Error('Sign-in was cancelled or the link expired. Please try signing in again.');
+  }
+  // The browser SDK automatically exchanges a PKCE code with its stored verifier.
+  // Read the account from our verified API, never from OAuth metadata or URL roles.
+  const user = await initializeAuth();
+  if (!user) throw new Error('Your sign-in session could not be restored. Please try signing in again.');
+  return user;
 }
 export function clearAuthSession(): Promise<void> {
   if (signOutTask) return signOutTask;

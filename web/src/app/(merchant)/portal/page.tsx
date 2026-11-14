@@ -1,4 +1,6 @@
 'use client';
+import LoadingState from '../../../components/ui/LoadingState';
+
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -105,7 +107,7 @@ export default function MerchantPortalPage() {
   };
 
   if (phase === 'loading') {
-    return <div className="min-h-screen flex items-center justify-center text-sm text-slate-400">Loading merchant portal…</div>;
+    return <LoadingState fullScreen />;
   }
   if (phase === 'auth' || !merchant) {
     return <MerchantAuth onSession={onSession} notice={notice || loadError} />;
