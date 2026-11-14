@@ -12,19 +12,23 @@ const customer = { id: 'customer-1', fullName: 'Test Customer', email: 'customer
 const deferred = () => { let resolve; const promise = new Promise(done => { resolve = done; }); return { promise, resolve }; };
 
 function harness({ fetch = async () => ({ ok: true, json: async () => ({ user: customer }) }), signOut = async () => ({ error: null }),
-  refreshSession = async () => ({ data: { session: { access_token: 'fresh-token' } }, error: null }) } = {}) {
+  refreshSession = async () => ({ data: { session: { access_token: 'fresh-token' } }, error: null }),
+  signInWithOAuth = async () => ({ data: { url: 'https://auth.example.test/authorize' }, error: null }),
+  getSession = async () => ({ data: { session: { access_token: 'test-token' } }, error: null }),
+  location = { origin: 'https://swiftdrop.example.test', search: '', hash: '' } } = {}) {
   let callback;
   const scheduled = [];
   const auth = {
-    getSession: async () => ({ data: { session: { access_token: 'test-token' } }, error: null }),
+    getSession,
     onAuthStateChange: listener => { callback = listener; },
     signOut,
     refreshSession,
+    signInWithOAuth,
   };
   const exports = {};
   vm.runInNewContext(source, {
     exports, require: () => ({ getSupabaseClient: async () => ({ auth }) }),
-    process: { env: {} }, fetch, AbortSignal, localStorage: { removeItem() {} },
+    process: { env: {} }, fetch, AbortSignal, URLSearchParams, window: { location }, localStorage: { removeItem() {} },
     setTimeout: task => scheduled.push(task),
   });
   const apiSource = ts.transpileModule(readFileSync(new URL('../src/lib/api.ts', import.meta.url), 'utf8'), {
@@ -162,5 +166,47 @@ test('logout during refresh prevents an authenticated retry or profile restorati
   pending.resolve({ data: { session: { access_token: 'fresh-token' } }, error: null });
   await rejection;
   assert.equal(requests, 1);
+  assert.equal(api.getStoredUser(), null);
+});
+
+
+test('Google OAuth uses Supabase and the current origin callback without granting a role', async () => {
+  let request;
+  const { api } = harness({ signInWithOAuth: async input => {
+    request = input;
+    return { data: { url: 'https://auth.example.test/authorize' }, error: null };
+  } });
+  await api.signInWithGoogle();
+  assert.equal(request.provider, 'google');
+  assert.equal(request.options.redirectTo, 'https://swiftdrop.example.test/auth/callback');
+  assert.equal(request.options.queryParams.prompt, 'select_account');
+  assert.equal(api.getStoredUser(), null);
+});
+
+test('failed Google OAuth does not establish an application session', async () => {
+  const { api } = harness({ signInWithOAuth: async () => ({ data: { url: null }, error: { message: 'private provider details' } }) });
+  await assert.rejects(api.signInWithGoogle(), /Google sign-in could not start/);
+  assert.equal(api.getStoredUser(), null);
+});
+
+test('OAuth callback loads the verified customer rather than trusting URL role or redirect parameters', async () => {
+  const { api } = harness({ location: { origin: 'https://swiftdrop.example.test', hash: '',
+    search: '?code=oauth-code&role=ADMIN&next=https://untrusted.example.test' } });
+  const user = await api.completeAuthRedirect();
+  assert.equal(user, customer);
+  assert.equal(api.dashboardFor(user), '/booking');
+});
+
+test('cancelled Google callback never reads or restores an existing session', async () => {
+  let calls = 0;
+  const { api } = harness({ location: { origin: 'https://swiftdrop.example.test', search: '?error=access_denied&error_description=private', hash: '' },
+    getSession: async () => { calls++; return { data: { session: null }, error: null }; } });
+  await assert.rejects(api.completeAuthRedirect(), /cancelled or the link expired/);
+  assert.equal(calls, 0);
+});
+
+test('callback with no restored session reports a retry instead of pretending sign-in succeeded', async () => {
+  const { api } = harness({ getSession: async () => ({ data: { session: null }, error: null }) });
+  await assert.rejects(api.completeAuthRedirect(), /session could not be restored/);
   assert.equal(api.getStoredUser(), null);
 });
