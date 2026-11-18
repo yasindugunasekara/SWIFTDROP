@@ -13,3 +13,5 @@ data:
   RABBITMQ_URL: "amqp://guest:guest@rabbitmq-service:5672"
   NEXT_PUBLIC_API_URL: "https://api.swiftdrop.local/api/v1"
   NEXT_PUBLIC_WS_URL: "wss://api.swiftdrop.local"
+  # Member 3: browsers open live tracking here (served by the API pods at /ws/tracking).
+  TRACKING_WS_URL: "wss://api.swiftdrop.local/ws/tracking"

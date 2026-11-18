@@ -13,7 +13,9 @@ import {
 
 // Member 3 — Tracking, History & Receipt
 //
+//   GET /config                                 public: live-tracking WebSocket URL (or null)
 //   GET /public/:trackingNumber                 public, safe fields only, rate limited
+//   WS  /ws/tracking                            live updates, see tracking.socket.ts
 //   GET /history                                CUSTOMER: own parcels (?status=&limit=&offset=)
 //   GET /history/:trackingNumber                CUSTOMER: own parcel with full timeline
 //   GET /history/:trackingNumber/receipt        CUSTOMER: receipt (?format=json|html)
@@ -51,6 +53,14 @@ export function createTrackingRouter(options: TrackingRouterOptions = {}): Route
   const noStore: RequestHandler = (_req, res, next) => { res.set('Cache-Control', 'private, no-store'); next(); };
   const customerOnly = [noStore, auth, requireRoles(['CUSTOMER']) as RequestHandler];
   const router = Router();
+
+  // Runtime client config: where to open the live-tracking WebSocket. Null when
+  // no standalone WebSocket server is reachable (e.g. Vercel serverless), in
+  // which case clients fall back to polling the public endpoint.
+  router.get('/config', (_req: Request, res: Response) => {
+    res.set('Cache-Control', 'no-store');
+    return res.json({ websocketUrl: process.env.TRACKING_WS_URL || null, pollIntervalMs: 20_000 });
+  });
 
   router.get('/public/:trackingNumber', publicLimiter, async (req: Request, res: Response) => {
     try {
