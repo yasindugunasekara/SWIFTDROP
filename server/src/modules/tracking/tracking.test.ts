@@ -10,6 +10,8 @@
  *   5. Receipt generation: totals, delivery date rules, printable HTML escapes input
  *   6. Public rate limiting
  *   7. Public location filter and the SQL bridge parameter-substitution fix
+ *   8. Live tracking against the real database: a status change written to the
+ *      DB is detected and pushed; the WebSocket config endpoint
  *
  * Runs the real tracking router in-process (express + listen(0)) against the real
  * database. Authentication uses a stub gateway via createAuthenticationMiddleware,
@@ -30,6 +32,8 @@ import { createAuthenticationMiddleware } from '../../middleware/auth.js';
 import { AuthServiceError, type AuthProfile } from '../auth/auth.service.js';
 import { createTrackingRouter, createPublicTrackingLimiter } from './tracking.routes.js';
 import { publicLocation } from './tracking.service.js';
+import { TrackingHub } from './tracking.socket.js';
+import { WebSocket } from 'ws';
 
 let totalAssertions = 0;
 let passedAssertions = 0;
@@ -372,6 +376,39 @@ export async function runTrackingTestSuite() {
       // containing "returning" broke plain writes (42P11).
       const write = await db.query(`UPDATE users SET full_name = $1 WHERE id = $2`, ['Returning Customer', customerB.id]);
       assert(write.rowCount === 1, 'A plain UPDATE whose value contains "returning" succeeds', write.rowCount);
+    }
+
+    console.log('\n--- 8. Live tracking against the real database ---');
+    {
+      const config = await request('/config');
+      assert(config.status === 200 && 'websocketUrl' in config.body && typeof config.body.pollIntervalMs === 'number',
+        'GET /config tells clients where the live-tracking socket is (or null to poll)', config.body);
+
+      // Real loaders (DB queries), fake socket: proves change detection on real data.
+      const hub = new TrackingHub({ pollMs: 0, logger: { warn: (...a: unknown[]) => console.warn(...a) } });
+      const sent: any[] = [];
+      const socket = { readyState: WebSocket.OPEN, send: (data: string) => sent.push(JSON.parse(data)) };
+      try {
+        await hub.subscribe(socket, parcelB.trackingNumber);
+        assert(sent[0]?.type === 'snapshot' && sent[0].data.status === 'IN_TRANSIT', 'Subscribing to a real parcel returns its snapshot', sent[0]);
+        await hub.poll();
+        assert(!sent.some((m) => m.type === 'update'), 'No update while the parcel is unchanged in the database');
+
+        await db.query(`UPDATE parcels SET status = 'OUT_FOR_DELIVERY', updated_at = now() WHERE id = $1`, [parcelB.id]);
+        await db.query(
+          `INSERT INTO parcel_status_history (parcel_id, status, location_name, note, created_at)
+           VALUES ($1, 'OUT_FOR_DELIVERY', 'Galle', 'Live test', now())`,
+          [parcelB.id]
+        );
+        await hub.poll();
+        const update = sent.find((m) => m.type === 'update');
+        assert(update?.data.status === 'OUT_FOR_DELIVERY' && update.data.events.length === 2,
+          'A status change written to the database is pushed to the subscriber', update);
+        assert(!JSON.stringify(update).includes(parcelB.recipientPhone) && !JSON.stringify(update).includes('Live test'),
+          'Pushed updates use the safe public projection (no phones, no notes)');
+      } finally {
+        hub.close();
+      }
     }
   } finally {
     await Promise.all(servers.map((s) => new Promise((resolve) => s.close(resolve))));
