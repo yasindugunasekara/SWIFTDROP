@@ -8,6 +8,16 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "swiftdrop. | Send Anything. Anywhere.",
   description: "Fast, reliable, and affordable parcel delivery for individuals and businesses.",
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/icon.png', type: 'image/png', sizes: '512x512' },
+    ],
+    apple: [
+      { url: '/icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+  },
 };
 
 export default function RootLayout({

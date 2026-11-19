@@ -49,3 +49,6 @@ AGENTS.md
 # Testing coverage
 coverage/
 .nyc_output/
+
+# Supabase CLI local cache (created by `supabase db query --remote`)
+**/supabase/.temp/

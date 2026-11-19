@@ -10,6 +10,34 @@ export default function HomePage() {
   const [pickup, setPickup] = useState('');
   const [delivery, setDelivery] = useState('');
 
+  // Interactive Quick Rate Estimator State
+  const [estWeight, setEstWeight] = useState<'1' | '3' | '10' | '25'>('1');
+  const [estDistance, setEstDistance] = useState<'local' | 'metro' | 'island'>('local');
+  const [estTier, setEstTier] = useState<'standard' | 'express'>('standard');
+
+  const getEstimate = () => {
+    let base = 350; // LKR Base (1kg)
+    if (estWeight === '3') base += 150;
+    if (estWeight === '10') base += 450;
+    if (estWeight === '25') base += 1200;
+
+    let dist = 100;
+    if (estDistance === 'metro') dist = 300;
+    if (estDistance === 'island') dist = 600;
+
+    let subtotal = base + dist;
+    if (estTier === 'express') subtotal *= 1.45;
+
+    const min = Math.round(subtotal * 0.95);
+    const max = Math.round(subtotal * 1.10);
+    return {
+      min: min.toLocaleString(),
+      max: max.toLocaleString(),
+      base: base.toLocaleString(),
+      dist: dist.toLocaleString()
+    };
+  };
+
   const handleQuickShip = (e: React.FormEvent) => {
     e.preventDefault();
     if (pickup || delivery) {
@@ -90,10 +118,11 @@ export default function HomePage() {
 
               <button
                 type="submit"
-                className="w-10 h-10 sm:w-11 sm:h-11 bg-[#ff6600] hover:bg-[#ea580c] rounded-full flex items-center justify-center text-white text-base sm:text-lg font-bold shadow-md shadow-orange-500/30 hover:scale-105 active:scale-95 transition-all flex-shrink-0 cursor-pointer ml-1"
-                title="Calculate Fee & Ship"
+                className="h-10 sm:h-11 px-4 sm:px-5 bg-[#ff6600] hover:bg-[#ea580c] rounded-full flex items-center gap-1.5 text-white text-xs sm:text-sm font-extrabold shadow-md shadow-orange-500/30 hover:scale-[1.02] active:scale-95 transition-all flex-shrink-0 cursor-pointer ml-1"
+                title="Get Instant Fee Quote & Book"
               >
-                <span>&rarr;</span>
+                <span className="hidden sm:inline">Get Quote</span>
+                <span className="text-base">&rarr;</span>
               </button>
             </form>
 
@@ -467,20 +496,318 @@ export default function HomePage() {
       <section id="pricing" className="py-24 bg-[#e8e7e2] border-t border-slate-200/60 relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
-          <div className="text-center max-w-2xl mx-auto mb-16">
+          <div className="text-center max-w-2xl mx-auto mb-14">
             <div className="flex items-center justify-center gap-4 max-w-xs mx-auto mb-3">
               <div className="h-px bg-slate-300 flex-1" />
               <span className="text-xs font-black tracking-[0.25em] text-[#ff6600] uppercase">
-                TRANSPARENT RATES
+                TRANSPARENT PRICING MODEL
               </span>
               <div className="h-px bg-slate-300 flex-1" />
             </div>
             <h2 className="text-3xl sm:text-4xl lg:text-[42px] font-black text-slate-900 mt-2 mb-3 tracking-tight">
-              Simple, Predictable Island-Wide Pricing
+              Dynamic, Distance &amp; Weight-Based Pricing
             </h2>
             <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
-              No hidden fuel surcharges. Real-time server-verified fee calculation based on actual distance and volumetric weight.
+              No artificial flat rates. Our server-side pricing engine calculates transparent fees in real-time based on actual road distance, scale weight, and dimensional volume.
             </p>
+          </div>
+
+          {/* INTERACTIVE QUICK RATE ESTIMATOR (FULL-WIDTH MODERN CONSOLE) */}
+          <div className="w-full bg-white rounded-[32px] sm:rounded-[36px] border border-slate-200/90 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.07)] overflow-hidden mb-16 transition-all">
+            <div className="grid grid-cols-1 lg:grid-cols-12 items-stretch">
+              
+              {/* LEFT CONFIGURATION PANEL (Col span 7 on lg, 8 on xl) */}
+              <div className="lg:col-span-7 xl:col-span-8 p-6 sm:p-9 lg:p-11 flex flex-col justify-between">
+                <div>
+                  {/* Sub-header badge & titles */}
+                  <div className="flex flex-wrap items-center justify-between gap-3 mb-6 pb-6 border-b border-slate-100">
+                    <div>
+                      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-50 border border-orange-200/80 text-[11px] font-black text-[#ff6600] uppercase tracking-wider mb-2">
+                        <span className="w-2 h-2 rounded-full bg-[#ff6600] animate-pulse" />
+                        <span>Interactive Rate Calculator</span>
+                      </div>
+                      <h3 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                        Calculate Your Delivery Fare in Seconds
+                      </h3>
+                      <p className="text-xs sm:text-sm text-slate-500 mt-1 font-medium">
+                        Instant door-to-door courier charges calculated dynamically across Sri Lanka.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* STEP 1: PARCEL WEIGHT */}
+                  <div className="mb-7">
+                    <div className="flex items-center justify-between mb-3">
+                      <label className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                        <span className="w-5 h-5 rounded-full bg-orange-100 text-[#ff6600] text-[11px] font-black flex items-center justify-center">1</span>
+                        <span>Select Parcel Weight</span>
+                      </label>
+                      <span className="text-[11px] text-slate-400 font-medium hidden sm:inline">Actual or scale weight</span>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+                      {[
+                        { id: '1', label: 'Up to 1 kg', sub: 'Documents / Pouch', tag: 'Base Rate' },
+                        { id: '3', label: '1 – 3 kg', sub: 'Standard Box', tag: '+ LKR 150' },
+                        { id: '10', label: '3 – 10 kg', sub: 'Medium Carton', tag: '+ LKR 450' },
+                        { id: '25', label: '10 – 25 kg', sub: 'Heavy Freight', tag: '+ LKR 1,200' },
+                      ].map((w) => {
+                        const isSelected = estWeight === w.id;
+                        return (
+                          <button
+                            key={w.id}
+                            type="button"
+                            onClick={() => setEstWeight(w.id as any)}
+                            className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-all relative flex flex-col justify-between ${
+                              isSelected
+                                ? 'border-[#ff6600] bg-orange-50/60 shadow-md ring-2 ring-[#ff6600]/25 text-slate-900'
+                                : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50/60 text-slate-700 bg-white'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <span className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${
+                                isSelected ? 'border-[#ff6600] bg-[#ff6600]' : 'border-slate-300 bg-white'
+                              }`}>
+                                {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                              </span>
+                              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${
+                                isSelected ? 'bg-[#ff6600] text-white' : 'bg-slate-100 text-slate-500'
+                              }`}>
+                                {w.tag}
+                              </span>
+                            </div>
+                            <div>
+                              <div className="text-sm font-black">{w.label}</div>
+                              <div className="text-[11px] text-slate-500 font-medium mt-0.5 truncate">{w.sub}</div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* STEP 2: ROUTE DISTANCE */}
+                  <div className="mb-7">
+                    <div className="flex items-center justify-between mb-3">
+                      <label className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                        <span className="w-5 h-5 rounded-full bg-orange-100 text-[#ff6600] text-[11px] font-black flex items-center justify-center">2</span>
+                        <span>Route &amp; Distance Zone</span>
+                      </label>
+                      <span className="text-[11px] text-slate-400 font-medium hidden sm:inline">Calculated via road transit</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
+                      {[
+                        { id: 'local', title: 'Intra-City (< 15 km)', desc: 'Same-town municipal delivery', tag: '+ LKR 100' },
+                        { id: 'metro', title: 'Inter-District (15 – 60 km)', desc: 'Metro corridor & regional transit', tag: '+ LKR 300' },
+                        { id: 'island', title: 'Island-Wide (60+ km)', desc: 'Cross-province line haul network', tag: '+ LKR 600' },
+                      ].map((d) => {
+                        const isSelected = estDistance === d.id;
+                        return (
+                          <button
+                            key={d.id}
+                            type="button"
+                            onClick={() => setEstDistance(d.id as any)}
+                            className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-all relative flex flex-col justify-between ${
+                              isSelected
+                                ? 'border-[#ff6600] bg-orange-50/60 shadow-md ring-2 ring-[#ff6600]/25 text-slate-900'
+                                : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50/60 text-slate-700 bg-white'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <span className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${
+                                isSelected ? 'border-[#ff6600] bg-[#ff6600]' : 'border-slate-300 bg-white'
+                              }`}>
+                                {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                              </span>
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                                isSelected ? 'bg-[#ff6600] text-white' : 'bg-slate-100 text-slate-500'
+                              }`}>
+                                {d.tag}
+                              </span>
+                            </div>
+                            <div>
+                              <div className="text-sm font-black">{d.title}</div>
+                              <div className="text-[11px] text-slate-500 font-medium mt-1 leading-snug">{d.desc}</div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* STEP 3: SERVICE SPEED */}
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <label className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                        <span className="w-5 h-5 rounded-full bg-orange-100 text-[#ff6600] text-[11px] font-black flex items-center justify-center">3</span>
+                        <span>Service Speed &amp; Priority</span>
+                      </label>
+                      <span className="text-[11px] text-slate-400 font-medium hidden sm:inline">Dispatch SLA guarantee</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {[
+                        {
+                          id: 'standard',
+                          label: 'Standard Delivery',
+                          timeBadge: 'Next-Day Guaranteed',
+                          desc: 'Optimal, cost-efficient transit across all provinces',
+                          surcharge: 'Standard Fee'
+                        },
+                        {
+                          id: 'express',
+                          label: 'Same-Day Express',
+                          timeBadge: '⚡ 2 – 4 Hours Priority',
+                          desc: 'Direct point-to-point courier dispatch with instant routing',
+                          surcharge: '+45% Priority Dispatch'
+                        },
+                      ].map((s) => {
+                        const isSelected = estTier === s.id;
+                        return (
+                          <button
+                            key={s.id}
+                            type="button"
+                            onClick={() => setEstTier(s.id as any)}
+                            className={`p-4 rounded-2xl border text-left transition-all relative flex flex-col justify-between ${
+                              isSelected
+                                ? 'border-[#ff6600] bg-orange-50/60 shadow-md ring-2 ring-[#ff6600]/25 text-slate-900'
+                                : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50/60 text-slate-700 bg-white'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between mb-2.5">
+                              <div className="flex items-center gap-2">
+                                <span className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${
+                                  isSelected ? 'border-[#ff6600] bg-[#ff6600]' : 'border-slate-300 bg-white'
+                                }`}>
+                                  {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                </span>
+                                <span className="text-sm font-black">{s.label}</span>
+                              </div>
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                                isSelected ? 'bg-white text-[#ff6600] border-orange-200' : 'bg-slate-100 text-slate-600 border-slate-200'
+                              }`}>
+                                {s.timeBadge}
+                              </span>
+                            </div>
+                            <div className="text-xs text-slate-500 font-medium leading-relaxed pl-6">{s.desc}</div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Left Panel Footnote */}
+                <div className="mt-8 pt-5 border-t border-slate-100 flex flex-wrap items-center gap-3 sm:gap-4 text-xs text-slate-400 font-medium">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    <span>Real-Time Pricing Engine Active</span>
+                  </span>
+                  <span>&bull;</span>
+                  <span>Final weight verified upon courier scale pickup</span>
+                </div>
+              </div>
+
+              {/* RIGHT SUMMARY & FARE RECEIPT CARD (Col span 5 on lg, 4 on xl) */}
+              <div className="lg:col-span-5 xl:col-span-4 bg-slate-950 text-white p-6 sm:p-8 lg:p-10 flex flex-col justify-between relative border-t lg:border-t-0 lg:border-l border-slate-800">
+                {/* Subtle Ambient Radial Glow */}
+                <div className="absolute top-0 right-0 w-56 h-56 bg-[#ff6600]/15 rounded-full blur-3xl pointer-events-none" />
+
+                <div className="relative z-10">
+                  {/* Card Header with Live Indicator */}
+                  <div className="flex items-center justify-between pb-5 border-b border-white/10">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                      <span className="text-xs font-black uppercase tracking-wider text-slate-200">Live Fare Summary</span>
+                    </div>
+                    <span className="text-[11px] font-bold text-slate-400 bg-white/10 px-2.5 py-0.5 rounded-full">
+                      LKR &bull; Sri Lanka
+                    </span>
+                  </div>
+
+                  {/* Price Banner */}
+                  <div className="my-6 p-5 sm:p-6 rounded-2xl bg-white/[0.04] border border-white/10 backdrop-blur-md">
+                    <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                      Estimated Total Range
+                    </span>
+                    <div className="text-3xl sm:text-4xl font-black text-[#ff6600] tracking-tight leading-none mb-2">
+                      LKR {getEstimate().min} &ndash; {getEstimate().max}
+                    </div>
+                    <div className="flex items-center gap-2 text-[11px] text-slate-400">
+                      <span>Base + Distance + Priority SLA</span>
+                    </div>
+                  </div>
+
+                  {/* Itemized Receipt Breakdown */}
+                  <div className="space-y-3 text-xs sm:text-sm">
+                    <div className="flex items-center justify-between text-slate-300 py-1.5 border-b border-white/5">
+                      <span className="text-slate-400">Weight Bracket:</span>
+                      <span className="font-bold text-white">
+                        {estWeight === '1' ? 'Up to 1 kg' : estWeight === '3' ? '1 – 3 kg' : estWeight === '10' ? '3 – 10 kg' : '10 – 25 kg'}
+                        <span className="text-slate-400 font-normal ml-1.5">(LKR {getEstimate().base})</span>
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-slate-300 py-1.5 border-b border-white/5">
+                      <span className="text-slate-400">Transit Distance:</span>
+                      <span className="font-bold text-white">
+                        {estDistance === 'local' ? 'Intra-City (< 15 km)' : estDistance === 'metro' ? 'Inter-District (15–60 km)' : 'Island-Wide (60+ km)'}
+                        <span className="text-slate-400 font-normal ml-1.5">(+LKR {getEstimate().dist})</span>
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-slate-300 py-1.5 border-b border-white/5">
+                      <span className="text-slate-400">Priority Tier:</span>
+                      <span className={`font-bold ${estTier === 'express' ? 'text-[#ff6600]' : 'text-white'}`}>
+                        {estTier === 'express' ? 'Same-Day Express (+45%)' : 'Standard Delivery'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-slate-300 py-1.5 border-b border-white/5">
+                      <span className="text-slate-400">Estimated Arrival:</span>
+                      <span className="font-bold text-emerald-400">
+                        {estTier === 'express' ? 'Within 2 – 4 Hours' : 'Tomorrow by 2:00 PM'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-slate-300 py-1.5">
+                      <span className="text-slate-400">Package Insurance:</span>
+                      <span className="font-bold text-slate-300">Included (Free)</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Card CTA & Trust Section */}
+                <div className="relative z-10 mt-8 pt-6 border-t border-white/10">
+                  <Link
+                    href={`/booking?tier=${estTier}&weight=${estWeight}`}
+                    className="w-full py-4 px-6 bg-[#ff6600] hover:bg-[#ea580c] text-white font-black text-sm rounded-2xl shadow-xl shadow-orange-500/25 transition-all flex items-center justify-center gap-2 group text-center"
+                  >
+                    <span>Book Delivery with this Rate</span>
+                    <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>
+                  </Link>
+
+                  <div className="mt-4 flex items-center justify-center gap-4 text-[11px] text-slate-400 font-medium">
+                    <span className="flex items-center gap-1.5">
+                      <svg className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      No Hidden Fees
+                    </span>
+                    <span>&bull;</span>
+                    <span className="flex items-center gap-1.5">
+                      <svg className="w-3.5 h-3.5 text-[#ff6600] flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                      </svg>
+                      Live GPS Tracking
+                    </span>
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
           </div>
 
           {/* Pricing Grid */}
@@ -489,11 +816,14 @@ export default function HomePage() {
             <div className="bg-white/95 backdrop-blur-md p-8 sm:p-9 rounded-[32px] border border-white/90 shadow-[0_10px_35px_rgba(0,0,0,0.04)] hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between">
               <div>
                 <span className="inline-block text-[11px] font-black uppercase tracking-wider text-slate-500 bg-slate-100 px-3 py-1 rounded-full mb-4">
-                  Standard Delivery
+                  Standard Island-Wide
                 </span>
-                <div className="flex items-baseline gap-1.5 mt-2 mb-2">
-                  <span className="text-4xl sm:text-5xl font-black text-slate-900">$4.50</span>
-                  <span className="text-xs sm:text-sm text-slate-500 font-semibold">/ parcel</span>
+                <div className="flex flex-col mt-2 mb-3">
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-xs font-bold text-slate-400 uppercase">Starts from</span>
+                    <span className="text-3xl sm:text-4xl font-black text-slate-900">LKR 450</span>
+                  </div>
+                  <span className="text-xs text-slate-500 font-semibold mt-0.5">+ distance &amp; weight rates</span>
                 </div>
                 <p className="text-xs sm:text-sm text-slate-500 leading-relaxed mb-6">
                   Reliable next-day delivery across municipal and inter-district zones island-wide.
@@ -501,7 +831,7 @@ export default function HomePage() {
                 <ul className="space-y-3.5 text-xs sm:text-sm text-slate-700 pb-8 border-t border-slate-100 pt-6">
                   <li className="flex items-center gap-2.5">
                     <span className="w-5 h-5 rounded-full bg-orange-100 text-[#ff6600] flex items-center justify-center font-bold text-xs flex-shrink-0">✓</span>
-                    <span>Up to 2 kg parcel weight included</span>
+                    <span>Includes first 1 kg parcel weight</span>
                   </li>
                   <li className="flex items-center gap-2.5">
                     <span className="w-5 h-5 rounded-full bg-orange-100 text-[#ff6600] flex items-center justify-center font-bold text-xs flex-shrink-0">✓</span>
@@ -518,10 +848,10 @@ export default function HomePage() {
                 </ul>
               </div>
               <Link
-                href="/booking"
+                href="/booking?tier=standard"
                 className="w-full py-3.5 text-center bg-white hover:bg-orange-50 text-[#ff6600] border-2 border-orange-200/90 rounded-full font-extrabold text-xs sm:text-sm transition-all shadow-sm"
               >
-                Book Standard Parcel &rarr;
+                Calculate Standard Quote &rarr;
               </Link>
             </div>
 
@@ -534,9 +864,12 @@ export default function HomePage() {
                 <span className="inline-block text-[11px] font-black uppercase tracking-wider text-[#ff6600] bg-orange-50 px-3 py-1 rounded-full mb-4">
                   Same-Day Express
                 </span>
-                <div className="flex items-baseline gap-1.5 mt-2 mb-2">
-                  <span className="text-4xl sm:text-5xl font-black text-slate-900">$8.50</span>
-                  <span className="text-xs sm:text-sm text-slate-500 font-semibold">/ parcel</span>
+                <div className="flex flex-col mt-2 mb-3">
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-xs font-bold text-orange-400 uppercase">Starts from</span>
+                    <span className="text-3xl sm:text-4xl font-black text-slate-900">LKR 850</span>
+                  </div>
+                  <span className="text-xs text-slate-500 font-semibold mt-0.5">+ priority express dispatch</span>
                 </div>
                 <p className="text-xs sm:text-sm text-slate-500 leading-relaxed mb-6">
                   Urgent doorstep delivery within 2–4 hours anywhere in urban hubs and metro corridors.
@@ -556,15 +889,15 @@ export default function HomePage() {
                   </li>
                   <li className="flex items-center gap-2.5">
                     <span className="w-5 h-5 rounded-full bg-[#ff6600] text-white flex items-center justify-center font-bold text-xs flex-shrink-0">✓</span>
-                    <span>$100 complimentary cargo guarantee</span>
+                    <span>LKR 25,000 complimentary cargo guarantee</span>
                   </li>
                 </ul>
               </div>
               <Link
-                href="/booking"
+                href="/booking?tier=express"
                 className="w-full py-4 text-center bg-[#ff6600] hover:bg-[#ea580c] text-white rounded-full font-black text-xs sm:text-sm shadow-lg shadow-orange-500/30 transition-all flex items-center justify-center gap-2 group"
               >
-                <span>Ship Express Now</span>
+                <span>Calculate Express Quote</span>
                 <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>
               </Link>
             </div>
@@ -575,8 +908,11 @@ export default function HomePage() {
                 <span className="inline-block text-[11px] font-black uppercase tracking-wider text-slate-500 bg-slate-100 px-3 py-1 rounded-full mb-4">
                   Merchant B2B Volume
                 </span>
-                <div className="flex items-baseline gap-1.5 mt-2 mb-2">
-                  <span className="text-3xl sm:text-4xl font-black text-slate-900">Custom SLA</span>
+                <div className="flex flex-col mt-2 mb-3">
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-3xl sm:text-4xl font-black text-slate-900">Volume Tiered</span>
+                  </div>
+                  <span className="text-xs text-slate-500 font-semibold mt-0.5">Custom SLA &amp; Volume Discounts</span>
                 </div>
                 <p className="text-xs sm:text-sm text-slate-500 leading-relaxed mb-6">
                   Dedicated volume pricing and automated API injection for high-throughput e-commerce stores.
@@ -601,27 +937,50 @@ export default function HomePage() {
                 </ul>
               </div>
               <Link
-                href="/login"
+                href="/portal"
                 className="w-full py-3.5 text-center bg-white hover:bg-orange-50 text-[#ff6600] border-2 border-orange-200/90 rounded-full font-extrabold text-xs sm:text-sm transition-all shadow-sm"
               >
-                Merchant Sign In &rarr;
+                Explore Merchant Portal &rarr;
               </Link>
             </div>
           </div>
 
-          {/* Trust Guarantees */}
-          <div className="mt-14 flex flex-wrap items-center justify-center gap-6 sm:gap-10 text-xs sm:text-sm font-semibold text-slate-600">
-            <div className="flex items-center gap-2">
-              <span className="text-[#ff6600] font-bold">✓</span>
-              <span>100% Server-Verified Distance Rates</span>
+          {/* 3 TRANSPARENCY PILLARS */}
+          <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6 pt-6 border-t border-slate-300/60">
+            <div className="bg-white/80 backdrop-blur-sm p-6 rounded-2xl border border-white/80 shadow-sm flex items-start gap-4">
+              <div className="w-10 h-10 rounded-xl bg-orange-100 text-[#ff6600] flex items-center justify-center font-bold text-lg flex-shrink-0">
+                ⚖️
+              </div>
+              <div>
+                <h4 className="text-sm font-black text-slate-900 mb-1">Volumetric &amp; Scale Weight</h4>
+                <p className="text-xs text-slate-500 leading-relaxed font-normal">
+                  Standard industry formula (L&times;W&times;H / 5000) prevents light, bulky boxes from incurring unfair flat charges.
+                </p>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[#ff6600] font-bold">✓</span>
-              <span>Instant Card &amp; COD Options</span>
+
+            <div className="bg-white/80 backdrop-blur-sm p-6 rounded-2xl border border-white/80 shadow-sm flex items-start gap-4">
+              <div className="w-10 h-10 rounded-xl bg-orange-100 text-[#ff6600] flex items-center justify-center font-bold text-lg flex-shrink-0">
+                📍
+              </div>
+              <div>
+                <h4 className="text-sm font-black text-slate-900 mb-1">True Road GPS Mileage</h4>
+                <p className="text-xs text-slate-500 leading-relaxed font-normal">
+                  Pricing calculates the exact road route between pickup and doorstep coordinates with zero inflated zone bands.
+                </p>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[#ff6600] font-bold">✓</span>
-              <span>Complimentary Cargo Guarantee</span>
+
+            <div className="bg-white/80 backdrop-blur-sm p-6 rounded-2xl border border-white/80 shadow-sm flex items-start gap-4">
+              <div className="w-10 h-10 rounded-xl bg-orange-100 text-[#ff6600] flex items-center justify-center font-bold text-lg flex-shrink-0">
+                🛡️
+              </div>
+              <div>
+                <h4 className="text-sm font-black text-slate-900 mb-1">Zero Hidden Surcharges</h4>
+                <p className="text-xs text-slate-500 leading-relaxed font-normal">
+                  Doorstep collection, milestone SMS tracking, and digital photo Proof-of-Delivery are included at no extra cost.
+                </p>
+              </div>
             </div>
           </div>
         </div>

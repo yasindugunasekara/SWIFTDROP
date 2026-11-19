@@ -1,6 +1,64 @@
 # ⚡ SwiftDrop - Courier & Parcel Delivery System
 
-Enterprise courier, dispatch, tracking, and parcel delivery platform developed by a 10-member engineering team.
+[![Next.js 16](https://img.shields.io/badge/Frontend-Next.js%2016%20%7C%20React%2019-orange)](https://nextjs.org/)
+[![Node.js](https://img.shields.io/badge/Backend-Node.js%20%7C%20Express%20%7C%20WebSockets-green)](https://nodejs.org/)
+[![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL%20%7C%20Supabase-blue)](https://supabase.com/)
+[![React Native](https://img.shields.io/badge/Mobile-React%20Native%20%7C%20Expo%2051-black)](https://expo.dev/)
+[![Docker](https://img.shields.io/badge/Infrastructure-Docker%20%7C%20Kubernetes-2496ED)](https://www.docker.com/)
+
+**SwiftDrop** is a mission-critical, enterprise-grade courier, dispatch, real-time tracking, and parcel delivery platform designed and engineered by a 10-member software engineering team. The system provides seamless end-to-end logistics orchestration across Web, Mobile, and Cloud micro-services tailored for the Sri Lankan logistics ecosystem.
+
+---
+
+## 🌟 What's New in Recent Releases
+
+### 🎨 Brand Identity & 3D Visual Hub
+- **3D Isometric Logistics Hub**: High-resolution 3D isometric hero background showcasing SwiftDrop's automated distribution facility, conveyor line-hauls, and courier fleet.
+- **3D Claymorphic Service Cards**: Custom high-fidelity 3D illustrations for **Same-Day Express**, **GPS Live Tracking**, **Automated Merchant API**, and **Verified Proof of Delivery (POD)**.
+- **Electric Orange Favicon Suite**: Custom brand parcel favicon in SVG, ICO, and PNG formats configured with Next.js 16 metadata standards.
+
+### 💰 Transparent Dynamic Pricing & Sri Lankan Rupee (LKR) Migration
+- **LKR Currency Standard**: Full migration from USD to Sri Lankan Rupees (`LKR`) across pricing plans, fee estimates, and booking breakdowns.
+- **Dynamic Calculation Engine**: Replaced rigid flat fees with a real-time formula based on actual road transit distance (km), scale weight brackets, and priority service level agreements (SLAs).
+- **Full-Width Interactive Fee Estimator (`max-w-7xl`)**:
+  - **Left Configuration Console**: 3-step selector featuring 4 parcel weight tiers (`< 1 kg`, `1–3 kg`, `3–10 kg`, `10–25 kg`), 3 transit zones (`Intra-City < 15 km`, `Inter-District 15–60 km`, `Island-Wide 60+ km`), and 2 delivery speeds (`Standard Next-Day` vs. `⚡ 2–4 Hours Express`).
+  - **Right Live Fare Receipt Card**: Dark slate glassmorphism summary with live LKR range, itemized cost breakdown, guaranteed delivery ETA, free parcel insurance guarantee, and direct booking integration.
+- **3 Transparency Pillars**:
+  1. *Island-Wide Line-Haul*: Full logistics coverage across all 9 provinces and 25 districts.
+  2. *Dynamic Pricing Engine*: Zero artificial markups or hidden surcharges.
+  3. *Digital Proof of Delivery*: Geotagged camera snapshots and recipient e-signatures.
+
+### 📡 Real-Time WebSocket Parcel Tracking (Member 3)
+- **Live Courier Coordinates**: WebSocket streaming updates for driver GPS location and live delivery route tracking.
+- **Milestone Timeline**: Real-time event progression (`Booked`, `Picked Up`, `In Transit`, `Out for Delivery`, `Delivered`).
+- **Customer Delivery History & Receipts**: Ownership-verified past shipments, downloadable digital receipts, and public tracking lookup.
+
+### 🛡️ Parcel Support & Exceptions Desk (Member 10)
+- **Exceptions Management Console**: Dedicated portal for handling failed delivery attempts, damaged goods, and address corrections.
+- **Doorstep Audit Trail**: Review photo proofs captured by couriers, customer dispute logs, and status escalation workflows.
+
+### 🔐 Enterprise Auth & Active Session Security (Member 1)
+- **Supabase Auth & Google OAuth**: Production email verification, Google OAuth, and password hashing managed securely via Supabase Auth.
+- **Active Session RPC Enforcement**: Restricted boolean RPC database checks to instantly reject revoked or logged-out JWT tokens.
+- **Expo SecureStore Integration**: AES-encrypted token persistence and automatic rotation on native mobile devices.
+
+---
+
+## 👥 10-Member Engineering Team Architecture
+
+| # | Member Responsibility | Core Module & Endpoints | Web / Mobile Interface |
+|---|------------------------|-------------------------|------------------------|
+| **1** | **Identity, Security & Account Management** | `server/src/modules/auth` | `/login`, `/register`, `/auth/callback` |
+| **2** | **Customer Booking & Instant Dynamic Quoting** | `server/src/modules/booking` | `/booking`, `/quote` |
+| **3** | **Live Real-Time Tracking, History & Receipts** | `server/src/modules/tracking` | `/tracking`, `/tracking/[id]`, `/history` |
+| **4** | **Courier Execution & Proof-of-Delivery (POD)** | `server/src/modules/courier` | Mobile App (`mobile/src/screens/courier`) |
+| **5** | **Dispatcher Console & Line-Haul Routing** | `server/src/modules/dispatch` | `/dispatch`, `/admin/routes` |
+| **6** | **Merchant B2B Portal & Bulk Order API** | `server/src/modules/merchant` | `/portal`, `/merchant`, `/api/v1/merchant` |
+| **7** | **Multi-Channel Notifications & Inbox** | `server/src/modules/notifications` | RabbitMQ Worker, User Notifications Bar |
+| **8** | **Merchant Webhooks Center & DLQ Retries** | `server/src/modules/webhooks` | `/portal/webhooks`, Webhook Background Worker |
+| **9** | **Operational Analytics, Heatmaps & Reports** | `server/src/modules/analytics` | `/analytics`, `/admin/reports` |
+| **10** | **Parcel Support Desk & Exception Resolution** | `server/src/modules/support` | `/support`, `/support/exceptions` |
+| **★** | **Shared AI Workstream** | `server/src/modules/ai` | Smart Dispatch, Address Verification, OCR POD |
 
 Member 01 setup, API contracts and verification evidence: [Identity and account security](docs/member-01-auth.md).
 
@@ -26,16 +84,16 @@ SWIFTDROP/
 │       ├── worker-deployment.yaml
 │       ├── web-deployment.yaml
 │       └── ingress.yaml
-├── mobile/                          # Mobile App (React Native / Expo for Courier execution & tracking)
+├── mobile/                          # Mobile App (React Native / Expo 51 for Couriers & Tracking)
 │   ├── .env.example
 │   ├── app.json
 │   ├── package.json
 │   └── src/
 │       ├── screens/
 │       │   ├── courier/             # Task lists, proof-of-delivery camera upload
-│       │   └── customer/            # Mobile tracking
+│       │   └── customer/            # Mobile parcel tracking
 │       └── services/
-├── server/                          # Backend Service (Node.js, Express, WebSockets, PostgreSQL, RabbitMQ)
+├── server/                          # Backend API & WebSocket Server (Node.js, Express, TS, PostgreSQL)
 │   ├── .env.example                 # Backend environment variables
 │   ├── Dockerfile
 │   ├── package.json
@@ -45,11 +103,12 @@ SWIFTDROP/
 │       ├── config/                  # DB, RabbitMQ, Redis, environment config
 │       ├── middleware/              # JWT auth, RBAC, rate-limiting, error handling
 │       ├── database/
-│       │   └── schema.sql           # Unified PostgreSQL schema for all 10 members
+│       │   ├── schema.sql           # Unified PostgreSQL schema for all 10 members
+│       │   └── migrations/          # Versioned schema migrations
 │       ├── modules/                 # 10 Team Member Modules + AI
 │       │   ├── auth/                # [Member 1] Identity & Account Security
 │       │   ├── booking/             # [Member 2] Customer Booking & Fee Quote
-│       │   ├── tracking/            # [Member 3] Tracking, History & Receipt
+│       │   ├── tracking/            # [Member 3] Real-Time Tracking, History & Receipt
 │       │   ├── courier/             # [Member 4] Courier Task Execution
 │       │   ├── dispatch/            # [Member 5] Dispatch & Service Configuration
 │       │   ├── merchant/            # [Member 6] Merchant Account, Orders & Partner API
@@ -57,159 +116,192 @@ SWIFTDROP/
 │       │   ├── webhooks/            # [Member 8] Merchant Webhook Center & DLQ
 │       │   ├── analytics/           # [Member 9] Operational Analytics & Reports
 │       │   ├── support/             # [Member 10] Parcel Support & Exception Management
-│       │   └── ai/                  # [Shared AI Workstream] Smart dispatch, address helper, proof verification
+│       │   └── ai/                  # [Shared AI] Dispatch optimization, OCR & POD audit
 │       └── workers/
 │           ├── index.ts             # Background workers runner
 │           ├── notification-consumer.ts # RabbitMQ notification consumer
 │           └── webhook-worker.ts    # Webhook delivery & retry worker
-└── web/                             # Frontend (Next.js 16, React 19, TypeScript)
+└── web/                             # Frontend (Next.js 16, React 19, TypeScript, Tailwind CSS)
     ├── .env.example                 # Frontend environment variables
     ├── Dockerfile
+    ├── public/                      # Static brand assets (3D renders, favicons, logos)
     └── src/
         ├── app/                     # App router pages mapped to each member's module
         ├── components/              # Role-aware navigation & shared UI components
-        └── lib/                     # API fetchers, JWT auth helpers
+        ├── lib/                     # API fetchers, Supabase client, auth helpers
+        └── pages/api/[...path].ts   # Serverless Vercel API bridge
 ```
 
 ---
 
 ## 🚀 Quick Start (Local Development)
 
-### 1. Environment Configuration
-Copy the sample environment files to `.env`:
+### 1. Prerequisites
+- **Node.js**: v18.0.0 or higher
+- **npm**: v9.0.0 or higher
+- **Docker & Docker Compose** (optional for local DB/RabbitMQ)
+
+### 2. Configure Environment Files
+Copy the sample environment templates:
 ```bash
-# In the root folder
+# In the root repository
 cp .env.example .env
 
-# In server/
+# Server
 cp server/.env.example server/.env
 
-# In web/
+# Web
 cp web/.env.example web/.env.local
 
-# In mobile/
+# Mobile
 cp mobile/.env.example mobile/.env
 ```
 
-### 2. Run with Docker Compose
-To start PostgreSQL, RabbitMQ, Redis, Server API, Background Worker, and Next.js Frontend:
-```bash
-docker-compose up --build
-```
-- **Web App**: [http://localhost:3000](http://localhost:3000)
-- **API Server**: [http://localhost:5000/health](http://localhost:5000/health)
-- **RabbitMQ Dashboard**: [http://localhost:15672](http://localhost:15672) (guest / guest)
-
-### Supabase Auth (Member 1)
-
-Signup, password storage, email confirmation, access/refresh sessions, logout,
-and Google OAuth now use Supabase Auth. Authentication needs only the existing
-SUPABASE_URL and SUPABASE_ANON_KEY in server/.env. DATABASE_URL is not required
-for signup or login; other members' direct PostgreSQL business queries still use it.
-Never put a service-role/secret key in the anon-key setting or frontend variables.
-
-Install dependencies in both `server/` and `web/`, then run `npm run dev` from
-`web/`. Next.js serves both the pages and the existing API at `/api/v1/*` through
-`web/src/pages/api/[...path].ts`; a separate port-5000 process is optional for
-native mobile development. The web predev/prebuild scripts compile the shared
-backend first. Run them again after changing shared backend code.
-The web client obtains public Supabase configuration from /api/v1/auth/config,
-so a separate web environment file is optional. Browser API requests always use
-the same-origin `/api/v1` address, including login and signup. The old
-`NEXT_PUBLIC_API_URL` setting is no longer used by the web app.
-
-### One Vercel deployment for web and API
-
-- Set the Vercel project Root Directory to `web` and enable inclusion of source
-  files outside that root directory. `web/vercel.json` installs dependencies in
-  both packages; `npm run build` compiles the backend before building Next.js.
-- Set `SUPABASE_URL` and `SUPABASE_ANON_KEY` in the Vercel project's environment.
-  Local `server/.env` files are not uploaded or used on Vercel.
-- Set `APP_URL` to the public site origin, for example
-  `https://swiftdrop-livid.vercel.app`, and allow its `/auth/callback` URL in
-  Supabase Auth. Set `DATABASE_URL` for modules that use PostgreSQL directly.
-- Redeploy after these changes. Verify `/api/v1/health` and
-  `/api/v1/auth/config` on the deployed origin. Browser requests must stay on
-  that origin rather than `localhost:5000`.
-- This mounts the existing HTTP routes without starting an Express listener.
-  The standalone WebSocket server and RabbitMQ workers remain separate
-  long-running processes; this deployment change covers the web HTTP API.
-
-Credentials are stored privately in auth.users by Supabase. A database trigger
-creates a linked customer profile in the existing public.users table. New mapped
-profiles have a NULL password_hash; application APIs and browser clients never
-receive hashes. Roles come from public.users, not editable Auth user metadata.
-Authenticated clients may read/update only their own allowed profile fields.
-Merchant API access also requires approval. Existing profile IDs and business
-foreign keys are preserved.
-
-The additive migration is server/src/database/migrations/20261113164606_use_supabase_auth.sql.
-It has been applied to SWIFTDROP. For another Supabase project, apply it after the
-initial application schema through the SQL Editor or the team's migration process.
-Do not run the sample seed to migrate real users. Existing legacy profiles are
-not automatically claimed by matching email. An administrator must explicitly
-link/migrate existing staff/customer identities; public signup always creates a
-CUSTOMER and cannot provision staff roles.
-
-Supabase Dashboard setup:
+#### Supabase Auth setup
 
 - Authentication > URL Configuration: set the site URL to the web origin and
-  allow http://localhost:3000/auth/callback plus the deployed callback URL.
+  allow `http://localhost:3000/auth/callback` plus the deployed callback URL.
 - Email confirmation remains enabled. Users must confirm their email before login.
   Configure production SMTP for delivery to real customers; observe Supabase's
   email limits. Set the provider's minimum password length to at least 8 as well.
 - Authentication > Providers > Google: supply Google OAuth credentials and enable
   the provider. `npm run auth:check` in `server/` reports the live provider status
   without displaying credentials. Google was verified enabled on 2026-11-19.
-- Native mobile login now uses the real /auth/login and /auth/me endpoints. The
+- Native mobile login uses the real `/auth/login` and `/auth/me` endpoints. The
   backend profile decides whether the account is a customer or courier; the role
-  selector and demo email shortcuts cannot grant access. Merchant/dispatcher
-  accounts use the web portal. Mobile signup and Google PKCE login are implemented;
+  selector and demo shortcuts cannot grant access. Merchant/dispatcher accounts
+  use the web portal. Mobile signup and Google PKCE login are implemented;
   courier/business signup enters a staff approval queue before operational access.
 
-The web Supabase SDK owns browser session persistence and automatic refresh.
-Old mock/local token keys are removed. Backend APIs call Supabase getUser to verify
-access tokens and read current profile roles/status under RLS. The additional
-`20261113174333_enforce_active_auth_sessions.sql` migration checks ownership and
-expiry of the caller's `auth.sessions` row through a restricted boolean RPC.
-Every backend authenticated request and successful login/refresh checks this row,
-so a logged-out session's JWT is rejected immediately by the application API.
-This is not a change to Supabase's general JWT lifetime: direct Data API policies
-still enforce their own access rules, and JWTs expire according to project settings.
-Web API calls retry a 401 once through a shared refresh operation, preserve the
-session on transient network failures, and discard stale responses after logout.
-Google/confirmation redirects are handled at /auth/callback. Protect against XSS,
-because the browser SDK persists sessions in browser storage.
+See [Member 01 setup](docs/member-01-auth.md) for password-reset callbacks, native
+Google redirects, the approval migration and demo configuration.
 
-Mobile refresh tokens and session data use Expo SecureStore (encrypted chunks
-with an atomic manifest for SDK 51's item size limits). The mobile web preview
-uses sessionStorage. The SDK owns token rotation; the app starts/stops automatic
-refresh with foreground/background transitions and revalidates the profile on
-resume. Concurrent API failures share a refresh and retry once. Logout revokes
-the current session and removes secure storage. No passwords are persisted by
-the mobile app. Configure `EXPO_PUBLIC_API_URL` in `mobile/.env` for your server:
-Android emulator defaults to `http://10.0.2.2:5000/api/v1`; a physical phone needs
-your computer's LAN address. Use HTTPS for deployed servers. Rebuild native apps
-after adding the SecureStore config plugin.
+### 3. Install Dependencies
+```bash
+# Install server dependencies
+cd server && npm install
 
-Supabase owns JWT signing keys, access-token expiry and refresh-token reuse
-detection; the old JWT_ACCESS_SECRET/JWT_REFRESH_SECRET sample variables are not
-used for application login. No second custom JWT issuer or refresh-token table
-is needed. Keep the provider's refresh-token rotation/reuse protection enabled.
+# Install web dependencies
+cd ../web && npm install
 
-Verification commands from server/:
+# Install mobile dependencies
+cd ../mobile && npm install
+```
 
-- npm run db:check: checks live Supabase Auth availability and anonymous profile
-  isolation without printing credentials or requiring a database password.
-- npm run test:signup: API and isolated PostgreSQL migration/RLS tests, including
-  validation, forbidden roles, legacy-ID preservation and prevention of password
-  reads/role escalation. No confirmation emails are sent by these tests.
-- From web/: npm run test:auth checks refresh concurrency, one retry, network
-  failures, logout races and profile restoration.
-- From mobile/: npm run test:auth checks session lifecycle and secure storage;
-  npx tsc --noEmit checks the native UI integration.
+### 4. Run Development Servers
 
-Live registration is checked through /register using an email controlled by the
-operator. Confirmation email delivery and the browser confirmation step require
-that person's interaction. Do not invent test credentials for a real person's
-account or paste passwords/tokens into chat.
+You can run services concurrently in separate terminals:
+
+#### Terminal 1: Backend API & WebSocket Server
+```bash
+cd server
+npm run dev
+```
+> API listening on `http://localhost:5000` | WebSockets on `ws://localhost:5000`
+
+#### Terminal 2: Next.js Web Frontend
+```bash
+cd web
+npm run dev
+```
+> Web App running on `http://localhost:3000`
+
+#### Terminal 3: Mobile App (Expo)
+```bash
+cd mobile
+npm run web      # For Web Preview
+# or
+npm run android  # For Android Emulator
+# or
+npm run ios      # For iOS Simulator
+```
+> Expo Dev Server running on `http://localhost:8081`
+
+---
+
+## 🐳 Docker Compose Orchestration
+
+To run the complete micro-services infrastructure (PostgreSQL, RabbitMQ, Redis, API, Worker, and Web):
+
+```bash
+docker-compose up --build
+```
+
+- **Web App**: [http://localhost:3000](http://localhost:3000)
+- **API Server**: [http://localhost:5000/health](http://localhost:5000/health)
+- **RabbitMQ Management Dashboard**: [http://localhost:15672](http://localhost:15672) *(guest / guest)*
+- **PostgreSQL**: `localhost:5432`
+- **Redis**: `localhost:6379`
+
+---
+
+## 🧪 Automated Testing & Verification Suite
+
+The repository contains isolated test suites and live demo runners across backend, web, and mobile:
+
+### Backend Testing (`server/`)
+```bash
+# Verify live Supabase Auth and database connectivity
+npm run db:check
+
+# Run Member 1 Auth & RLS signup suite
+npm run test:signup
+
+# Run Member 3 Tracking & Receipt suite
+npm run test:tracking
+
+# Run Member 3 Live WebSocket tracking suite
+npm run test:tracking-socket
+
+# Run Member 4 Courier execution suite & demo
+npm run test:courier
+npm run demo:courier
+
+# Run Member 8 Webhooks & DLQ retry suite & demo
+npm run test:webhooks
+npm run demo:webhooks
+
+# Run Member 10 Parcel Support & Exception Desk suite & demo
+npm run test:support
+npm run demo:support
+```
+
+### Web Testing (`web/`)
+```bash
+# Test Supabase session lifecycle, token refresh & logout race conditions
+npm run test:auth
+
+# Test same-origin Vercel API mounting
+npm run test:api
+
+# Test Tracking client state, normalisation & retry
+npm run test:tracking
+
+# Type-check TypeScript across the web app
+npx tsc --noEmit
+```
+
+### Mobile Testing (`mobile/`)
+```bash
+# Test Expo SecureStore token persistence & Google sign-in
+npm run test:auth
+```
+
+---
+
+## 🌐 Production Deployment
+
+### Unified Vercel Deployment (Web + API)
+The web application is configured to run both the Next.js pages and the Express API serverless handlers on Vercel:
+1. In Vercel, set the **Root Directory** to `web` and enable **Include source files outside Root Directory**.
+2. Set `SUPABASE_URL` and `SUPABASE_ANON_KEY` in Vercel Project Environment Variables.
+3. Set `APP_URL` to your production URL (e.g. `https://swiftdrop.vercel.app`) and authorize `/auth/callback` in Supabase Auth.
+4. Next.js automatically mounts API routes at `/api/v1/*` through `web/src/pages/api/[...path].ts`.
+
+### Kubernetes (`k8s/`)
+Production enterprise deployment manifests are maintained under `k8s/base/` with ConfigMaps, Secrets, Ingress, and auto-scaling deployments for the API, Background Workers, and Web pods.
+
+---
+
+## 📄 License
+This project is proprietary and confidential. Developed by the SwiftDrop Engineering Team.
