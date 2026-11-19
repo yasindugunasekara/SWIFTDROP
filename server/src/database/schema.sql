@@ -131,6 +131,12 @@ CREATE TABLE IF NOT EXISTS parcel_status_history (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Member 3: timeline and customer-history lookups
+CREATE INDEX IF NOT EXISTS idx_parcel_status_history_parcel_created
+    ON parcel_status_history (parcel_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_parcels_customer_created
+    ON parcels (customer_id, created_at DESC);
+
 CREATE TABLE IF NOT EXISTS courier_delivery_proofs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     parcel_id UUID NOT NULL REFERENCES parcels(id) ON DELETE CASCADE,

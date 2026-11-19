@@ -247,7 +247,16 @@ export default function CustomerDashboardPage() {
                   </svg>
                 ),
               },
-            ].map((item) => (
+            ].map((item) => (item.id === 'history' || item.id === 'bills') ? (
+              <Link
+                key={item.id}
+                href="/history"
+                className="w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl text-xs sm:text-sm font-bold transition-all cursor-pointer text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+              >
+                <span className="text-slate-400">{item.icon}</span>
+                <span>{item.label}</span>
+              </Link>
+            ) : (
               <button
                 key={item.id}
                 onClick={() => setActiveNav(item.id)}
@@ -555,7 +564,7 @@ export default function CustomerDashboardPage() {
             <h3 className="text-sm font-black text-slate-900 tracking-tight">
               Recent Order
             </h3>
-            <Link href="/tracking/SWIFT-892102" className="text-xs font-bold text-slate-400 hover:text-[#ff6600] transition-colors">
+            <Link href="/history" className="text-xs font-bold text-slate-400 hover:text-[#ff6600] transition-colors">
               View all &gt;
             </Link>
           </div>

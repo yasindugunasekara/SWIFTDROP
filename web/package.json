@@ -10,7 +10,8 @@
     "test:auth": "node --test tests/auth-session.test.mjs",
     "predev": "npm --prefix ../server run build",
     "prebuild": "npm --prefix ../server run build",
-    "test:api": "node --test tests/same-origin-api.test.mjs"
+    "test:api": "node --test tests/same-origin-api.test.mjs",
+    "test:tracking": "node --test tests/tracking.test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.119.0",

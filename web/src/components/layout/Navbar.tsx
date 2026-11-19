@@ -12,7 +12,7 @@ export default function Navbar() {
   const user = useSyncExternalStore(subscribeAuth, getStoredUser, () => null);
 
   // Remove the public marketing navbar completely when inside any dashboard route
-  const isDashboardRoute = ['/booking', '/tasks', '/portal', '/webhooks', '/dispatch', '/analytics', '/inbox', '/config', '/exceptions'].some(
+  const isDashboardRoute = ['/booking', '/history', '/tasks', '/portal', '/webhooks', '/dispatch', '/analytics', '/inbox', '/config', '/exceptions'].some(
     (prefix) => pathname === prefix || pathname.startsWith(prefix + '/')
   );
 
@@ -52,6 +52,9 @@ export default function Navbar() {
           </Link>
           <Link href="/#pricing" className="text-xs sm:text-sm font-bold text-slate-700 hover:text-[#ff6600] transition-colors tracking-wide">
             PRICING
+          </Link>
+          <Link href="/tracking" className="text-xs sm:text-sm font-bold text-slate-700 hover:text-[#ff6600] transition-colors tracking-wide">
+            TRACK
           </Link>
         </nav>
 
