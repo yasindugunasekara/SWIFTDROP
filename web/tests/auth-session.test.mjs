@@ -15,6 +15,8 @@ function harness({ fetch = async () => ({ ok: true, json: async () => ({ user: c
   refreshSession = async () => ({ data: { session: { access_token: 'fresh-token' } }, error: null }),
   signInWithOAuth = async () => ({ data: { url: 'https://auth.example.test/authorize' }, error: null }),
   getSession = async () => ({ data: { session: { access_token: 'test-token' } }, error: null }),
+  getUser = async () => ({ data: { user: customer }, error: null }),
+  updateUser = async () => ({ data: { user: customer }, error: null }),
   location = { origin: 'https://swiftdrop.example.test', search: '', hash: '' } } = {}) {
   let callback;
   const scheduled = [];
@@ -24,11 +26,13 @@ function harness({ fetch = async () => ({ ok: true, json: async () => ({ user: c
     signOut,
     refreshSession,
     signInWithOAuth,
+    getUser, updateUser,
+    setSession: async () => ({ error: null }),
   };
   const exports = {};
   vm.runInNewContext(source, {
     exports, require: () => ({ getSupabaseClient: async () => ({ auth }) }),
-    process: { env: {} }, fetch, AbortSignal, URLSearchParams, window: { location }, localStorage: { removeItem() {} },
+    process: { env: {} }, fetch, AbortSignal, URLSearchParams, TextEncoder, window: { location, history: { replaceState() {} } }, localStorage: { removeItem() {} },
     setTimeout: task => scheduled.push(task),
   });
   const apiSource = ts.transpileModule(readFileSync(new URL('../src/lib/api.ts', import.meta.url), 'utf8'), {
@@ -209,4 +213,58 @@ test('callback with no restored session reports a retry instead of pretending si
   const { api } = harness({ getSession: async () => ({ data: { session: null }, error: null }) });
   await assert.rejects(api.completeAuthRedirect(), /session could not be restored/);
   assert.equal(api.getStoredUser(), null);
+});
+
+test('dashboard routing covers all roles and keeps pending/rejected applicants on approval', () => {
+  const { api } = harness();
+  for (const [role, route] of Object.entries({ CUSTOMER: '/booking', COURIER: '/tasks', MERCHANT: '/portal', DISPATCHER: '/dispatch', ADMIN: '/dispatch' })) {
+    assert.equal(api.dashboardFor({ ...customer, role, approvalStatus: 'APPROVED' }), route);
+  }
+  for (const status of ['PENDING', 'REJECTED']) assert.equal(api.dashboardFor({ ...customer, application: { requestedRole: 'COURIER', status } }), '/approval');
+  assert.equal(api.dashboardFor({ ...customer, role: 'COURIER', application: { status: 'APPROVED' } }), '/tasks');
+});
+
+test('password reset requests use the backend and display its generic response', async () => {
+  let request;
+  const { api } = harness({ fetch: async (url, options) => {
+    request = { url, options }; return { ok: true, json: async () => ({ message: 'If an account exists, check your email.' }) };
+  } });
+  assert.match(await api.requestPasswordReset('customer@example.test'), /If an account exists/);
+  assert.equal(request.url, '/api/v1/auth/forgot-password');
+  assert.equal(JSON.parse(request.options.body).email, 'customer@example.test');
+});
+
+test('reset page rejects missing/expired sessions and provider errors before accepting a password', async () => {
+  await assert.rejects(harness({ getSession: async () => ({ data: { session: null } }) }).api.preparePasswordReset(), /invalid or expired/);
+  await assert.rejects(harness({ getUser: async () => ({ data: {}, error: {} }) }).api.preparePasswordReset(), /invalid or expired/);
+  await assert.rejects(harness({ location: { search: '?error=access_denied', hash: '' } }).api.preparePasswordReset(), /invalid or expired/);
+  await harness().api.preparePasswordReset();
+});
+
+test('password update enforces matching/UTF-8 limits and globally signs out only after a successful update', async () => {
+  const calls = [];
+  const { api } = harness({ updateUser: async input => { calls.push(input); return { error: null }; },
+    signOut: async input => { calls.push(input); return { error: null }; } });
+  await assert.rejects(api.updatePassword('short', 'short'), /at least 8/);
+  await assert.rejects(api.updatePassword('Password@123', 'different'), /do not match/);
+  await assert.rejects(api.updatePassword('😀'.repeat(20), '😀'.repeat(20)), /72 UTF-8/);
+  api.saveAuthSession(customer);
+  await api.updatePassword('Password@123', 'Password@123');
+  assert.equal(calls.length, 2); assert.equal(calls[0].password, 'Password@123'); assert.equal(calls[1].scope, 'global');
+  assert.equal(api.getStoredUser(), null);
+  let signedOut = false;
+  const rejected = harness({ updateUser: async () => ({ error: {} }), signOut: async () => { signedOut = true; return { error: null }; } });
+  await assert.rejects(rejected.api.updatePassword('Password@123', 'Password@123'), /Unable to update/);
+  assert.equal(signedOut, false);
+});
+
+test('demo login persists only server-issued tokens and verified identity', async () => {
+  let request;
+  const { api } = harness({ fetch: async (url, options) => {
+    request = { url, options }; return { ok: true, json: async () => ({ user: customer, accessToken: 'demo-access', refreshToken: 'demo-refresh' }) };
+  } });
+  assert.equal(await api.signInDemo('CUSTOMER'), customer);
+  assert.equal(request.url, '/api/v1/auth/demo');
+  assert.deepEqual(JSON.parse(request.options.body), { role: 'CUSTOMER' });
+  assert.equal(api.getStoredUser(), customer);
 });

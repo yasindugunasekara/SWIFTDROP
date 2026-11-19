@@ -7,6 +7,7 @@ export type UserRole = typeof roles[number];
 export interface AuthProfile {
   id: string; authUserId: string; email: string; fullName: string; phone: string | null;
   role: UserRole; merchantId?: string; approvalStatus?: string;
+  application?: { id: string; requestedRole: 'COURIER' | 'MERCHANT'; status: string; reviewNote: string | null };
 }
 export class AuthServiceError extends Error {
   constructor(public status: number, public code: string, message: string) { super(message); }
@@ -22,6 +23,7 @@ export interface AuthGateway {
   logout(accessToken: string): Promise<void>;
   google(idToken: string): Promise<AuthSession>;
   updateProfile(accessToken: string, input: { fullName: string; phone?: string | null }): Promise<AuthProfile>;
+  requestPasswordReset(email: string): Promise<void>;
 }
 
 async function profileFor(accessToken: string, authUserId: string): Promise<AuthProfile> {
@@ -37,6 +39,11 @@ async function profileFor(accessToken: string, authUserId: string): Promise<Auth
   }
   const profile: AuthProfile = { id: data.id, authUserId, email: data.email, fullName: data.full_name,
     phone: data.phone, role: data.role };
+  const application = await client.from('account_applications')
+    .select('id,requested_role,status,review_note').eq('auth_user_id', authUserId).maybeSingle();
+  if (application.error) throw new AuthServiceError(503, 'PROFILE_UNAVAILABLE', 'Unable to load account approval status.');
+  if (application.data) profile.application = { id: application.data.id, requestedRole: application.data.requested_role,
+    status: application.data.status, reviewNote: application.data.review_note };
   if (profile.role === 'MERCHANT') {
     const merchant = await client.from('merchants').select('id,approval_status').eq('user_id', data.id).maybeSingle();
     if (merchant.error) throw new AuthServiceError(503, 'PROFILE_UNAVAILABLE', 'Unable to load your business account.');
@@ -53,6 +60,15 @@ async function sessionResponse(session: Session | null): Promise<AuthSession> {
 }
 
 export const authGateway: AuthGateway = {
+  async requestPasswordReset(email) {
+    const { error } = await createSupabaseClient().auth.resetPasswordForEmail(email, {
+      redirectTo: `${config.appUrl}/reset-password`,
+    });
+    // Never reveal whether an email belongs to an account.
+    if (error && (error.status === 429 || !error.status || error.status >= 500)) {
+      throw new AuthServiceError(error.status === 429 ? 429 : 503, 'RESET_UNAVAILABLE', 'Unable to send a reset email right now. Please retry later.');
+    }
+  },
   async register(input) {
     const { data, error } = await createSupabaseClient().auth.signUp({ email: input.email, password: input.password,
       options: { data: { full_name: input.fullName, ...(input.application ? { registration_application: input.application } : {}) }, emailRedirectTo: `${config.appUrl}/auth/callback` } });

@@ -1,6 +1,9 @@
 import { Router, Request, Response } from 'express';
 import { authenticateToken } from '../../middleware/auth.js';
 import { requireRoles } from '../../middleware/rbac.js';
+import { z } from 'zod';
+import { setMerchantApproval } from '../merchant/merchant.service.js';
+import { asyncHandler } from '../merchant/merchant.utils.js';
 
 const router = Router();
 
@@ -30,8 +33,10 @@ router.put('/config/pricing-zones', async (req: Request, res: Response) => {
 });
 
 // Merchant approvals
-router.patch('/merchants/:merchantId/approval', async (req: Request, res: Response) => {
-  res.json({ message: 'Merchant onboarding approval updated' });
-});
+router.patch('/merchants/:merchantId/approval', asyncHandler(async (req, res) => {
+  const merchantId = z.string().uuid().parse(req.params.merchantId);
+  const { status } = z.object({ status: z.enum(['PENDING', 'APPROVED', 'REJECTED']) }).strict().parse(req.body);
+  res.json({ merchant: await setMerchantApproval(merchantId, status) });
+}));
 
 export default router;

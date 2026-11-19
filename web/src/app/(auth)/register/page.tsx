@@ -14,6 +14,7 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState<'CUSTOMER' | 'COURIER' | 'MERCHANT'>('CUSTOMER');
+  const [details, setDetails] = useState({ phone: '', address: '', vehicleType: 'Motorcycle', vehicleNumber: '', companyName: '', registrationNumber: '' });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -24,16 +25,19 @@ export default function RegisterPage() {
     e.preventDefault();
     if (submitting.current) return;
     setError('');
-    if (role !== 'CUSTOMER') return;
     if (fullName.trim().length < 2 || /[\u0000-\u001f\u007f]/.test(fullName)) { setError('Enter a valid full name with at least 2 characters.'); return; }
     if (new TextEncoder().encode(password).length > 72) { setError('Password must be at most 72 UTF-8 bytes.'); return; }
     if (password !== confirmPassword) { setError('Passwords do not match.'); return; }
     submitting.current = true; setBusy(true);
     try {
       const base = '/api/v1';
-      const response = await fetch(`${base}/auth/register`, {
+      const response = await fetch(`${base}/auth/${role === 'CUSTOMER' ? 'register' : 'register-application'}`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, cache: 'no-store',
-        body: JSON.stringify({ fullName, email, password, confirmPassword, role: 'CUSTOMER' }),
+        body: JSON.stringify({ fullName, email, password, confirmPassword, ...(role === 'CUSTOMER' ? { role } : {
+          application: { role, phone: details.phone, address: details.address, ...(role === 'COURIER'
+            ? { vehicleType: details.vehicleType, vehicleNumber: details.vehicleNumber }
+            : { companyName: details.companyName, registrationNumber: details.registrationNumber }) },
+        }) }),
         signal: AbortSignal.timeout(20000),
       });
       const result = await response.json().catch(() => ({}));
@@ -86,8 +90,7 @@ export default function RegisterPage() {
           ))}
         </div>
         {role !== 'CUSTOMER' && <p className={styles.signupRoleNotice} role="status">
-          {role === 'MERCHANT' ? <>For business registration, <Link href="/portal">open the merchant portal</Link>.</>
-            : 'Contact SwiftDrop to create a courier account.'}
+          Your {role === 'MERCHANT' ? 'business' : 'courier'} application requires staff approval before workspace access is enabled.
         </p>}
         <form onSubmit={handleRegister} className={`${styles.form} ${styles.signupForm}`} aria-label="Create account" aria-busy={busy}>
           {error && <p className={`${styles.alert} ${styles.signupNotice}`} role="alert">{error}</p>}
@@ -131,7 +134,18 @@ export default function RegisterPage() {
                 placeholder="Repeat your password" className={styles.input} />
             </div>
           </div>
-          <button type="submit" disabled={busy || role !== 'CUSTOMER'} className={`${styles.primary} ${styles.signupActions}`}>{busy ? 'Creating account...' : 'Create account'}{!busy && <span className={styles.buttonArrow} aria-hidden="true">&#8594;</span>}</button>
+          {role !== 'CUSTOMER' && <>
+            {(['phone', 'address', ...(role === 'MERCHANT' ? ['companyName', 'registrationNumber'] : details.vehicleType === 'Bicycle' ? [] : ['vehicleNumber'])] as Array<keyof typeof details>).map(key => <div className={styles.field} key={key}>
+              <label htmlFor={`application-${key}`} className={styles.label}>{{ phone: 'Phone number', address: 'Address / delivery area', companyName: 'Company name', registrationNumber: 'Business registration number', vehicleNumber: 'Vehicle registration number', vehicleType: 'Vehicle type' }[key]}</label>
+              <input id={`application-${key}`} className={styles.input} style={{ paddingLeft: 12 }} required disabled={busy} maxLength={key === 'address' ? 300 : key === 'phone' || key === 'vehicleNumber' ? 30 : key === 'companyName' ? 255 : 100}
+                value={details[key]} onChange={event => setDetails(previous => ({ ...previous, [key]: event.target.value }))} />
+            </div>)}
+            {role === 'COURIER' && <div className={styles.field}><label htmlFor="vehicle-type" className={styles.label}>Vehicle type</label>
+              <select id="vehicle-type" className={styles.input} style={{ paddingLeft: 12 }} disabled={busy} value={details.vehicleType} onChange={event => setDetails(previous => ({ ...previous, vehicleType: event.target.value }))}>
+                {['Motorcycle', 'Car', 'Van', 'Bicycle'].map(value => <option key={value}>{value}</option>)}
+              </select></div>}
+          </>}
+          <button type="submit" disabled={busy} className={`${styles.primary} ${styles.signupActions}`}>{busy ? 'Submitting...' : role === 'CUSTOMER' ? 'Create account' : 'Submit application'}{!busy && <span className={styles.buttonArrow} aria-hidden="true">&#8594;</span>}</button>
         </form>
         <p className={`${styles.footer} ${styles.registerFooter}`}>Already have an account? <Link href="/login">Sign in</Link></p>
       </section>

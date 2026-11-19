@@ -11,6 +11,7 @@ import { AuthServiceError, type AuthGateway, type AuthProfile } from './auth.ser
 import { requireRoles } from '../../middleware/rbac.js';
 import { createAuthenticationMiddleware } from '../../middleware/auth.js';
 import { errorHandler } from '../../middleware/error-handler.js';
+import { config } from '../../config/env.js';
 
 const profile: AuthProfile = { id: '11111111-1111-4111-8111-111111111111', authUserId: '22222222-2222-4222-8222-222222222222',
   email: 'customer@example.com', fullName: 'Customer', phone: null, role: 'CUSTOMER' };
@@ -30,7 +31,7 @@ const gateway: AuthGateway = {
     if (token !== 'supabase-access') throw new AuthServiceError(401, 'INVALID_TOKEN', 'Invalid or expired session.');
     return profile;
   },
-  async logout() {}, async google() { return session; }, async updateProfile() { return profile; },
+  async logout() {}, async google() { return session; }, async updateProfile() { return profile; }, async requestPasswordReset() {},
 };
 const servers: Server[] = [];
 let database: PGlite;
@@ -50,7 +51,7 @@ before(async () => {
     CREATE TABLE public.users(id UUID PRIMARY KEY,email VARCHAR(255) UNIQUE NOT NULL,password_hash VARCHAR(255) NOT NULL,
       full_name VARCHAR(150) NOT NULL,phone VARCHAR(30),role user_role NOT NULL DEFAULT 'CUSTOMER',
       is_active BOOLEAN DEFAULT true,created_at TIMESTAMPTZ DEFAULT now(),updated_at TIMESTAMPTZ DEFAULT now());
-    CREATE TABLE public.merchants(id UUID PRIMARY KEY,user_id UUID REFERENCES public.users(id),approval_status TEXT);
+    CREATE TABLE public.merchants(id UUID PRIMARY KEY,user_id UUID REFERENCES public.users(id),approval_status TEXT,company_name TEXT,registration_number TEXT);
     INSERT INTO public.users(id,email,password_hash,full_name,role)
       VALUES ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','legacy@example.com','legacy-hash','Legacy Courier','COURIER');`);
   const migration = await readFile(new URL('../../database/migrations/20261113164606_use_supabase_auth.sql', import.meta.url), 'utf8');
@@ -60,6 +61,9 @@ before(async () => {
   const sessionMigration = await readFile(new URL('../../database/migrations/20261113174333_enforce_active_auth_sessions.sql', import.meta.url), 'utf8');
   await database.exec(sessionMigration);
   await database.exec(sessionMigration);
+  const approvalMigration = await readFile(new URL('../../database/migrations/20261119095136_account_application_approvals.sql', import.meta.url), 'utf8');
+  await database.exec(approvalMigration);
+  await database.exec(approvalMigration);
 });
 after(async () => {
   await Promise.all(servers.map(server => new Promise<void>((resolve, reject) => {
@@ -228,4 +232,110 @@ test('applications reject missing role details and privileged role requests befo
     { role: 'MERCHANT', phone: '0771234567', address: 'Colombo' },
   ]) assert.equal((await request('/api/v1/auth/register-application', { ...credentials, application })).status, 400);
   assert.equal(called, false);
+});
+
+test('password reset normalizes email, returns a generic response, and rejects redirect injection', async () => {
+  let email = '';
+  const request = await app({ async requestPasswordReset(value) { email = value; } });
+  const result = await request('/api/v1/auth/forgot-password', { email: ' Customer@Example.com ' });
+  assert.equal(result.status, 200); assert.equal(email, 'customer@example.com');
+  assert.match(result.body.message, /If an account exists/);
+  assert.equal((await request('/api/v1/auth/forgot-password', { email: 'bad' })).status, 400);
+  assert.equal((await request('/api/v1/auth/forgot-password', { email: profile.email, redirectTo: 'https://evil.test' })).status, 400);
+});
+
+test('signup alias follows the same validation and customer-only rules', async () => {
+  const request = await app();
+  assert.equal((await request('/api/v1/auth/signup', input)).status, 202);
+  assert.equal((await request('/api/v1/auth/signup', { ...input, role: 'ADMIN' })).status, 400);
+});
+
+test('demo login is explicitly gated and authenticates the actual provisioned role', async () => {
+  const enabled = config.authDemoEnabled;
+  try {
+    config.authDemoEnabled = false;
+    const disabled = await app();
+    assert.deepEqual((await disabled('/api/v1/auth/demo')).body.roles, []);
+    assert.equal((await disabled('/api/v1/auth/demo', { role: 'CUSTOMER' })).status, 404);
+    config.authDemoEnabled = true;
+    let submitted = '';
+    const request = await app({ async login(email) { submitted = email; return session; } });
+    assert.equal((await request('/api/v1/auth/demo', { role: 'CUSTOMER' })).status, 200);
+    assert.equal(submitted, 'customer@swiftdrop.com');
+    assert.equal((await request('/api/v1/auth/demo', { role: 'ADMIN' })).status, 400);
+    assert.equal((await request('/api/v1/auth/demo', { role: 'COURIER' })).status, 403);
+  } finally { config.authDemoEnabled = enabled; }
+});
+
+test('application review APIs reject missing tokens and non-staff roles before data access', async () => {
+  const request = await app();
+  assert.equal((await request('/api/v1/auth/applications')).status, 401);
+  assert.equal((await request('/api/v1/auth/applications', undefined, 'supabase-access')).status, 403);
+});
+
+test('all five verified roles respect the staff API boundary', async () => {
+  for (const role of ['CUSTOMER', 'COURIER', 'MERCHANT', 'DISPATCHER', 'ADMIN'] as const) {
+    const request = await app({ async authenticate() { return { ...profile, role, merchantId: role === 'MERCHANT' ? 'merchant-id' : undefined, approvalStatus: 'APPROVED' }; } });
+    assert.equal((await request('/staff', undefined, 'verified-token')).status, ['DISPATCHER','ADMIN'].includes(role) ? 200 : 403, role);
+  }
+});
+
+const courierApplicant = '88888888-8888-4888-8888-888888888888';
+const merchantApplicant = '99999999-9999-4999-8999-999999999999';
+const staffId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+const courierSession = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+const staffSession = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
+async function asActor<T>(id: string, sessionId: string, work: () => Promise<T>): Promise<T> {
+  await database.query("SELECT set_config('request.jwt.claim.sub',$1,false),set_config('request.jwt.claims',$2,false)", [id, JSON.stringify({ session_id: sessionId })]);
+  await database.exec('SET ROLE authenticated');
+  try { return await work(); } finally { await database.exec('RESET ROLE'); }
+}
+test('application snapshots ignore editable metadata changes and never auto-grant roles', async () => {
+  const applications = [
+    [courierApplicant, { requestedRole: 'COURIER', phone: '0771234567', address: 'Colombo', vehicleType: 'Bicycle' }],
+    [merchantApplicant, { requestedRole: 'MERCHANT', phone: '0771234567', address: 'Colombo', companyName: 'Test Store', registrationNumber: 'BR-123' }],
+  ] as const;
+  for (const [id, application] of applications) await database.query('INSERT INTO auth.users(id,email,raw_user_meta_data) VALUES ($1,$2,$3::jsonb)',
+    [id, `${id}@example.test`, JSON.stringify({ full_name: 'Applicant', registration_application: { ...application, status: 'APPROVED' } })]);
+  await database.query('INSERT INTO auth.users(id,email) VALUES ($1,$2)', [staffId, 'staff@example.test']);
+  await database.query("UPDATE public.users SET role='DISPATCHER' WHERE auth_user_id=$1", [staffId]);
+  await database.query('INSERT INTO auth.sessions(id,user_id) VALUES ($1,$2),($3,$4)', [courierSession,courierApplicant,staffSession,staffId]);
+  await database.query("UPDATE auth.users SET raw_user_meta_data='{}' WHERE id=$1", [courierApplicant]);
+  const { rows: [snapshot] } = await database.query<{ status: string; requested_role: string; role: string }>(
+    'SELECT a.status,a.requested_role,u.role FROM public.account_applications a JOIN public.users u ON a.auth_user_id=u.auth_user_id WHERE a.auth_user_id=$1', [courierApplicant]);
+  assert.equal(snapshot.status, 'PENDING'); assert.equal(snapshot.requested_role, 'COURIER'); assert.equal(snapshot.role, 'CUSTOMER');
+});
+test('applicant RLS hides other applications and blocks direct status changes and self-approval', async () => {
+  await asActor(courierApplicant, courierSession, async () => {
+    const { rows } = await database.query<{ id: string; auth_user_id: string }>('SELECT id,auth_user_id FROM public.account_applications');
+    assert.equal(rows.length, 1); assert.equal(rows[0].auth_user_id, courierApplicant);
+    await assert.rejects(database.query("UPDATE public.account_applications SET status='APPROVED'"));
+    await assert.rejects(database.query("SELECT public.review_account_application($1,'APPROVED','self approval')", [rows[0].id]));
+  });
+});
+test('staff approval atomically grants courier/merchant roles, creates the merchant and records the reviewer', async () => {
+  await asActor(staffId, staffSession, async () => {
+    const { rows } = await database.query<{ id: string }>("SELECT id FROM public.account_applications WHERE status='PENDING'");
+    assert.equal(rows.length, 2);
+    for (const row of rows) {
+      await database.query("SELECT public.review_account_application($1,'APPROVED','Documents verified')", [row.id]);
+      await assert.rejects(database.query("SELECT public.review_account_application($1,'REJECTED','second decision')", [row.id]));
+    }
+  });
+  const { rows } = await database.query<{ role: string }>('SELECT role FROM public.users WHERE auth_user_id IN ($1,$2) ORDER BY role::text', [courierApplicant,merchantApplicant]);
+  assert.deepEqual(rows.map(row => row.role), ['COURIER','MERCHANT']);
+  const { rows: merchants } = await database.query<{ approval_status: string }>('SELECT approval_status FROM public.merchants WHERE user_id=$1', [merchantApplicant]);
+  assert.equal(merchants.length, 1); assert.equal(merchants[0].approval_status, 'APPROVED');
+  const { rows: audit } = await database.query<{ reviewed_by: string; review_note: string }>('SELECT reviewed_by,review_note FROM public.account_applications');
+  assert.ok(audit.every(row => row.reviewed_by === staffId && row.review_note === 'Documents verified'));
+});
+test('rejection preserves customer role and revoked staff sessions cannot approve', async () => {
+  const rejectedId = 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee';
+  await database.query('INSERT INTO auth.users(id,email,raw_user_meta_data) VALUES ($1,$2,$3::jsonb)', [rejectedId,'rejected@example.test',JSON.stringify({ registration_application: { requestedRole: 'COURIER',phone: '0771234567',address: 'Colombo',vehicleType: 'Bicycle' } })]);
+  const { rows: [application] } = await database.query<{ id: string }>('SELECT id FROM public.account_applications WHERE auth_user_id=$1', [rejectedId]);
+  await asActor(staffId, staffSession, async () => { await database.query("SELECT public.review_account_application($1,'REJECTED','Missing documents')", [application.id]); });
+  const { rows: [profile] } = await database.query<{ role: string }>('SELECT role FROM public.users WHERE auth_user_id=$1', [rejectedId]);
+  assert.equal(profile.role, 'CUSTOMER');
+  await database.query('DELETE FROM auth.sessions WHERE id=$1', [staffSession]);
+  await asActor(staffId, staffSession, async () => { await assert.rejects(database.query("SELECT public.review_account_application($1,'APPROVED','Invalid session')", [application.id])); });
 });

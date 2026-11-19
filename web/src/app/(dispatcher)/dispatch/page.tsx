@@ -113,15 +113,15 @@ export default function DispatcherDashboardPage() {
                 ),
               },
             ].map((item) => {
-              if (item.id === 'analytics') {
+              if (item.id === 'analytics' || item.id === 'approvals') {
                 return (
                   <Link
                     key={item.id}
-                    href="/analytics"
+                    href={item.id === 'approvals' ? '/account-applications' : '/analytics'}
                     className="w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl text-xs sm:text-sm font-bold transition-all cursor-pointer text-slate-500 hover:text-slate-900 hover:bg-slate-50"
                   >
                     <span className="text-slate-400">{item.icon}</span>
-                    <span>{item.label}</span>
+                    <span>{item.id === 'approvals' ? 'Account Approvals' : item.label}</span>
                   </Link>
                 );
               }

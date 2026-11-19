@@ -60,6 +60,8 @@
 | **10** | **Parcel Support Desk & Exception Resolution** | `server/src/modules/support` | `/support`, `/support/exceptions` |
 | **★** | **Shared AI Workstream** | `server/src/modules/ai` | Smart Dispatch, Address Verification, OCR POD |
 
+Member 01 setup, API contracts and verification evidence: [Identity and account security](docs/member-01-auth.md).
+
 ---
 
 ## 📁 Repository Structure
@@ -154,6 +156,25 @@ cp web/.env.example web/.env.local
 # Mobile
 cp mobile/.env.example mobile/.env
 ```
+
+#### Supabase Auth setup
+
+- Authentication > URL Configuration: set the site URL to the web origin and
+  allow `http://localhost:3000/auth/callback` plus the deployed callback URL.
+- Email confirmation remains enabled. Users must confirm their email before login.
+  Configure production SMTP for delivery to real customers; observe Supabase's
+  email limits. Set the provider's minimum password length to at least 8 as well.
+- Authentication > Providers > Google: supply Google OAuth credentials and enable
+  the provider. `npm run auth:check` in `server/` reports the live provider status
+  without displaying credentials. Google was verified enabled on 2026-11-19.
+- Native mobile login uses the real `/auth/login` and `/auth/me` endpoints. The
+  backend profile decides whether the account is a customer or courier; the role
+  selector and demo shortcuts cannot grant access. Merchant/dispatcher accounts
+  use the web portal. Mobile signup and Google PKCE login are implemented;
+  courier/business signup enters a staff approval queue before operational access.
+
+See [Member 01 setup](docs/member-01-auth.md) for password-reset callbacks, native
+Google redirects, the approval migration and demo configuration.
 
 ### 3. Install Dependencies
 ```bash

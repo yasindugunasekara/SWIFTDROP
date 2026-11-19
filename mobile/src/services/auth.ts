@@ -4,10 +4,16 @@ import * as SecureStore from 'expo-secure-store';
 import { createClient, processLock, type SupabaseClient } from '@supabase/supabase-js';
 import { createSecureSessionStorage } from './secure-session-storage';
 
-export const API_URL = process.env.EXPO_PUBLIC_API_URL || `http://${Platform.OS === 'android' ? '10.0.2.2' : 'localhost'}:5000/api/v1`;
+// A phone's localhost is the phone itself. The browser preview should call
+// the computer serving Metro, unless an explicit API deployment is configured.
+const defaultApiHost = Platform.OS === 'web' && typeof window !== 'undefined'
+  ? window.location.hostname : Platform.OS === 'android' ? '10.0.2.2' : 'localhost';
+const defaultApiAuthority = defaultApiHost.includes(':') ? `[${defaultApiHost}]` : defaultApiHost;
+export const API_URL = process.env.EXPO_PUBLIC_API_URL || `http://${defaultApiAuthority}:5000/api/v1`;
 export interface MobileUser {
   id: string; authUserId: string; fullName: string; email: string; phone: string | null;
   role: 'CUSTOMER' | 'COURIER';
+  application?: { id: string; requestedRole: 'COURIER' | 'MERCHANT'; status: string; reviewNote: string | null };
 }
 let clientTask: Promise<SupabaseClient> | null = null;
 let user: MobileUser | null = null;
@@ -120,6 +126,9 @@ export async function loginMobile(email: string, password: string): Promise<Mobi
     body: JSON.stringify({ email: email.trim().toLowerCase(), password }) });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || 'Sign-in failed.');
+  return establishMobileSession(data);
+}
+async function establishMobileSession(data: { user: MobileUser; accessToken: string; refreshToken: string }): Promise<MobileUser> {
   if (!['CUSTOMER', 'COURIER'].includes(data.user.role)) {
     // Close the newly issued session even though it will never be persisted.
     await fetch(`${API_URL}/auth/logout`, { method: 'POST', headers: { Authorization: `Bearer ${data.accessToken}` } });
@@ -130,6 +139,23 @@ export async function loginMobile(email: string, password: string): Promise<Mobi
   if (result.error) throw new Error('Unable to save your session securely. Please retry.');
   saveUser(data.user);
   return data.user;
+}
+
+export async function loginMobileDemo(role: 'CUSTOMER' | 'COURIER'): Promise<MobileUser> {
+  if (signingOut) await signingOut;
+  revision++;
+  const response = await fetch(`${API_URL}/auth/demo`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ role }) });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || 'Demo login is unavailable.');
+  return establishMobileSession(data);
+}
+
+export async function requestMobilePasswordReset(email: string): Promise<string> {
+  const response = await fetch(`${API_URL}/auth/forgot-password`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: email.trim().toLowerCase() }), signal: typeof AbortSignal.timeout === 'function' ? AbortSignal.timeout(20000) : undefined });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || 'Unable to request a reset email.');
+  return data.message;
 }
 
 export function logoutMobile(): Promise<void> {

@@ -7,6 +7,7 @@ import { dashboardFor, signIn, signInWithGoogle, type UserRole } from '../../../
 import styles from '../auth.module.css';
 import AuthBackButton from '../AuthBackButton';
 import AuthInputIcon from '../AuthInputIcon';
+import DemoLogins from '../../../components/auth/DemoLogins';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -89,7 +90,7 @@ export default function LoginPage() {
           <div className={styles.field}>
             <div className={styles.labelRow}>
               <label htmlFor="login-password" className={styles.label}>Password</label>
-              <a href="#">Forgot password?</a>
+              <Link href="/forgot-password">Forgot password?</Link>
             </div>
             <div className={`${styles.password} ${styles.inputControl}`}>
               <span className={styles.inputIcon}><AuthInputIcon kind="password" /></span>
@@ -124,6 +125,7 @@ export default function LoginPage() {
             <p className={styles.roleNote}>Continue with your {activeRole.toLowerCase()} account.</p>
           </>}
         </div>
+        <DemoLogins disabled={loading} onBusy={setLoading} onError={setErrorMsg} />
         <p className={styles.footer}>New to SwiftDrop? <Link href="/register">Create an account</Link></p>
       </section>
     </div>

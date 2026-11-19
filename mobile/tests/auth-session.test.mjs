@@ -63,7 +63,8 @@ test('successful token rotation deletes old chunks; incomplete saved sessions ar
   assert.equal(await storage.getItem('session'), null);
 });
 
-function authHarness({ profile = customer, refresh = async () => ({ data: { session: { access_token: 'fresh-token' } }, error: null }), fetch: customFetch } = {}) {
+function authHarness({ profile = customer, refresh = async () => ({ data: { session: { access_token: 'fresh-token' } }, error: null }), fetch: customFetch,
+  platform = 'android', hostname = 'localhost', apiUrl = '' } = {}) {
   let callback;
   let savedSession = null;
   let signedOut = 0;
@@ -87,9 +88,9 @@ function authHarness({ profile = customer, refresh = async () => ({ data: { sess
   };
   const exports = {};
   vm.runInNewContext(compile('../src/services/auth.ts'), {
-    exports, process: { env: {} }, fetch, AbortSignal, setTimeout: () => undefined,
+    exports, process: { env: { EXPO_PUBLIC_API_URL: apiUrl } }, window: { location: { hostname } }, fetch, AbortSignal, setTimeout: () => undefined,
     require: name => {
-      if (name === 'react-native') return { Platform: { OS: 'android' } };
+      if (name === 'react-native') return { Platform: { OS: platform } };
       if (name === '@supabase/supabase-js') return { createClient: () => ({ auth }), processLock: () => undefined };
       if (name === './secure-session-storage') return storageModule;
       return {};
@@ -176,4 +177,31 @@ test('Google sign-in cannot promote a courier or merchant into the customer dash
     assert.equal(h.saved, null);
     assert.equal(h.api.getMobileUser(), null);
   }
+});
+
+test('mobile demo login persists a real backend session without submitting client credentials', async () => {
+  const h = authHarness({ fetch: async (url, options) => {
+    assert.match(url, /\/auth\/demo$/);
+    assert.deepEqual(JSON.parse(options.body), { role: 'COURIER' });
+    return { ok: true, json: async () => ({ user: { ...customer, role: 'COURIER' }, accessToken: 'demo-token', refreshToken: 'demo-refresh' }) };
+  } });
+  assert.equal((await h.api.loginMobileDemo('COURIER')).role, 'COURIER');
+  assert.equal(h.saved.access_token, 'demo-token');
+});
+
+test('mobile password reset normalizes the email and reports backend failures', async () => {
+  const h = authHarness({ fetch: async (url, options) => {
+    assert.match(url, /\/auth\/forgot-password$/); assert.equal(JSON.parse(options.body).email, 'customer@example.test');
+    return { ok: true, json: async () => ({ message: 'If an account exists, check your email.' }) };
+  } });
+  assert.match(await h.api.requestMobilePasswordReset(' Customer@Example.test '), /If an account exists/);
+  const unavailable = authHarness({ fetch: async () => ({ ok: false, json: async () => ({ error: 'Try again later.' }) }) });
+  await assert.rejects(unavailable.api.requestMobilePasswordReset('customer@example.test'), /Try again later/);
+});
+
+test('phone browser API follows the preview hostname while explicit deployments and emulator defaults are preserved', () => {
+  assert.equal(authHarness({ platform: 'web', hostname: '172.20.10.6' }).api.API_URL, 'http://172.20.10.6:5000/api/v1');
+  assert.equal(authHarness({ platform: 'web', hostname: '192.168.1.20' }).api.API_URL, 'http://192.168.1.20:5000/api/v1');
+  assert.equal(authHarness({ platform: 'web', hostname: '172.20.10.6', apiUrl: 'https://api.example.test/api/v1' }).api.API_URL, 'https://api.example.test/api/v1');
+  assert.equal(authHarness().api.API_URL, 'http://10.0.2.2:5000/api/v1');
 });
