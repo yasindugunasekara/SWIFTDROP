@@ -16,21 +16,26 @@ export default function HomePage() {
   const [estTier, setEstTier] = useState<'standard' | 'express'>('standard');
 
   const getEstimate = () => {
-    let base = 2.50;
-    if (estWeight === '3') base += 1.25;
-    if (estWeight === '10') base += 3.75;
-    if (estWeight === '25') base += 8.50;
+    let base = 350; // LKR Base (1kg)
+    if (estWeight === '3') base += 150;
+    if (estWeight === '10') base += 450;
+    if (estWeight === '25') base += 1200;
 
-    let dist = 0.75;
-    if (estDistance === 'metro') dist = 2.40;
-    if (estDistance === 'island') dist = 5.20;
+    let dist = 100;
+    if (estDistance === 'metro') dist = 300;
+    if (estDistance === 'island') dist = 600;
 
     let subtotal = base + dist;
     if (estTier === 'express') subtotal *= 1.45;
 
-    const min = (subtotal * 0.95).toFixed(2);
-    const max = (subtotal * 1.10).toFixed(2);
-    return { min, max, base: base.toFixed(2), dist: dist.toFixed(2) };
+    const min = Math.round(subtotal * 0.95);
+    const max = Math.round(subtotal * 1.10);
+    return {
+      min: min.toLocaleString(),
+      max: max.toLocaleString(),
+      base: base.toLocaleString(),
+      dist: dist.toLocaleString()
+    };
   };
 
   const handleQuickShip = (e: React.FormEvent) => {
@@ -522,7 +527,7 @@ export default function HomePage() {
               <div className="bg-slate-900 text-white px-5 py-3 rounded-2xl flex flex-col items-end shadow-md">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Estimated Range</span>
                 <span className="text-2xl sm:text-3xl font-black text-[#ff6600]">
-                  ${getEstimate().min} &ndash; ${getEstimate().max}
+                  LKR {getEstimate().min} &ndash; {getEstimate().max}
                 </span>
               </div>
             </div>
@@ -620,9 +625,9 @@ export default function HomePage() {
             {/* Estimator Action & Breakdown Footer */}
             <div className="mt-7 pt-5 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="text-xs text-slate-500 font-medium flex items-center gap-3">
-                <span>Base Fare: <b>${getEstimate().base}</b></span>
+                <span>Base Fare: <b>LKR {getEstimate().base}</b></span>
                 <span className="text-slate-300">&bull;</span>
-                <span>Est. Distance Charge: <b>${getEstimate().dist}</b></span>
+                <span>Est. Distance Charge: <b>LKR {getEstimate().dist}</b></span>
                 <span className="text-slate-300">&bull;</span>
                 <span>Speed: <b className="capitalize">{estTier}</b></span>
               </div>
@@ -647,7 +652,7 @@ export default function HomePage() {
                 <div className="flex flex-col mt-2 mb-3">
                   <div className="flex items-baseline gap-1.5">
                     <span className="text-xs font-bold text-slate-400 uppercase">Starts from</span>
-                    <span className="text-4xl sm:text-5xl font-black text-slate-900">$2.50</span>
+                    <span className="text-3xl sm:text-4xl font-black text-slate-900">LKR 450</span>
                   </div>
                   <span className="text-xs text-slate-500 font-semibold mt-0.5">+ distance &amp; weight rates</span>
                 </div>
@@ -693,7 +698,7 @@ export default function HomePage() {
                 <div className="flex flex-col mt-2 mb-3">
                   <div className="flex items-baseline gap-1.5">
                     <span className="text-xs font-bold text-orange-400 uppercase">Starts from</span>
-                    <span className="text-4xl sm:text-5xl font-black text-slate-900">$4.50</span>
+                    <span className="text-3xl sm:text-4xl font-black text-slate-900">LKR 850</span>
                   </div>
                   <span className="text-xs text-slate-500 font-semibold mt-0.5">+ priority express dispatch</span>
                 </div>
@@ -715,7 +720,7 @@ export default function HomePage() {
                   </li>
                   <li className="flex items-center gap-2.5">
                     <span className="w-5 h-5 rounded-full bg-[#ff6600] text-white flex items-center justify-center font-bold text-xs flex-shrink-0">✓</span>
-                    <span>$100 complimentary cargo guarantee</span>
+                    <span>LKR 25,000 complimentary cargo guarantee</span>
                   </li>
                 </ul>
               </div>
