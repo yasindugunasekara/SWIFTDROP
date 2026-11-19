@@ -15,7 +15,7 @@ export default function Navbar() {
     (prefix) => pathname === prefix || pathname.startsWith(prefix + '/')
   );
 
-  const isAuthRoute = pathname === '/login' || pathname === '/register' || pathname === '/auth/callback' || pathname === '/approval';
+  const isAuthRoute = ['/login', '/register', '/auth/callback', '/approval', '/forgot-password', '/reset-password', '/account-applications'].includes(pathname);
 
   if (isDashboardRoute || isAuthRoute) {
     return null;

@@ -12,6 +12,8 @@
     "lint": "eslint src --ext .ts",
     "test": "jest",
     "test:signup": "tsx --test src/modules/auth/auth.test.ts",
+    "auth:check": "tsx src/scripts/check-auth-setup.ts",
+    "auth:http": "tsx src/scripts/check-auth-http.ts",
     "db:check": "tsx src/scripts/check-database.ts",
     "test:webhooks": "tsx src/modules/webhooks/webhook.test.ts",
     "demo:webhooks": "tsx src/scripts/webhook-demo.ts",

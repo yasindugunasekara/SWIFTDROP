@@ -4,6 +4,7 @@ export type UserRole = 'CUSTOMER' | 'COURIER' | 'DISPATCHER' | 'ADMIN' | 'MERCHA
 export interface User {
   id: string; authUserId?: string; email: string; fullName: string; phone?: string | null;
   role: UserRole; merchantId?: string; approvalStatus?: string;
+  application?: { id: string; requestedRole: 'COURIER' | 'MERCHANT'; status: string; reviewNote: string | null };
 }
 let currentUser: User | null = null;
 let started = false;
@@ -110,10 +111,50 @@ export async function signIn(email: string, password: string): Promise<User> {
     body: JSON.stringify({ email, password }), signal: AbortSignal.timeout(20000) });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || 'Sign-in failed.');
+  return establishSession(data);
+}
+async function establishSession(data: { user: User; accessToken: string; refreshToken: string }): Promise<User> {
   const client = await getSupabaseClient();
   const result = await client.auth.setSession({ access_token: data.accessToken, refresh_token: data.refreshToken });
   if (result.error) throw new Error('Unable to establish your session. Please retry.');
   saveAuthSession(data.user); return data.user;
+}
+export async function signInDemo(role: UserRole): Promise<User> {
+  if (signOutTask) await signOutTask;
+  sessionRevision++;
+  const response = await fetch(`${base}/auth/demo`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ role }), signal: AbortSignal.timeout(20000) });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || 'Demo login is unavailable.');
+  return establishSession(data);
+}
+export async function requestPasswordReset(email: string) {
+  const response = await fetch(`${base}/auth/forgot-password`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }), signal: AbortSignal.timeout(20000) });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || 'Unable to request a password reset.');
+  return data.message as string;
+}
+export async function preparePasswordReset() {
+  const query = new URLSearchParams(window.location.search);
+  const hash = new URLSearchParams(window.location.hash.slice(1));
+  if ([query, hash].some(params => params.has('error') || params.has('error_code'))) throw new Error('This reset link is invalid or expired. Request a new link.');
+  const client = await getSupabaseClient();
+  const { data, error } = await client.auth.getSession();
+  if (error || !data.session) throw new Error('This reset link is invalid or expired. Request a new link.');
+  const verified = await client.auth.getUser();
+  if (verified.error || !verified.data.user) throw new Error('This reset link is invalid or expired. Request a new link.');
+  window.history.replaceState(null, '', '/reset-password');
+}
+export async function updatePassword(password: string, confirmPassword: string) {
+  if (password.length < 8 || new TextEncoder().encode(password).length > 72) throw new Error('Use at least 8 characters and at most 72 UTF-8 bytes.');
+  if (password !== confirmPassword) throw new Error('Passwords do not match.');
+  const client = await getSupabaseClient();
+  const { error } = await client.auth.updateUser({ password });
+  if (error) throw new Error('Unable to update your password. Use a different password or request a new reset link.');
+  const signedOut = await client.auth.signOut({ scope: 'global' });
+  if (signedOut.error) throw new Error('Password changed, but signing out all sessions failed. Sign out and sign in with your new password.');
+  sessionRevision++; generation++; discardAuthSession();
 }
 export async function signInWithGoogle() {
   if (signOutTask) await signOutTask;
@@ -151,6 +192,7 @@ export function clearAuthSession(): Promise<void> {
   return signOutTask;
 }
 export function dashboardFor(user: User) {
+  if (user.application && user.application.status !== 'APPROVED') return '/approval';
   if (user.role === 'MERCHANT' && user.approvalStatus !== 'APPROVED') return '/approval';
   return { CUSTOMER: '/booking', COURIER: '/tasks', MERCHANT: '/portal', DISPATCHER: '/dispatch', ADMIN: '/dispatch' }[user.role];
 }

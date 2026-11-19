@@ -2,6 +2,8 @@
 
 Enterprise courier, dispatch, tracking, and parcel delivery platform developed by a 10-member engineering team.
 
+Member 01 setup, API contracts and verification evidence: [Identity and account security](docs/member-01-auth.md).
+
 ---
 
 ## 📁 Repository Structure
@@ -157,13 +159,13 @@ Supabase Dashboard setup:
   Configure production SMTP for delivery to real customers; observe Supabase's
   email limits. Set the provider's minimum password length to at least 8 as well.
 - Authentication > Providers > Google: supply Google OAuth credentials and enable
-  the provider. The code uses the real provider flow; Google is currently disabled
-  in the hosted project's settings.
+  the provider. `npm run auth:check` in `server/` reports the live provider status
+  without displaying credentials. Google was verified enabled on 2026-11-19.
 - Native mobile login now uses the real /auth/login and /auth/me endpoints. The
   backend profile decides whether the account is a customer or courier; the role
   selector and demo email shortcuts cannot grant access. Merchant/dispatcher
-  accounts use the web portal. Mobile social login and signup screens are still
-  separate follow-up work.
+  accounts use the web portal. Mobile signup and Google PKCE login are implemented;
+  courier/business signup enters a staff approval queue before operational access.
 
 The web Supabase SDK owns browser session persistence and automatic refresh.
 Old mock/local token keys are removed. Backend APIs call Supabase getUser to verify
