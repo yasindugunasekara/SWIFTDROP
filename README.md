@@ -1,5 +1,115 @@
 # SwiftDrop - Courier & Parcel Delivery System
 
+## Docker Installation
+
+Docker runs the web application, standalone API/WebSockets, background workers, Redis, and RabbitMQ. Authentication and PostgreSQL use your **existing Supabase project**. The mobile app runs separately through Expo. Node.js does not need to be installed on the host for this Docker setup.
+
+### 1. Prepare the Environment
+
+Install Git and Docker Desktop, start Docker Desktop with **Linux containers**, then clone the repository:
+
+```bash
+git clone https://github.com/yasindugunasekara/SWIFTDROP.git
+cd SWIFTDROP
+docker compose version
+```
+
+Copy the templates if the destination files do not already exist. On Windows PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+Copy-Item server/.env.example server/.env
+```
+
+On macOS/Linux:
+
+```bash
+cp .env.example .env
+cp server/.env.example server/.env
+```
+
+Set these values in `server/.env`:
+
+| Variable | Required configuration |
+|---|---|
+| `SUPABASE_URL` | Your Supabase project URL. |
+| `SUPABASE_ANON_KEY` | Your project's anon/publishable key. |
+| `DATABASE_URL` | PostgreSQL connection URL for that same Supabase project; use its session pooler connection string and percent-encode reserved password characters. |
+| `DATABASE_SSL_CA` | Project CA certificate if required, with literal `\n` line breaks. |
+| `AUTH_DEMO_ENABLED` | Keep `false` unless demo accounts have been provisioned. |
+
+Configure optional feature secrets in `server/.env` as needed. Compose injects this file into the web, API, and worker containers at runtime. The Docker build excludes local environment files, uploaded files, and host build outputs.
+
+The root `.env` controls Compose's ports and shared settings:
+
+```dotenv
+WEB_PORT=3000
+API_PORT=5000
+APP_URL=http://localhost:3000
+CORS_ORIGIN=http://localhost:3000
+TRACKING_WS_URL=ws://localhost:5000/ws/tracking
+RABBITMQ_USER=swiftdrop
+RABBITMQ_PASSWORD=swiftdrop_local
+```
+
+Use a non-`guest` RabbitMQ account because application containers connect across the Docker network. If you choose another password, URL-encode reserved characters when they appear in an AMQP URL. Compose overrides `REDIS_URL` and `RABBITMQ_URL` from `server/.env` with container service addresses. It also overrides `APP_URL`, `CORS_ORIGIN`, and `TRACKING_WS_URL` using the root `.env`; database/auth settings come from `server/.env`.
+
+### 2. Prepare Supabase
+
+For a new development project, apply the SQL files in `server/src/database/migrations/` in filename order through the Supabase SQL Editor. For an existing project, apply only outstanding migrations. Do not initialize the same project again with `schema.sql`. These migrations require Supabase's Auth schema and roles; Compose intentionally does not start a plain PostgreSQL replacement.
+
+Configure the web site URL and allow `http://localhost:3000/auth/callback` in Supabase Auth. Keep email confirmation enabled, and confirm a registered customer's email before login. See the authentication setup under local installation below for Google login and optional demo accounts.
+
+### 3. Build and Start
+
+From the repository root:
+
+```bash
+docker compose config --quiet
+docker compose up --build -d --wait
+docker compose ps
+```
+
+The first build downloads Node.js 22 images and installs the locked dependencies. Both application images compile the backend; the web image also builds Next.js. Containers run the compiled applications as the `node` user. Source folders are not mounted over the image, so host `node_modules`, `dist`, and `.next` directories are not required.
+
+| Service | Address |
+|---|---|
+| Web application | `http://localhost:3000` |
+| Web HTTP API health | `http://localhost:3000/api/v1/health` |
+| Standalone API health | `http://localhost:5000/health` |
+| Standalone HTTP API | `http://localhost:5000/api/v1` |
+| Tracking WebSocket | `ws://localhost:5000/ws/tracking` |
+| RabbitMQ management | `http://localhost:15672` (credentials from root `.env`) |
+| Redis | `127.0.0.1:6379` |
+
+Next.js serves its HTTP API on the web origin; the standalone API supplies WebSockets and native mobile access. Redis and RabbitMQ use service names inside the Docker network. Their published ports are limited to the host loopback address. Uploaded files share a persistent volume between the API and web containers; Redis and RabbitMQ also retain data in named volumes.
+
+Check startup and provider configuration:
+
+```bash
+docker compose logs --tail=100 server web worker
+docker compose exec server node dist/scripts/check-database.js
+docker compose exec server node dist/scripts/check-auth-setup.js
+```
+
+The provider checks require network access to Supabase. HTTP health checks verify that the application process responds; they do not establish that every database operation works. Register, confirm email, and sign in to verify the configured authentication flow.
+
+### 4. Stop, Rebuild, and Troubleshoot
+
+```bash
+# Stop containers and keep stored data
+docker compose down
+
+# Rebuild after source or Dockerfile changes
+docker compose up --build -d --wait
+```
+
+- If Docker cannot resolve `registry-1.docker.io`, fix Docker Desktop's network, DNS, or proxy access, then retry the build. The initial build requires access to Docker Hub and the npm registry.
+- If ports are occupied, stop the conflicting local processes or change `WEB_PORT`/`API_PORT` in the root `.env`. Update `APP_URL`, `CORS_ORIGIN`, `TRACKING_WS_URL`, and the Supabase callback allowlist to match the browser-facing URLs.
+- For a physical phone, use the computer's LAN address for the API and tracking socket, and allow the required port through the host firewall. For Expo web preview, add its browser origin to the comma-separated `CORS_ORIGIN` value.
+- If RabbitMQ rejects credentials, check the root `.env` and worker logs. RabbitMQ only provisions its default account when its data volume is first initialized; changing environment values does not change an existing broker account. Update the account through RabbitMQ management using its existing credentials.
+- Environment changes require container recreation (`docker compose up -d`); source changes require rebuilding. Keep the named volumes when stopping the stack to preserve data.
+
 ## 🚀 Installation and Local Development
 
 ### 1. Prerequisites
@@ -167,7 +277,7 @@ Restart Expo after environment changes. For the iOS simulator, use `http://local
 - Open `/register`, register a customer, confirm the verification email, and sign in at `/login`. Courier/business applications require staff approval before operational access.
 - If login fails, check the Supabase URL/key, callback allowlist, email confirmation, and migration output. Run `npm run auth:check` from `server/`.
 - If a business page reports database errors, check `DATABASE_URL` and run `npm run db:check` from `server/`; a healthy HTTP endpoint alone does not prove database connectivity.
-- If notifications or retries fail, run `docker compose ps` and check the worker terminal. RabbitMQ management is available at `http://localhost:15672` (`guest` / `guest` locally).
+- If notifications or retries fail, run `docker compose ps` and check the worker terminal. RabbitMQ management is available at `http://localhost:15672` (credentials from the root `.env`; defaults are `swiftdrop` / `swiftdrop_local`). Match the standalone server's `RABBITMQ_URL` to those credentials.
 - If a port is occupied, stop the conflicting process or select another port and update the corresponding URLs, CORS origin, and auth redirects.
 - Stop application terminals with `Ctrl+C`. Run `docker compose stop redis rabbitmq` from the repository root to stop supporting services while keeping their data.
 
@@ -176,7 +286,8 @@ Restart Expo after environment changes. For the iOS simulator, use `http://local
 ```
 SWIFTDROP/
 ├── .env.example                     # Master environment variables template
-├── docker-compose.yml               # Complete Docker orchestration (DB, Redis, RabbitMQ, API, Web, Worker)
+├── docker-compose.yml               # Web, API, worker, Redis, and RabbitMQ; external Supabase
+├── .dockerignore                    # Excludes host builds, dependencies, and credentials
 ├── .gitignore                       # Universal gitignore
 ├── k8s/                             # Kubernetes deployment manifests
 │   └── base/
