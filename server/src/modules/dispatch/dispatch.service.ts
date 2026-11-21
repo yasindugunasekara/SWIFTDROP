@@ -764,9 +764,14 @@ export class DispatchService {
       return [
         {
           id: '55555555-5555-5555-5555-555555555555',
+          merchantId: '55555555-5555-5555-5555-555555555555',
+          userId: '33333333-3333-3333-3333-333333333333',
+          email: 'merchant@swiftdrop.com',
+          fullName: 'Acme Wholesale Director',
+          phone: '+94 11 234 5678',
           companyName: 'Acme Electronics LLC',
           registrationNumber: 'LK-8877123',
-          approvalStatus: 'PENDING',
+          approvalStatus: 'PENDING' as ApprovalStatus,
           createdAt: new Date().toISOString()
         }
       ];
