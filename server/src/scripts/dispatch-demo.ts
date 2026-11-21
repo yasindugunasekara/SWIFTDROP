@@ -145,7 +145,8 @@ async function runDispatchDemo() {
   console.log(`[Review] Reviewing "${merchant.companyName}" (Reg: ${merchant.registrationNumber || 'LK-8877123'})`);
   console.log(`-> Action: Approving merchant registration...`);
   
-  const approved = await dispatchService.setMerchantApproval(merchant.id, 'APPROVED');
+  const mId = (merchant as any).merchantId || (merchant as any).id || '55555555-5555-5555-5555-555555555555';
+  const approved = await dispatchService.setMerchantApproval(mId, 'APPROVED');
   console.log(`[Status]  Merchant "${merchant.companyName}" successfully ${(approved as any).approvalStatus || 'APPROVED'}!`);
 
   console.log('\n╔══════════════════════════════════════════════════════════════════════════╗');
