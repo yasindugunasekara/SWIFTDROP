@@ -257,6 +257,11 @@ npm run test:tracking-socket
 npm run test:courier
 npm run demo:courier
 
+# Run Member 5 Dispatch, Workload Balancer & AI suite & demo
+npm run test:dispatch
+npm run demo:dispatch
+npm run db:seed:dispatch
+
 # Run Member 8 Webhooks & DLQ retry suite & demo
 npm run test:webhooks
 npm run demo:webhooks

@@ -24,7 +24,10 @@
     "demo:support": "tsx src/scripts/support-demo.ts",
     "test:merchant": "tsx src/modules/merchant/merchant.test.ts",
     "test:tracking": "tsx src/modules/tracking/tracking.test.ts",
-    "test:tracking-socket": "tsx src/modules/tracking/tracking.socket.test.ts"
+    "test:tracking-socket": "tsx src/modules/tracking/tracking.socket.test.ts",
+    "test:dispatch": "tsx src/modules/dispatch/dispatch.test.ts",
+    "demo:dispatch": "tsx src/scripts/dispatch-demo.ts",
+    "db:seed:dispatch": "tsx src/scripts/seed-dispatch.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.14.0",
