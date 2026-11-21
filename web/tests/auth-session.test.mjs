@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import vm from 'node:vm';
 import ts from 'typescript';
+import { moduleOptions } from '../../scripts/auth-test-module.mjs';
 
 // Exercise the real auth module with an isolated SDK and HTTP boundary.
 const source = ts.transpileModule(readFileSync(new URL('../src/lib/auth.ts', import.meta.url), 'utf8'), {
@@ -17,6 +18,7 @@ function harness({ fetch = async () => ({ ok: true, json: async () => ({ user: c
   getSession = async () => ({ data: { session: { access_token: 'test-token' } }, error: null }),
   getUser = async () => ({ data: { user: customer }, error: null }),
   updateUser = async () => ({ data: { user: customer }, error: null }),
+  setSession = async () => ({ error: null }),
   location = { origin: 'https://swiftdrop.example.test', search: '', hash: '' } } = {}) {
   let callback;
   const scheduled = [];
@@ -27,21 +29,79 @@ function harness({ fetch = async () => ({ ok: true, json: async () => ({ user: c
     refreshSession,
     signInWithOAuth,
     getUser, updateUser,
-    setSession: async () => ({ error: null }),
+    setSession,
   };
   const exports = {};
   vm.runInNewContext(source, {
     exports, require: () => ({ getSupabaseClient: async () => ({ auth }) }),
     process: { env: {} }, fetch, AbortSignal, URLSearchParams, TextEncoder, window: { location, history: { replaceState() {} } }, localStorage: { removeItem() {} },
     setTimeout: task => scheduled.push(task),
-  });
+  }, moduleOptions(source, 'web-auth.js'));
   const apiSource = ts.transpileModule(readFileSync(new URL('../src/lib/api.ts', import.meta.url), 'utf8'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
   }).outputText;
   const http = {};
-  vm.runInNewContext(apiSource, { exports: http, require: () => exports, process: { env: {} }, window: {}, fetch });
+  vm.runInNewContext(apiSource, { exports: http, require: () => exports, process: { env: {} }, window: {}, fetch }, moduleOptions(apiSource, 'web-api.js'));
   return { api: exports, http, emit: (...args) => callback(...args), scheduled };
 }
+
+test('late email and demo login responses cannot restore a session after logout', async () => {
+  for (const method of ['signIn', 'signInDemo']) {
+    const response = deferred(); let writes = 0;
+    const { api } = harness({ fetch: () => response.promise, setSession: async () => { writes++; return { error: null }; } });
+    const login = method === 'signIn' ? api.signIn('test@example.test', 'password') : api.signInDemo('CUSTOMER');
+    const rejected = assert.rejects(login, /session changed/);
+    await api.clearAuthSession();
+    response.resolve({ ok: true, json: async () => ({ user: customer, accessToken: 'old', refreshToken: 'old-refresh' }) });
+    await rejected;
+    assert.equal(writes, 0); assert.equal(api.getStoredUser(), null);
+  }
+});
+
+test('logout waits for an in-progress session write and clears the persisted session', async () => {
+  const write = deferred(); const started = deferred(); let stored = false;
+  const { api } = harness({ fetch: async () => ({ ok: true, json: async () => ({ user: customer, accessToken: 'a', refreshToken: 'r' }) }),
+    setSession: async () => { started.resolve(); await write.promise; stored = true; return { error: null }; },
+    signOut: async () => { stored = false; return { error: null }; } });
+  const login = api.signIn('test@example.test', 'password');
+  const rejected = assert.rejects(login, /session changed/);
+  await started.promise;
+  const logout = api.clearAuthSession(); write.resolve();
+  await Promise.all([rejected, logout]);
+  assert.equal(stored, false); assert.equal(api.getStoredUser(), null);
+});
+
+test('a slow previous account login cannot overwrite the newer account', async () => {
+  const first = deferred(); const second = { ...customer, id: 'courier-2', role: 'COURIER' }; let requests = 0;
+  const { api } = harness({ fetch: async () => ++requests === 1 ? first.promise : ({ ok: true, json: async () => ({ user: second, accessToken: 'b', refreshToken: 'br' }) }) });
+  const oldLogin = api.signIn('first@example.test', 'password');
+  const rejected = assert.rejects(oldLogin, /session changed/);
+  await api.signIn('second@example.test', 'password');
+  first.resolve({ ok: true, json: async () => ({ user: customer, accessToken: 'a', refreshToken: 'ar' }) });
+  await rejected; assert.equal(api.getStoredUser(), second);
+});
+
+test('profile edits send only safe fields with the active token and update the displayed identity', async () => {
+  const updated = { ...customer, fullName: 'Updated Customer', phone: '0771234567' };
+  const { api } = harness({ fetch: async (url, options) => {
+    assert.equal(url, '/api/v1/auth/me'); assert.equal(options.method, 'PATCH');
+    assert.equal(options.headers.Authorization, 'Bearer test-token');
+    assert.deepEqual(JSON.parse(options.body), { fullName: 'Updated Customer', phone: '0771234567' });
+    return { ok: true, json: async () => ({ user: updated }) };
+  } });
+  await api.updateMyProfile(' Updated Customer ', '0771234567');
+  assert.equal(api.getStoredUser(), updated);
+});
+
+test('a profile save response arriving after logout cannot restore the old identity', async () => {
+  const response = deferred(); const started = deferred();
+  const { api } = harness({ fetch: () => { started.resolve(); return response.promise; } });
+  const save = api.updateMyProfile('Changed Name', '');
+  const rejected = assert.rejects(save, /session changed/);
+  await started.promise; await api.clearAuthSession();
+  response.resolve({ ok: true, json: async () => ({ user: customer }) });
+  await rejected; assert.equal(api.getStoredUser(), null);
+});
 
 test('profile request uses the authenticated token and stores the returned customer', async () => {
   let request;

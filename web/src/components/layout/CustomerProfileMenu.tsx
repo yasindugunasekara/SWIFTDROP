@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState, useSyncExternalStore } from 'react';
-import { getStoredUser, loadAuthenticatedUser, subscribeAuth } from '../../lib/auth';
+import { getStoredUser, loadAuthenticatedUser, subscribeAuth, updateMyProfile } from '../../lib/auth';
 
 interface Props {
   onLogout: () => Promise<void>;
@@ -15,6 +15,12 @@ export default function CustomerProfileMenu({ onLogout, loggingOut, logoutError 
   const request = useRef(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [editing, setEditing] = useState(false);
+  const [fullName, setFullName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [notice, setNotice] = useState('');
+  const savePending = useRef(false);
   const initials = user?.fullName.trim().split(/\s+/).slice(0, 2).map(part => part[0]).join('').toUpperCase() || 'C';
 
   async function refreshProfile() {
@@ -32,6 +38,7 @@ export default function CustomerProfileMenu({ onLogout, loggingOut, logoutError 
 
   function closeProfile() {
     request.current++;
+    setEditing(false); setNotice('');
     dialog.current?.close();
   }
 
@@ -63,6 +70,19 @@ export default function CustomerProfileMenu({ onLogout, loggingOut, logoutError 
           <div><dt className="text-xs text-slate-500">Email address</dt><dd className="mt-1 break-all font-medium">{user?.email || 'Not provided'}</dd></div>
           <div><dt className="text-xs text-slate-500">Phone number</dt><dd className="mt-1 break-words font-medium">{user?.phone || 'Not provided'}</dd></div>
         </dl>
+        {editing ? <form className="mt-5 space-y-3" onSubmit={async event => {
+          event.preventDefault(); if (savePending.current) return;
+          savePending.current = true; setSaving(true); setError(''); setNotice('');
+          try { await updateMyProfile(fullName, phone); setEditing(false); setNotice('Profile saved.'); }
+          catch (failure) { setError(failure instanceof Error ? failure.message : 'Unable to save your profile.'); }
+          finally { savePending.current = false; setSaving(false); }
+        }}>
+          <label className="block text-sm">Full name<input className="mt-1 w-full rounded-lg border p-2" required minLength={2} maxLength={150} value={fullName} onChange={event => setFullName(event.target.value)} disabled={saving || loggingOut} /></label>
+          <label className="block text-sm">Phone number<input className="mt-1 w-full rounded-lg border p-2" type="tel" maxLength={30} value={phone} onChange={event => setPhone(event.target.value)} disabled={saving || loggingOut} /></label>
+          <button className="mr-4 font-semibold text-orange-600" disabled={saving || loggingOut}>{saving ? 'Saving...' : 'Save profile'}</button>
+          <button type="button" disabled={saving} onClick={() => setEditing(false)}>Cancel</button>
+        </form> : <button type="button" className="mt-5 font-semibold text-orange-600" disabled={loading || loggingOut} onClick={() => { setFullName(user?.fullName || ''); setPhone(user?.phone || ''); setNotice(''); setEditing(true); }}>Edit profile</button>}
+        {notice && <p role="status" className="mt-3 text-sm text-green-700">{notice}</p>}
         {loading && <p role="status" className="mt-4 text-xs text-slate-500">Refreshing your details...</p>}
         {error && <div role="alert" className="mt-4 text-sm text-red-700"><p>{error}</p><button type="button" onClick={() => void refreshProfile()} className="mt-2 font-semibold underline">Try again</button></div>}
         <button type="button" disabled={loggingOut} onClick={() => void onLogout()}

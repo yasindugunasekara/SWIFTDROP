@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import vm from 'node:vm';
 import ts from 'typescript';
+import { moduleOptions } from '../../scripts/auth-test-module.mjs';
 
 function compile(path) {
   return ts.transpileModule(readFileSync(new URL(path, import.meta.url), 'utf8'), {
@@ -10,7 +11,8 @@ function compile(path) {
   }).outputText;
 }
 const storageModule = {};
-vm.runInNewContext(compile('../src/services/secure-session-storage.ts'), { exports: storageModule });
+const storageSource = compile('../src/services/secure-session-storage.ts');
+vm.runInNewContext(storageSource, { exports: storageModule }, moduleOptions(storageSource, 'mobile-secure-storage.js'));
 const createStorage = storageModule.createSecureSessionStorage;
 const customer = { id: 'customer-1', authUserId: 'auth-1', fullName: 'Test Customer', email: 'customer@example.test', phone: null, role: 'CUSTOMER' };
 const deferred = () => { let resolve; const promise = new Promise(done => { resolve = done; }); return { promise, resolve }; };
@@ -64,7 +66,7 @@ test('successful token rotation deletes old chunks; incomplete saved sessions ar
 });
 
 function authHarness({ profile = customer, refresh = async () => ({ data: { session: { access_token: 'fresh-token' } }, error: null }), fetch: customFetch,
-  platform = 'android', hostname = 'localhost', apiUrl = '' } = {}) {
+  platform = 'android', hostname = 'localhost', apiUrl = '', setSession, timers = { setTimeout: () => undefined, clearTimeout: () => undefined } } = {}) {
   let callback;
   let savedSession = null;
   let signedOut = 0;
@@ -72,7 +74,7 @@ function authHarness({ profile = customer, refresh = async () => ({ data: { sess
   const requests = [];
   const auth = {
     getSession: async () => ({ data: { session: savedSession }, error: null }),
-    setSession: async value => { savedSession = value; return { error: null }; },
+    setSession: async value => { if (setSession) await setSession(value); savedSession = value; return { error: null }; },
     signOut: async () => { signedOut++; savedSession = null; callback?.('SIGNED_OUT', null); return { error: null }; },
     refreshSession: refresh,
     onAuthStateChange: value => { callback = value; },
@@ -87,17 +89,83 @@ function authHarness({ profile = customer, refresh = async () => ({ data: { sess
     return { ok: true, status: 200, json: async () => ({ user: profile }) };
   };
   const exports = {};
-  vm.runInNewContext(compile('../src/services/auth.ts'), {
-    exports, process: { env: { EXPO_PUBLIC_API_URL: apiUrl } }, window: { location: { hostname } }, fetch, AbortSignal, setTimeout: () => undefined,
+  const authSource = compile('../src/services/auth.ts');
+  vm.runInNewContext(authSource, {
+    exports, process: { env: { EXPO_PUBLIC_API_URL: apiUrl } }, window: { location: { hostname } }, fetch, AbortSignal, AbortController, ...timers,
     require: name => {
       if (name === 'react-native') return { Platform: { OS: platform } };
       if (name === '@supabase/supabase-js') return { createClient: () => ({ auth }), processLock: () => undefined };
       if (name === './secure-session-storage') return storageModule;
       return {};
     },
-  });
+  }, moduleOptions(authSource, 'mobile-auth.js'));
   return { api: exports, requests, get saved() { return savedSession; }, get signouts() { return signedOut; }, get auto() { return auto; }, seed: value => { savedSession = value; } };
 }
+
+test('late mobile email and demo responses cannot restore a session after logout', async () => {
+  for (const demo of [false, true]) {
+    const response = deferred();
+    const h = authHarness({ fetch: () => response.promise });
+    const login = demo ? h.api.loginMobileDemo('CUSTOMER') : h.api.loginMobile('test@example.test', 'password');
+    const rejected = assert.rejects(login, /session changed/);
+    await h.api.logoutMobile();
+    response.resolve({ ok: true, json: async () => ({ user: customer, accessToken: 'old', refreshToken: 'r' }) });
+    await rejected; assert.equal(h.saved, null); assert.equal(h.api.getMobileUser(), null);
+  }
+});
+
+test('mobile logout clears a session write that was already in progress', async () => {
+  const write = deferred(); const started = deferred();
+  const h = authHarness({ setSession: async () => { started.resolve(); await write.promise; } });
+  const login = h.api.loginMobile('test@example.test', 'password');
+  const rejected = assert.rejects(login, /session changed/);
+  await started.promise;
+  const logout = h.api.logoutMobile(); write.resolve();
+  await Promise.all([rejected, logout]); assert.equal(h.saved, null); assert.equal(h.api.getMobileUser(), null);
+});
+
+test('mobile account switching prevents an older login from overwriting the courier', async () => {
+  const response = deferred(); let requests = 0;
+  const courier = { ...customer, id: 'courier-2', authUserId: 'auth-2', role: 'COURIER' };
+  const h = authHarness({ fetch: async () => ++requests === 1 ? response.promise : ({ ok: true, json: async () => ({ user: courier, accessToken: 'b', refreshToken: 'br' }) }) });
+  const previous = h.api.loginMobile('first@example.test', 'password');
+  const rejected = assert.rejects(previous, /session changed/);
+  await h.api.loginMobile('second@example.test', 'password');
+  response.resolve({ ok: true, json: async () => ({ user: customer, accessToken: 'a', refreshToken: 'ar' }) });
+  await rejected; assert.equal(h.api.getMobileUser(), courier); assert.equal(h.saved.access_token, 'b');
+});
+
+test('mobile hung requests abort with a retryable timeout message', async () => {
+  let expire; let cleared = 0;
+  const h = authHarness({ timers: { setTimeout: callback => { expire = callback; return 1; }, clearTimeout: () => { cleared++; } },
+    fetch: (_url, options) => new Promise((_resolve, reject) => options.signal.addEventListener('abort', () => reject(new Error('aborted')))) });
+  const request = h.api.authFetch('https://example.test/hung');
+  const rejected = assert.rejects(request, /timed out/);
+  expire(); await rejected; assert.equal(cleared, 1);
+});
+
+test('mobile profile edits submit safe fields and refresh the displayed user', async () => {
+  const updated = { ...customer, fullName: 'Updated Customer', phone: '0771234567' };
+  const h = authHarness({ fetch: async (_url, options) => {
+    assert.equal(options.method, 'PATCH'); assert.equal(options.headers.Authorization, 'Bearer test-token');
+    assert.deepEqual(JSON.parse(options.body), { fullName: 'Updated Customer', phone: '0771234567' });
+    return { ok: true, json: async () => ({ user: updated }) };
+  } });
+  h.seed({ access_token: 'test-token' });
+  await h.api.updateMobileProfile(' Updated Customer ', '0771234567');
+  assert.equal(h.api.getMobileUser(), updated);
+});
+
+test('mobile profile save cannot restore an account after logout', async () => {
+  const response = deferred(); const started = deferred();
+  const h = authHarness({ fetch: () => { started.resolve(); return response.promise; } });
+  h.seed({ access_token: 'test-token' });
+  const save = h.api.updateMobileProfile('Changed Name', '');
+  const rejected = assert.rejects(save, /session changed/);
+  await started.promise; await h.api.logoutMobile();
+  response.resolve({ ok: true, json: async () => ({ user: customer }) });
+  await rejected; assert.equal(h.api.getMobileUser(), null);
+});
 
 test('mobile login uses backend identity, persists SDK tokens, restores profile and securely signs out', async () => {
   const h = authHarness();

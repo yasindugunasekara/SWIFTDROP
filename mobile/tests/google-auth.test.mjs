@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import vm from 'node:vm';
 import ts from 'typescript';
+import { moduleOptions } from '../../scripts/auth-test-module.mjs';
 
 const source = ts.transpileModule(readFileSync(new URL('../src/services/google-auth.ts', import.meta.url), 'utf8'), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
@@ -26,12 +27,13 @@ function harness({ ready = true, callbackError = false, roleRejected = false, ca
       if (name === 'expo-auth-session') return { makeRedirectUri: () => 'swiftdrop://auth/callback' };
       if (name === 'expo-web-browser') return { openAuthSessionAsync: async () => cancel ? { type: 'cancel' } : { type: 'success', url: 'swiftdrop://auth/callback?code=valid-code' } };
       if (name === './auth') return { API_URL: 'https://api.example.test/api/v1',
+        authFetch: async () => ({ ok: true, json: async () => ({ url: 'https://auth.example.test', anonKey: 'sb_publishable_test' }) }),
         createMobileAuthStorage: () => ({ getItem: key => storage.get(key), setItem: (key, value) => storage.set(key, value), removeItem: key => storage.delete(key) }),
         acceptMobileGoogleSession: async () => { promotions++; if (roleRejected) throw new Error('Customer accounts only'); return { role: 'CUSTOMER' }; },
       };
       throw new Error(name);
     },
-  });
+  }, moduleOptions(source, 'mobile-google-auth.js'));
   return { api: exports, stats: () => ({ oauthCalls, exchanges, promotions, revocations }) };
 }
 

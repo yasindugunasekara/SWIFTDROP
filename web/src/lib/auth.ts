@@ -12,6 +12,14 @@ let generation = 0;
 let sessionRevision = 0;
 let signOutTask: Promise<void> | null = null;
 let refreshTask: Promise<string | null> | null = null;
+let sessionWrite: Promise<unknown> = Promise.resolve();
+let writingSession = false;
+function serializeSession<T>(action: () => Promise<T>): Promise<T> {
+  const run = async () => { writingSession = true; try { return await action(); } finally { writingSession = false; } };
+  const task = sessionWrite.then(run, run);
+  sessionWrite = task.catch(() => undefined);
+  return task;
+}
 const listeners = new Set<() => void>();
 const base = '/api/v1';
 export const getStoredUser = () => currentUser;
@@ -91,7 +99,7 @@ export async function initializeAuth() {
     ['swiftdrop_user', 'swiftdrop_access_token', 'swiftdrop_refresh_token'].forEach(key => localStorage.removeItem(key));
     client.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT') { generation++; sessionRevision++; discardAuthSession(); }
-      else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+      else if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && !writingSession) {
         if (currentUser?.authUserId && session?.user.id !== currentUser.authUserId) { sessionRevision++; discardAuthSession(); }
         generation++;
         // Avoid calling auth methods while Supabase holds its auth-state callback lock.
@@ -106,27 +114,34 @@ export async function initializeAuth() {
 }
 export async function signIn(email: string, password: string): Promise<User> {
   if (signOutTask) await signOutTask;
-  sessionRevision++;
+  const version = ++sessionRevision;
+  generation++; discardAuthSession();
   const response = await fetch(`${base}/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }), signal: AbortSignal.timeout(20000) });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || 'Sign-in failed.');
-  return establishSession(data);
+  return establishSession(data, version);
 }
-async function establishSession(data: { user: User; accessToken: string; refreshToken: string }): Promise<User> {
-  const client = await getSupabaseClient();
-  const result = await client.auth.setSession({ access_token: data.accessToken, refresh_token: data.refreshToken });
-  if (result.error) throw new Error('Unable to establish your session. Please retry.');
-  saveAuthSession(data.user); return data.user;
+async function establishSession(data: { user: User; accessToken: string; refreshToken: string }, version: number): Promise<User> {
+  return serializeSession(async () => {
+    if (!isSessionCurrent(version)) throw new Error('Your session changed. Please sign in again.');
+    const client = await getSupabaseClient();
+    if (!isSessionCurrent(version)) throw new Error('Your session changed. Please sign in again.');
+    const result = await client.auth.setSession({ access_token: data.accessToken, refresh_token: data.refreshToken });
+    if (result.error) throw new Error('Unable to establish your session. Please retry.');
+    if (!isSessionCurrent(version)) throw new Error('Your session changed. Please sign in again.');
+    saveAuthSession(data.user); return data.user;
+  });
 }
 export async function signInDemo(role: UserRole): Promise<User> {
   if (signOutTask) await signOutTask;
-  sessionRevision++;
+  const version = ++sessionRevision;
+  generation++; discardAuthSession();
   const response = await fetch(`${base}/auth/demo`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ role }), signal: AbortSignal.timeout(20000) });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || 'Demo login is unavailable.');
-  return establishSession(data);
+  return establishSession(data, version);
 }
 export async function requestPasswordReset(email: string) {
   const response = await fetch(`${base}/auth/forgot-password`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -134,6 +149,17 @@ export async function requestPasswordReset(email: string) {
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || 'Unable to request a password reset.');
   return data.message as string;
+}
+export async function updateMyProfile(fullName: string, phone: string): Promise<User> {
+  const version = sessionRevision;
+  const token = await getAccessToken();
+  if (!token || !isSessionCurrent(version)) throw new Error('Please sign in again.');
+  const response = await fetch(`${base}/auth/me`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ fullName: fullName.trim(), phone: phone.trim() || null }), signal: AbortSignal.timeout(20000) });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || 'Unable to save your profile.');
+  if (!isSessionCurrent(version)) throw new Error('Your session changed. Please sign in again.');
+  saveAuthSession(data.user); return data.user;
 }
 export async function preparePasswordReset() {
   const query = new URLSearchParams(window.location.search);
@@ -182,13 +208,13 @@ export function clearAuthSession(): Promise<void> {
   if (signOutTask) return signOutTask;
   generation++;
   sessionRevision++;
-  signOutTask = (async () => {
+  signOutTask = serializeSession(async () => {
     const client = await getSupabaseClient();
     const { error } = await client.auth.signOut({ scope: 'local' });
     if (error) throw new Error('Unable to sign out securely. Check your connection and retry.');
     generation++;
     discardAuthSession();
-  })().finally(() => { signOutTask = null; });
+  }).finally(() => { signOutTask = null; });
   return signOutTask;
 }
 export function dashboardFor(user: User) {
