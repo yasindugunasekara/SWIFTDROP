@@ -557,7 +557,7 @@ export default function HomePage() {
                           <button
                             key={w.id}
                             type="button"
-                            onClick={() => setEstWeight(w.id as any)}
+                            onClick={() => setEstWeight(w.id as typeof estWeight)}
                             className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-all relative flex flex-col justify-between ${
                               isSelected
                                 ? 'border-[#ff6600] bg-orange-50/60 shadow-md ring-2 ring-[#ff6600]/25 text-slate-900'
@@ -607,7 +607,7 @@ export default function HomePage() {
                           <button
                             key={d.id}
                             type="button"
-                            onClick={() => setEstDistance(d.id as any)}
+                            onClick={() => setEstDistance(d.id as typeof estDistance)}
                             className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-all relative flex flex-col justify-between ${
                               isSelected
                                 ? 'border-[#ff6600] bg-orange-50/60 shadow-md ring-2 ring-[#ff6600]/25 text-slate-900'
@@ -668,7 +668,7 @@ export default function HomePage() {
                           <button
                             key={s.id}
                             type="button"
-                            onClick={() => setEstTier(s.id as any)}
+                            onClick={() => setEstTier(s.id as typeof estTier)}
                             className={`p-4 rounded-2xl border text-left transition-all relative flex flex-col justify-between ${
                               isSelected
                                 ? 'border-[#ff6600] bg-orange-50/60 shadow-md ring-2 ring-[#ff6600]/25 text-slate-900'
@@ -1048,11 +1048,11 @@ export default function HomePage() {
                 Services
               </h5>
               <ul className="text-xs sm:text-sm text-slate-400 space-y-2.5">
-                <li><a href="/#services" className="hover:text-white transition-colors">Same-Day Express</a></li>
-                <li><a href="/#services" className="hover:text-white transition-colors">Live GPS Tracking</a></li>
-                <li><a href="/#services" className="hover:text-white transition-colors">Merchant Partner API</a></li>
-                <li><a href="/#services" className="hover:text-white transition-colors">Verified Delivery POD</a></li>
-                <li><a href="/#coverage" className="hover:text-white transition-colors">Provincial Sorting Hubs</a></li>
+                <li><Link href="/#services" className="hover:text-white transition-colors">Same-Day Express</Link></li>
+                <li><Link href="/#services" className="hover:text-white transition-colors">Live GPS Tracking</Link></li>
+                <li><Link href="/#services" className="hover:text-white transition-colors">Merchant Partner API</Link></li>
+                <li><Link href="/#services" className="hover:text-white transition-colors">Verified Delivery POD</Link></li>
+                <li><Link href="/#coverage" className="hover:text-white transition-colors">Provincial Sorting Hubs</Link></li>
               </ul>
             </div>
 

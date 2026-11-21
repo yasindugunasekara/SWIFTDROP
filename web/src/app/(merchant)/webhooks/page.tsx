@@ -12,7 +12,7 @@ interface DeliveryAttempt {
   tracking_number?: string;
   event_type?: string;
   event?: string;
-  payload?: any;
+  payload?: unknown;
   response_code: number | null;
   status?: number;
   response_body: string | null;
@@ -110,11 +110,11 @@ export default function WebhookCenterPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const epData = await fetchApi<{ endpoint?: any }>('/webhooks/endpoints');
+        const epData = await fetchApi<{ endpoint?: { targetUrl?: string; target_url?: string; signingSecret?: string; signing_secret?: string; events?: string[] } }>('/webhooks/endpoints');
         if (epData?.endpoint) {
-          setUrl(epData.endpoint.targetUrl || epData.endpoint.target_url);
+          setUrl(epData.endpoint.targetUrl || epData.endpoint.target_url || '');
           if (epData.endpoint.signingSecret || epData.endpoint.signing_secret) {
-            setSecret(epData.endpoint.signingSecret || epData.endpoint.signing_secret);
+            setSecret(epData.endpoint.signingSecret || epData.endpoint.signing_secret || '');
           }
           if (epData.endpoint.events) {
             setSelectedEvents(epData.endpoint.events);
@@ -159,7 +159,7 @@ export default function WebhookCenterPage() {
         setSecret(res.endpoint.signingSecret);
       }
       setStatusMessage({ type: 'success', text: 'Webhook endpoint updated and cryptographic secret provisioned!' });
-    } catch (err: any) {
+    } catch {
       // Local optimistic update
       setStatusMessage({
         type: 'success',
@@ -546,7 +546,7 @@ export default function WebhookCenterPage() {
               </div>
 
               <div className="p-4 bg-slate-900 text-slate-100 rounded-2xl font-mono text-xs overflow-x-auto">
-                <span className="text-slate-400 block mb-2">// Node.js Verification Example (Express)</span>
+                <span className="text-slate-400 block mb-2">{'// Node.js Verification Example (Express)'}</span>
                 <pre>{`const crypto = require('crypto');
 
 app.post('/webhooks/swiftdrop', express.raw({ type: 'application/json' }), (req, res) => {
