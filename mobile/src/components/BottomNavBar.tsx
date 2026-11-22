@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
-import { Colors } from '../theme/colors';
+import NavIcon from './NavIcon';
 
 export type TabKey = 'home' | 'orders' | 'track' | 'account';
 
@@ -14,38 +14,22 @@ export default function BottomNavBar({ activeTab, onTabChange }: Props) {
     {
       key: 'home' as TabKey,
       label: 'Home',
-      icon: (active: boolean) => (
-        <View style={[styles.iconContainer, active && styles.activeIconContainer]}>
-          <Text style={[styles.tabEmoji, active && styles.activeTabEmoji]}>🏠</Text>
-        </View>
-      ),
+      iconName: 'home' as const,
     },
     {
       key: 'orders' as TabKey,
       label: 'Orders',
-      icon: (active: boolean) => (
-        <View style={[styles.iconContainer, active && styles.activeIconContainer]}>
-          <Text style={[styles.tabEmoji, active && styles.activeTabEmoji]}>📋</Text>
-        </View>
-      ),
+      iconName: 'orders' as const,
     },
     {
       key: 'track' as TabKey,
       label: 'Track',
-      icon: (active: boolean) => (
-        <View style={[styles.iconContainer, active && styles.activeIconContainer]}>
-          <Text style={[styles.tabEmoji, active && styles.activeTabEmoji]}>📍</Text>
-        </View>
-      ),
+      iconName: 'track' as const,
     },
     {
       key: 'account' as TabKey,
       label: 'Account',
-      icon: (active: boolean) => (
-        <View style={[styles.iconContainer, active && styles.activeIconContainer]}>
-          <Text style={[styles.tabEmoji, active && styles.activeTabEmoji]}>👤</Text>
-        </View>
-      ),
+      iconName: 'account' as const,
     },
   ];
 
@@ -58,9 +42,18 @@ export default function BottomNavBar({ activeTab, onTabChange }: Props) {
             key={tab.key}
             onPress={() => onTabChange(tab.key)}
             style={styles.tabButton}
-            activeOpacity={0.7}
+            activeOpacity={0.75}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: isActive }}
           >
-            {tab.icon(isActive)}
+            <View style={[styles.iconContainer, isActive && styles.activeIconContainer]}>
+              <NavIcon
+                name={tab.iconName}
+                active={isActive}
+                size={20}
+                color={isActive ? '#ffffff' : '#52525b'}
+              />
+            </View>
             <Text style={[styles.tabLabel, isActive && styles.activeTabLabel]}>
               {tab.label}
             </Text>
@@ -77,15 +70,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: '#ffffff',
     borderTopWidth: 1,
-    borderTopColor: '#f1f5f9',
+    borderTopColor: '#e4e4e7',
     paddingVertical: 8,
     paddingBottom: Platform.OS === 'ios' ? 24 : 10,
     justifyContent: 'space-around',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
     elevation: 8,
   },
   tabButton: {
@@ -96,37 +89,38 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   iconContainer: {
-    width: 32,
+    width: 38,
     height: 32,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 16,
-  },
+    backgroundColor: 'transparent',
+    transition: 'all 0.15s ease',
+  } as any,
   activeIconContainer: {
-    backgroundColor: '#fff7ed',
-  },
-  tabEmoji: {
-    fontSize: 18,
-    color: '#94a3b8',
-  },
-  activeTabEmoji: {
-    color: Colors.primary,
+    backgroundColor: '#000000',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 2,
   },
   tabLabel: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#94a3b8',
-    marginTop: 2,
+    color: '#71717a',
+    marginTop: 3,
+    letterSpacing: -0.2,
   },
   activeTabLabel: {
-    color: Colors.primary,
-    fontWeight: '800',
+    color: '#000000',
+    fontWeight: '900',
   },
   activeIndicator: {
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: Colors.primary,
+    backgroundColor: '#000000',
     position: 'absolute',
     bottom: -6,
   },

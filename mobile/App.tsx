@@ -41,7 +41,16 @@ export default function App() {
   const [logoutError, setLogoutError] = useState('');
   const logoutPending = useRef(false);
   const [bookModalVisible, setBookModalVisible] = useState(false);
+  const [selectedBookingCategory, setSelectedBookingCategory] = useState('parcels');
+  const [selectedBookingPromo, setSelectedBookingPromo] = useState('');
   const [activeTrackingId, setActiveTrackingId] = useState('SWIFT-991122');
+
+  const handleOpenBookModal = (category?: string, promo?: string) => {
+    if (category) setSelectedBookingCategory(category);
+    if (promo) setSelectedBookingPromo(promo);
+    else setSelectedBookingPromo('');
+    setBookModalVisible(true);
+  };
 
   const handleLoginSuccess = (profile: MobileUser) => {
     setCurrentScreen('main');
@@ -119,9 +128,10 @@ export default function App() {
         if (userRole === 'courier') return <TaskListScreen navigation={undefined} />;
         return (
           <HomeScreen
-            onBookNow={() => setBookModalVisible(true)}
+            onBookNow={handleOpenBookModal}
             onTrackPress={handleTrackPress}
             onNotifications={() => setActiveTab('orders')}
+            userName={user?.fullName || 'Kasun'}
           />
         );
       case 'orders':
@@ -167,7 +177,7 @@ export default function App() {
       <View style={styles.phoneFrame}>
         {currentScreen === 'splash' && (
           <SplashScreen
-            onGetStarted={() => { setRegistrationNotice(''); setCurrentScreen('register'); }}
+            onGetStarted={() => setCurrentScreen('register')}
             onLogin={() => setCurrentScreen('login')}
           />
         )}
@@ -193,6 +203,8 @@ export default function App() {
               visible={bookModalVisible}
               onClose={() => setBookModalVisible(false)}
               onBookingComplete={handleBookingComplete}
+              initialCategory={selectedBookingCategory}
+              initialPromoCode={selectedBookingPromo}
             />}
           </View>
         )}
@@ -214,6 +226,7 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: '#ffffff',
     overflow: 'hidden',
+    position: 'relative',
     ...Platform.select({
       web: {
         maxHeight: width > 500 ? 900 : '100%',
@@ -227,6 +240,7 @@ const styles = StyleSheet.create({
   appShell: {
     flex: 1,
     backgroundColor: '#ffffff',
+    position: 'relative',
   },
   screenArea: {
     flex: 1,

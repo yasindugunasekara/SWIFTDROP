@@ -36,9 +36,9 @@ test('login and signup validation use existing backend handlers', async () => {
 });
 
 test('Express parses POST JSON through Next and retains auth guards', async () => {
-  const quote = await request('/api/v1/booking/quote', post({ weightKg: 4 }));
+  const quote = await request('/api/v1/booking/quote', post({ pickupAddress:'Colombo', dropoffAddress:'Kandy', weightKg:4 }));
   assert.equal(quote.status, 200);
-  assert.equal((await quote.json()).weightFee, 10);
+  assert.equal((await quote.json()).quote.weightFee, 4.5);
   for (const [path, options] of [
     ['/api/v1/auth/me', {}], ['/api/v1/booking/create', post({})],
   ]) {
