@@ -6,6 +6,7 @@ import { db } from '../../config/database.js';
 import { config } from '../../config/env.js';
 import type { AuthenticatedUser } from '../../middleware/auth.js';
 import { HttpError, generateTrackingNumber, sha256 } from './merchant.utils.js';
+import { quoteDelivery } from '../operations/pricing.js';
 
 // =============================================================================
 // MEMBER 6 — Merchant Account, Orders & Partner API: business logic
@@ -97,6 +98,7 @@ export async function getMerchantById(merchantId: string): Promise<MerchantAccou
  * middleware verifies, so merchant sessions work with existing RBAC.
  */
 export function issueMerchantToken(account: MerchantAccount) {
+  if (!config.jwt.accessSecret || config.jwt.accessSecret.length < 32) throw new HttpError(503,'Legacy token signing is disabled. Use unified authentication.');
   const payload: AuthenticatedUser = {
     id: account.userId,
     email: account.email,
@@ -221,8 +223,8 @@ export async function resolveApiKey(rawKey: string) {
   if (!rawKey.startsWith(API_KEY_PREFIX)) throw new HttpError(401, 'Invalid or revoked API key');
   const r = await db.query(
     `UPDATE merchant_api_keys k SET last_used_at = NOW()
-       FROM merchants m
-      WHERE k.api_key_hash = $1 AND k.is_active AND m.id = k.merchant_id
+       FROM merchants m JOIN users owner ON owner.id=m.user_id
+      WHERE k.api_key_hash = $1 AND k.is_active AND m.id = k.merchant_id AND owner.is_active AND owner.role='MERCHANT'
       RETURNING k.id AS "keyId", m.id AS "merchantId", m.company_name AS "companyName",
                 m.approval_status AS "approvalStatus"`,
     [sha256(rawKey)]
@@ -268,18 +270,9 @@ const round2 = (n: number) => Math.round(n * 100) / 100;
 
 /** Server-side fee from the configured delivery zone rates; client-sent fees are never trusted. */
 export async function calculateOrderFee(input: OrderInput) {
-  const zoneRes = input.zoneId
-    ? await db.query('SELECT * FROM delivery_zones WHERE id = $1', [input.zoneId])
-    : await db.query('SELECT * FROM delivery_zones ORDER BY base_rate ASC, created_at ASC LIMIT 1');
-  const zone = zoneRes.rows[0];
-  if (!zone) throw new HttpError(input.zoneId ? 404 : 503, input.zoneId ? 'Delivery zone not found' : 'No delivery zones configured');
+  const calculated=await quoteDelivery(input);
+  return {zoneName:calculated.zoneName,chargeableKg:calculated.chargeableKg,distanceKm:calculated.distanceKm,totalFee:calculated.totalFee};
 
-  const volumetric =
-    input.lengthCm && input.widthCm && input.heightCm ? (input.lengthCm * input.widthCm * input.heightCm) / VOLUMETRIC_DIVISOR : 0;
-  const chargeableKg = Math.max(input.weightKg, volumetric);
-  const distanceKm = input.distanceKm ?? DEFAULT_DISTANCE_KM;
-  const total = Number(zone.base_rate) + chargeableKg * Number(zone.per_kg_rate) + distanceKm * Number(zone.per_km_rate);
-  return { zoneName: zone.zone_name as string, chargeableKg: round2(chargeableKg), distanceKm, totalFee: round2(total) };
 }
 
 /** Creates an order owned by `merchantId`. The merchant id never comes from the request body. */

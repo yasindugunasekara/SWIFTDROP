@@ -3,11 +3,11 @@ import { authenticateToken, AuthRequest } from '../../middleware/auth.js';
 import { requireRoles } from '../../middleware/rbac.js';
 import { z } from 'zod';
 import {
-  webhookService,
   validateEndpointUrl,
   verifyWebhookSignature,
   signWebhookPayload
 } from './webhook.service.js';
+import { databaseWebhookService as webhookService } from './webhook.database.js';
 
 const router = Router();
 
@@ -58,7 +58,7 @@ router.get('/endpoints', async (req: AuthRequest, res: Response) => {
       }
     });
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Failed to fetch webhook endpoint' });
+    res.status(500).json({ error: 'Failed to fetch webhook endpoint' });
   }
 });
 
@@ -100,7 +100,7 @@ router.post('/endpoints', async (req: AuthRequest, res: Response) => {
       }
     });
   } catch (err: any) {
-    res.status(400).json({ error: err.message || 'Failed to register webhook endpoint' });
+    res.status(400).json({ error: 'Failed to register webhook endpoint' });
   }
 });
 
@@ -119,7 +119,7 @@ router.delete('/endpoints/:id', async (req: AuthRequest, res: Response) => {
 
     res.json({ message: 'Webhook endpoint deactivated successfully' });
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Failed to deactivate endpoint' });
+    res.status(500).json({ error: 'Failed to deactivate endpoint' });
   }
 });
 
@@ -148,7 +148,7 @@ router.post('/endpoints/test', async (req: AuthRequest, res: Response) => {
       endpoint,
       'PARCEL_DELIVERED',
       testParcel,
-      testParcel.id
+      undefined
     );
 
     res.json({
@@ -158,7 +158,7 @@ router.post('/endpoints/test', async (req: AuthRequest, res: Response) => {
       delivery
     });
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Failed to dispatch test webhook' });
+    res.status(500).json({ error: 'Failed to dispatch test webhook' });
   }
 });
 
@@ -188,7 +188,7 @@ router.get('/deliveries', async (req: AuthRequest, res: Response) => {
       }
     });
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Failed to fetch webhook deliveries' });
+    res.status(500).json({ error: 'Failed to fetch webhook deliveries' });
   }
 });
 
@@ -210,7 +210,7 @@ router.post('/deliveries/:id/retry', async (req: AuthRequest, res: Response) => 
     });
   } catch (err: any) {
     const isForbidden = err.message?.includes('Forbidden');
-    res.status(isForbidden ? 403 : 400).json({ error: err.message || 'Failed to retry delivery' });
+    res.status(isForbidden ? 403 : 400).json({ error: 'Failed to retry delivery' });
   }
 });
 
@@ -238,7 +238,7 @@ router.post('/dispatch', async (req: AuthRequest, res: Response) => {
       delivery
     });
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Failed to dispatch webhook' });
+    res.status(500).json({ error: 'Failed to dispatch webhook' });
   }
 });
 
@@ -257,7 +257,7 @@ router.post('/verify', async (req: AuthRequest, res: Response) => {
 
     res.json(result);
   } catch (err: any) {
-    res.status(400).json({ error: err.message || 'Verification failure' });
+    res.status(400).json({ error: 'Verification failure' });
   }
 });
 

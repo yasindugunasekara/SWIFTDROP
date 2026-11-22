@@ -51,34 +51,27 @@ export default function ServiceConfigPage() {
   const [merchants, setMerchants] = useState<MerchantApplication[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [loaded,setLoaded]=useState(false);
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const [configRes, merchantsRes] = await Promise.all([
-        fetchApi<{ success: boolean; config: ServiceConfigData }>('/dispatch/config').catch(() => null),
-        fetchApi<{ success: boolean; merchants: MerchantApplication[] }>('/dispatch/merchants?status=PENDING').catch(() => null)
+        fetchApi<{ success: boolean; config: ServiceConfigData }>('/dispatch/config'),
+        fetchApi<{ success: boolean; merchants: MerchantApplication[] }>('/dispatch/merchants?status=PENDING')
       ]);
 
       if (configRes && configRes.config) {
         setConfig(configRes.config);
+        setLoaded(true);
       }
       if (merchantsRes && merchantsRes.merchants) {
         setMerchants(merchantsRes.merchants);
-      } else {
-        setMerchants([
-          {
-            id: '55555555-5555-5555-5555-555555555555',
-            companyName: 'Acme Electronics LLC',
-            registrationNumber: 'LK-8877123',
-            approvalStatus: 'PENDING',
-            createdAt: new Date().toISOString()
-          }
-        ]);
       }
     } catch (err: any) {
-      console.warn('Config load error:', err);
+      setLoaded(false);
+      setStatusMessage({type:'error',text:'Unable to load configuration. Please retry.'});
     } finally {
       setLoading(false);
     }
@@ -89,6 +82,7 @@ export default function ServiceConfigPage() {
   }, [loadData]);
 
   const handleSaveRates = async () => {
+    if(!loaded){setStatusMessage({type:'error',text:'Load configuration before saving.'});return;}
     setSaving(true);
     setStatusMessage(null);
 
@@ -148,6 +142,7 @@ export default function ServiceConfigPage() {
     }
   };
 
+  if(!loading&&!loaded)return <div role="alert" className="p-10">Unable to load configuration. <button onClick={()=>void loadData()} className="underline">Retry</button></div>;
   return (
     <div className="w-full min-h-screen bg-white flex flex-col font-sans antialiased text-slate-800">
       {/* Top Header */}

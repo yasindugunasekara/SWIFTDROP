@@ -22,22 +22,22 @@ router.get('/summary', async (req: Request, res: Response) => {
     if (range === '30d') days = 30;
 
     const query = `
-      SELECT 
+      SELECT
         COUNT(*)::int AS total_dispatched,
         COUNT(CASE WHEN status = 'DELIVERED' THEN 1 END)::int AS delivered_count,
         COUNT(CASE WHEN status = 'FAILED' THEN 1 END)::int AS failed_count,
         COALESCE(SUM(CASE WHEN status = 'DELIVERED' THEN total_fee ELSE 0 END), 0)::float AS total_revenue,
-        CASE 
+        CASE
           WHEN COUNT(CASE WHEN status IN ('DELIVERED', 'FAILED') THEN 1 END) = 0 THEN 0.0
           ELSE ROUND(
-            (COUNT(CASE WHEN status = 'DELIVERED' THEN 1 END)::numeric / 
+            (COUNT(CASE WHEN status = 'DELIVERED' THEN 1 END)::numeric /
              COUNT(CASE WHEN status IN ('DELIVERED', 'FAILED') THEN 1 END)::numeric) * 100, 2
           )::float
         END AS success_rate,
-        CASE 
+        CASE
           WHEN COUNT(CASE WHEN status IN ('DELIVERED', 'FAILED') THEN 1 END) = 0 THEN 0.0
           ELSE ROUND(
-            (COUNT(CASE WHEN status = 'FAILED' THEN 1 END)::numeric / 
+            (COUNT(CASE WHEN status = 'FAILED' THEN 1 END)::numeric /
              COUNT(CASE WHEN status IN ('DELIVERED', 'FAILED') THEN 1 END)::numeric) * 100, 2
           )::float
         END AS failure_rate
@@ -60,23 +60,7 @@ router.get('/summary', async (req: Request, res: Response) => {
         failureRate: row.failure_rate,
       },
     });
-  } catch (error: any) {
-    console.error('Analytics summary database query error:', error.message);
-    // Graceful fallback telemetry when database is offline or unseeded
-    return res.json({
-      success: true,
-      isFallback: true,
-      range: req.query.range || '7d',
-      kpis: {
-        totalDispatched: 1482,
-        deliveredCount: 1438,
-        failedCount: 44,
-        totalRevenue: 845200.0,
-        successRate: 97.03,
-        failureRate: 2.97,
-      },
-    });
-  }
+  } catch (error: any) { return res.status(503).json({error:'Analytics are temporarily unavailable.'}); }
 });
 
 /**
@@ -91,7 +75,7 @@ router.get('/daily-deliveries', async (req: Request, res: Response) => {
     if (range === '30d') days = 30;
 
     const query = `
-      SELECT 
+      SELECT
         TO_CHAR(DATE_TRUNC('day', created_at), 'Dy') AS day_name,
         DATE(created_at) AS delivery_date,
         COUNT(CASE WHEN status = 'DELIVERED' THEN 1 END)::int AS delivered,
@@ -118,24 +102,7 @@ router.get('/daily-deliveries', async (req: Request, res: Response) => {
       range,
       dailyCounts,
     });
-  } catch (error: any) {
-    console.error('Daily deliveries database query error:', error.message);
-    // Fallback data when database is offline
-    return res.json({
-      success: true,
-      isFallback: true,
-      range: req.query.range || '7d',
-      dailyCounts: [
-        { date: 'Mon', delivered: 180, failed: 4, total: 184 },
-        { date: 'Tue', delivered: 215, failed: 8, total: 223 },
-        { date: 'Wed', delivered: 195, failed: 5, total: 200 },
-        { date: 'Thu', delivered: 240, failed: 11, total: 251 },
-        { date: 'Fri', delivered: 265, failed: 6, total: 271 },
-        { date: 'Sat', delivered: 210, failed: 7, total: 217 },
-        { date: 'Sun', delivered: 133, failed: 3, total: 136 },
-      ],
-    });
-  }
+  } catch (error: any) { return res.status(503).json({error:'Analytics are temporarily unavailable.'}); }
 });
 
 /**
@@ -145,16 +112,16 @@ router.get('/daily-deliveries', async (req: Request, res: Response) => {
 router.get('/courier-performance', async (req: Request, res: Response) => {
   try {
     const query = `
-      SELECT 
+      SELECT
         u.id AS courier_id,
         u.full_name AS name,
         u.phone AS phone,
         COUNT(CASE WHEN p.status = 'DELIVERED' THEN 1 END)::int AS completed_runs,
         COUNT(CASE WHEN p.status IN ('ASSIGNED', 'PICKED_UP', 'IN_TRANSIT', 'OUT_FOR_DELIVERY') THEN 1 END)::int AS active_runs,
-        CASE 
+        CASE
           WHEN COUNT(CASE WHEN p.status IN ('DELIVERED', 'FAILED') THEN 1 END) = 0 THEN 100.0
           ELSE ROUND(
-            (COUNT(CASE WHEN p.status = 'DELIVERED' THEN 1 END)::numeric / 
+            (COUNT(CASE WHEN p.status = 'DELIVERED' THEN 1 END)::numeric /
              COUNT(CASE WHEN p.status IN ('DELIVERED', 'FAILED') THEN 1 END)::numeric) * 100, 1
           )::float
         END AS success_rate,
@@ -186,20 +153,7 @@ router.get('/courier-performance', async (req: Request, res: Response) => {
       success: true,
       couriers,
     });
-  } catch (error: any) {
-    console.error('Courier performance database query error:', error.message);
-    // Fallback data when database is offline
-    return res.json({
-      success: true,
-      isFallback: true,
-      couriers: [
-        { id: '1', name: 'Sunil Silva (#101)', phone: '+94 77 123 4567', completedRuns: 184, activeRuns: 3, successRate: 99.1, avgTimeMins: 38 },
-        { id: '2', name: 'Sarah Lee (#102)', phone: '+94 71 987 6543', completedRuns: 162, activeRuns: 2, successRate: 98.5, avgTimeMins: 41 },
-        { id: '3', name: 'Kamal Perera (#103)', phone: '+94 75 444 3322', completedRuns: 149, activeRuns: 4, successRate: 97.8, avgTimeMins: 44 },
-        { id: '4', name: 'Nimal Jayasooriya (#104)', phone: '+94 78 555 1199', completedRuns: 138, activeRuns: 1, successRate: 96.2, avgTimeMins: 49 },
-      ],
-    });
-  }
+  } catch (error: any) { return res.status(503).json({error:'Analytics are temporarily unavailable.'}); }
 });
 
 export default router;

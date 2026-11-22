@@ -1,107 +1,52 @@
-import { connectRabbitMQ } from '../config/rabbitmq.js';
-import {
-  inMemoryStore,
-  webhookService,
-  WebhookDeliveryAttempt
-} from '../modules/webhooks/webhook.service.js';
-
-let isRunning = false;
-let retryInterval: NodeJS.Timeout | null = null;
-
-/**
- * Member 8 Webhook Worker
- * Handles asynchronous event consumption from RabbitMQ and background retry loop with exponential backoff & DLQ state.
- */
-export const startWebhookWorker = async () => {
-  if (isRunning) return;
-  isRunning = true;
-
-  console.log('🔄 Initializing Member 8 Webhook Dispatch & Retry Worker (DLQ)...');
-
-  // 1. Initialize RabbitMQ Consumer for parcel events
-  try {
-    const mq = await connectRabbitMQ();
-    if (mq && mq.channel) {
-      const ch = mq.channel;
-      const queue = process.env.RABBITMQ_QUEUE_WEBHOOKS || 'swiftdrop_webhooks_queue';
-      const dlq = process.env.RABBITMQ_QUEUE_DLQ || 'swiftdrop_dead_letter_queue';
-
-      await ch.assertQueue(queue, { durable: true });
-      await ch.assertQueue(dlq, { durable: true });
-
-      console.log(`📡 [Webhook Worker] Subscribed to RabbitMQ queue '${queue}'`);
-
-      ch.consume(queue, async (msg) => {
-        if (!msg) return;
-
-        try {
-          const content = JSON.parse(msg.content.toString());
-          console.log(`📥 [Webhook Worker] Received parcel event for merchant ${content.merchantId}: ${content.event}`);
-
-          const endpoint = await webhookService.getEndpoint(content.merchantId);
-          if (endpoint && endpoint.is_active) {
-            const attempt = await webhookService.dispatchEvent(
-              endpoint,
-              content.event,
-              content.parcel,
-              content.parcelId
-            );
-
-            if (attempt.is_dead_letter) {
-              console.warn(`☠️ [Webhook Worker] Delivery ${attempt.id} moved to RabbitMQ DLQ '${dlq}'`);
-              ch.sendToQueue(dlq, Buffer.from(JSON.stringify(attempt)), { persistent: true });
-            }
-          }
-
-          ch.ack(msg);
-        } catch (err) {
-          console.error('❌ [Webhook Worker] Error consuming message:', err);
-          ch.nack(msg, false, false);
-        }
-      });
-    } else {
-      console.log('ℹ️ [Webhook Worker] RabbitMQ broker unavailable; running internal async retry engine.');
-    }
-  } catch (err) {
-    console.warn('⚠️ [Webhook Worker] RabbitMQ connection failed; continuing with internal retry loop.');
-  }
-
-  // 2. Start internal periodic retry loop for exponential backoff retries
-  startRetryEngine();
-  console.log('✅ Member 8 Webhook Dispatch & Retry Worker operational.');
-};
-
-/**
- * Runs background sweep every 10 seconds to process pending retries
- */
-export function startRetryEngine(intervalMs = 10000) {
-  if (retryInterval) clearInterval(retryInterval);
-
-  retryInterval = setInterval(async () => {
+import { connectRabbitMQ, createRabbitMQChannel } from '../config/rabbitmq.js';
+import type { Channel } from 'amqplib';
+import { z } from 'zod';
+import { databaseWebhookService as webhookService } from '../modules/webhooks/webhook.database.js';
+let running=false;
+let channel:Channel|null=null;
+let timer:ReturnType<typeof setInterval>|null=null;
+let sweep:Promise<void>|null=null;
+const eventSchema=z.object({eventId:z.string().uuid(),merchantId:z.string().uuid(),parcelId:z.string().uuid(),event:z.string().min(1),parcel:z.object({id:z.string(),trackingNumber:z.string(),status:z.string()})});
+async function connectConsumer(){
+  if(!running||channel)return;
+  if(!await connectRabbitMQ())return;
+  const ch=await createRabbitMQChannel();if(!ch||!running){await ch?.close();return;}
+  channel=ch;
+  ch.on('close',()=>{if(channel===ch)channel=null;});
+  ch.on('error',()=>console.error('Webhook broker channel unavailable'));
+  const queue=process.env.RABBITMQ_QUEUE_WEBHOOKS||'swiftdrop_webhooks_queue';
+  await ch.assertQueue(queue,{durable:true});await ch.prefetch(10);
+  await ch.consume(queue,async msg=>{
+    if(!msg)return;
+    let payload;
+    try{payload=eventSchema.parse(JSON.parse(msg.content.toString()));}
+    catch {ch.ack(msg);return;}
     try {
-      const pending = inMemoryStore.getPendingRetries();
-      if (pending.length > 0) {
-        console.log(`🔁 [Webhook Worker] Processing ${pending.length} pending retries with exponential backoff...`);
-        for (const item of pending) {
-          try {
-            await webhookService.retryDelivery(item.id, item.merchant_id);
-            console.log(`   ➜ Delivery ${item.id} retried (attempt ${item.attempt_count}, code ${item.response_code})`);
-          } catch (err: any) {
-            console.error(`   ❌ Failed to retry delivery ${item.id}:`, err.message);
-          }
-        }
-      }
-    } catch (err) {
-      console.error('Error during webhook retry loop:', err);
+      const endpoint=await webhookService.getEndpoint(payload.merchantId);
+      const webhookEvent=['PARCEL_DELIVERED','PARCEL_FAILED'].includes(payload.event)?payload.event:'PARCEL_STATUS_UPDATED';
+      if(endpoint?.events.includes(webhookEvent))await webhookService.dispatchEvent(endpoint,webhookEvent,payload.parcel,payload.parcelId,payload.eventId);
+      ch.ack(msg);
+    } catch {
+      console.error('Webhook event processing unavailable; retrying');
+      setTimeout(()=>{try{ch.nack(msg,false,true);}catch{}},1000);
     }
-  }, intervalMs);
+  });
 }
-
-export function stopWebhookWorker() {
-  if (retryInterval) {
-    clearInterval(retryInterval);
-    retryInterval = null;
-  }
-  isRunning = false;
-  console.log('🛑 Member 8 Webhook Worker stopped.');
+export function startRetryEngine(intervalMs=3000){
+  if(timer)return;
+  const run=()=>{
+    if(sweep||!running)return;
+    sweep=(async()=>{
+      await connectConsumer();
+      for(const item of await webhookService.getPendingRetries()){
+        try{await webhookService.retryDelivery(item.id,item.merchant_id,true);}catch{console.error('Webhook retry unavailable');}
+      }
+    })().catch(()=>console.error('Webhook worker unavailable')).finally(()=>{sweep=null;});
+  };
+  timer=setInterval(run,intervalMs);run();
+}
+export async function startWebhookWorker(){if(running)return;running=true;startRetryEngine();}
+export async function stopWebhookWorker(){
+  running=false;if(timer)clearInterval(timer);timer=null;
+  await channel?.close().catch(()=>{});channel=null;await sweep;
 }

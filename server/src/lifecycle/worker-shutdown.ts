@@ -15,7 +15,7 @@ export interface WorkerShutdownOptions {
    * Stops the existing webhook worker's retry engine. Its RabbitMQ consumer is
    * attached to the shared connection and is stopped by closeBroker below.
    */
-  stopWebhook: () => void;
+  stopWebhook: () => void | Promise<void>;
   /** Closes the worker process's shared RabbitMQ connection. */
   closeBroker: () => Promise<void>;
   logger?: ShutdownLogger;

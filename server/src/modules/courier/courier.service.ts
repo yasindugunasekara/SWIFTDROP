@@ -501,7 +501,7 @@ export class CourierService {
       channel.sendToQueue('swiftdrop_notifications_queue', buffer, { persistent: true });
       channel.sendToQueue('swiftdrop_webhooks_queue', buffer, { persistent: true });
     } catch (err) {
-      console.warn('⚠️ RabbitMQ status publish bypassed:', err);
+      console.warn('courier operation unavailable');
     }
   }
 
@@ -740,4 +740,5 @@ export class CourierService {
   }
 }
 
+/** Demo-only service; HTTP routes use DatabaseCourierService. */
 export const courierService = new CourierService();

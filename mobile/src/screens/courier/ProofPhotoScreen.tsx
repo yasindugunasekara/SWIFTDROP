@@ -1,161 +1,26 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, ScrollView } from 'react-native';
-
-export default function ProofPhotoScreen({ route, navigation }: any) {
-  const { parcelId, isFailure } = route?.params || { parcelId: 'SWIFT-991122', isFailure: false };
-
-  const [photoTaken, setPhotoTaken] = useState(false);
-  const [signed, setSigned] = useState(false);
-  const [failureReason, setFailureReason] = useState('RECIPIENT_UNAVAILABLE');
-  const [courierNotes, setCourierNotes] = useState('');
-
-  const handleCapturePhoto = () => {
-    setPhotoTaken(true);
-    Alert.alert('Camera Capture', 'Doorstep proof photo captured with GPS coordinates & timestamp.');
-  };
-
-  const handleConfirm = () => {
-    if (isFailure) {
-      if (!failureReason) {
-        Alert.alert('Error', 'Please select a failure reason.');
-        return;
-      }
-      Alert.alert(
-        'Delivery Exception Logged',
-        `Parcel ${parcelId} marked as FAILED with reason: ${failureReason}`,
-        [{ text: 'OK', onPress: () => navigation?.goBack() }]
-      );
-      return;
-    }
-
-    if (!photoTaken) {
-      Alert.alert('Proof Photo Required', 'You must capture a doorstep proof photo before confirming delivery.');
-      return;
-    }
-
-    Alert.alert(
-      'Delivery Confirmed',
-      `Parcel ${parcelId} delivered successfully with verified photo proof!`,
-      [{ text: 'OK', onPress: () => navigation?.goBack() }]
-    );
-  };
-
-  return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.header}>
-        {isFailure ? 'Log Delivery Failure' : 'Capture Delivery Proof'}
-      </Text>
-      <Text style={styles.sub}>Tracking #: {parcelId}</Text>
-
-      {isFailure ? (
-        <View style={styles.formBox}>
-          <Text style={styles.label}>Select Failure Reason:</Text>
-          {[
-            { id: 'RECIPIENT_UNAVAILABLE', label: 'Recipient Unreachable / Not Home' },
-            { id: 'WRONG_ADDRESS', label: 'Incorrect / Incomplete Address' },
-            { id: 'CUSTOMER_REFUSED', label: 'Customer Refused Handover' },
-            { id: 'ACCESS_DENIED', label: 'Gate / Building Access Denied' },
-          ].map((item) => (
-            <TouchableOpacity
-              key={item.id}
-              style={[styles.reasonBtn, failureReason === item.id && styles.reasonBtnActive]}
-              onPress={() => setFailureReason(item.id)}
-            >
-              <Text style={[styles.reasonText, failureReason === item.id && styles.reasonTextActive]}>
-                {item.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-
-          <Text style={[styles.label, { marginTop: 12 }]}>Failure Details / Notes:</Text>
-          <TextInput
-            style={styles.textArea}
-            placeholder="Document attempts made, phone calls, etc..."
-            placeholderTextColor="#64748b"
-            multiline
-            numberOfLines={3}
-            value={courierNotes}
-            onChangeText={setCourierNotes}
-          />
-        </View>
-      ) : (
-        <>
-          {/* Camera Viewfinder */}
-          <View style={styles.cameraPlaceholder}>
-            {photoTaken ? (
-              <View style={styles.photoPreview}>
-                <Text style={styles.photoCheck}>✓</Text>
-                <Text style={styles.photoCapturedText}>Doorstep Proof Photo Captured</Text>
-                <Text style={styles.timestamp}>{new Date().toLocaleTimeString()}</Text>
-              </View>
-            ) : (
-              <Text style={styles.cameraText}>[Camera Viewfinder: Frame doorstep & parcel]</Text>
-            )}
-          </View>
-
-          <TouchableOpacity style={styles.shutterBtn} onPress={handleCapturePhoto}>
-            <Text style={styles.shutterText}>
-              {photoTaken ? 'Retake Photo' : '📸 Snap Proof Photo'}
-            </Text>
-          </TouchableOpacity>
-
-          {/* Signature Option */}
-          <TouchableOpacity
-            style={[styles.signatureBox, signed && styles.signatureBoxActive]}
-            onPress={() => setSigned(!signed)}
-          >
-            <Text style={styles.signatureText}>
-              {signed ? '✓ Recipient Signature Received' : '✍️ Tap to Sign on Screen'}
-            </Text>
-          </TouchableOpacity>
-
-          <TextInput
-            style={styles.notesInput}
-            placeholder="Courier recipient notes (optional)..."
-            placeholderTextColor="#64748b"
-            value={courierNotes}
-            onChangeText={setCourierNotes}
-          />
-        </>
-      )}
-
-      {/* Confirm Button */}
-      <TouchableOpacity
-        style={[styles.confirmBtn, isFailure && styles.confirmBtnFail]}
-        onPress={handleConfirm}
-      >
-        <Text style={styles.confirmText}>
-          {isFailure ? 'Submit Failure Exception' : 'Confirm & Complete Handover'}
-        </Text>
-      </TouchableOpacity>
-    </ScrollView>
-  );
+import React,{useRef,useState} from 'react';
+import {View,Text,TouchableOpacity,TextInput,ScrollView,Image,Platform,StyleSheet} from 'react-native';
+import {CameraView,useCameraPermissions} from 'expo-camera';
+import {mobileApiFetch} from '../../services/api';
+export default function ProofPhotoScreen({parcelId,isFailure=false,onComplete,onCancel}:{parcelId:string;isFailure?:boolean;onComplete:()=>void;onCancel:()=>void}){
+  const [permission,requestPermission]=useCameraPermissions(),camera=useRef<CameraView>(null);
+  const [uri,setUri]=useState(''),[reason,setReason]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState('');
+  async function capture(){try{const photo=await camera.current?.takePictureAsync({quality:.65});if(photo)setUri(photo.uri);}catch{setError('Unable to capture photo.');}}
+  async function confirm(){
+    if(isFailure&&!reason.trim()){setError('Enter the reason for this failed delivery.');return;}
+    if(!isFailure&&!uri){setError('Capture a proof photo first.');return;}
+    setBusy(true);setError('');
+    try {
+      if(uri){const body=new FormData();if(Platform.OS==='web'){body.append('photo',await(await fetch(uri)).blob(),'proof.jpg');}else{body.append('photo',{uri,name:'proof.jpg',type:'image/jpeg'} as unknown as Blob);}
+        await mobileApiFetch(`/courier/jobs/${parcelId}/proof`,{method:'POST',body});}
+      await mobileApiFetch(`/courier/jobs/${parcelId}/${isFailure?'fail':'status'}`,{method:isFailure?'POST':'PATCH',body:JSON.stringify(isFailure?{failureReason:reason}:{status:'DELIVERED',note:reason})});
+      onComplete();
+    }catch{setError('Delivery was not saved. Check your connection and retry.');}finally{setBusy(false);}
+  }
+  return <ScrollView contentContainerStyle={s.page}><TouchableOpacity disabled={busy} onPress={onCancel}><Text>Back to deliveries</Text></TouchableOpacity><Text style={s.title}>{isFailure?'Report failed delivery':'Delivery proof'}</Text>
+    {error?<Text accessibilityRole="alert">{error}</Text>:null}
+    {uri?<><Image source={{uri}} style={s.camera}/><TouchableOpacity onPress={()=>setUri('')}><Text>Retake photo</Text></TouchableOpacity></>:permission?.granted?<><CameraView ref={camera} facing="back" style={s.camera}/><TouchableOpacity style={s.button} onPress={()=>void capture()}><Text>Capture doorstep photo</Text></TouchableOpacity></>:<TouchableOpacity style={s.button} onPress={()=>void requestPermission()}><Text>Allow camera access</Text></TouchableOpacity>}
+    <TextInput accessibilityLabel={isFailure?'Failure reason':'Delivery note'} placeholder={isFailure?'Required failure reason':'Delivery note'} value={reason} maxLength={2000} onChangeText={setReason} style={s.input}/>
+    <TouchableOpacity disabled={busy} style={s.button} onPress={()=>void confirm()}><Text>{busy?'Saving…':'Confirm delivery record'}</Text></TouchableOpacity></ScrollView>;
 }
-
-const styles = StyleSheet.create({
-  container: { flexGrow: 1, backgroundColor: '#090d16', padding: 20, alignItems: 'center' },
-  header: { fontSize: 22, fontWeight: 'bold', color: '#ff6600', marginTop: 10 },
-  sub: { color: '#94a3b8', marginVertical: 6, fontSize: 13 },
-  cameraPlaceholder: { width: '100%', height: 260, backgroundColor: '#1e293b', borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginVertical: 14, borderWidth: 1, borderColor: '#334155' },
-  cameraText: { color: '#64748b', fontSize: 14, textAlign: 'center', paddingHorizontal: 20 },
-  photoPreview: { alignItems: 'center' },
-  photoCheck: { fontSize: 44, color: '#10b981', fontWeight: 'bold' },
-  photoCapturedText: { color: '#e2e8f0', fontSize: 14, fontWeight: 'bold', marginTop: 4 },
-  timestamp: { color: '#94a3b8', fontSize: 11, marginTop: 2 },
-  shutterBtn: { backgroundColor: '#334155', paddingVertical: 12, paddingHorizontal: 24, borderRadius: 10, width: '100%', alignItems: 'center', marginBottom: 12 },
-  shutterText: { color: '#fff', fontSize: 14, fontWeight: 'bold' },
-  signatureBox: { width: '100%', padding: 14, backgroundColor: '#1e293b', borderRadius: 10, borderWidth: 1, borderColor: '#334155', alignItems: 'center', marginBottom: 12 },
-  signatureBoxActive: { borderColor: '#10b981', backgroundColor: '#064e3b' },
-  signatureText: { color: '#e2e8f0', fontSize: 13, fontWeight: '600' },
-  notesInput: { width: '100%', backgroundColor: '#1e293b', borderRadius: 10, padding: 12, color: '#fff', fontSize: 13, borderWidth: 1, borderColor: '#334155', marginBottom: 16 },
-  formBox: { width: '100%', marginVertical: 12 },
-  label: { fontSize: 12, fontWeight: 'bold', color: '#94a3b8', marginBottom: 6 },
-  reasonBtn: { backgroundColor: '#1e293b', padding: 12, borderRadius: 10, marginBottom: 8, borderWidth: 1, borderColor: '#334155' },
-  reasonBtnActive: { borderColor: '#ef4444', backgroundColor: '#450a0a' },
-  reasonText: { color: '#cbd5e1', fontSize: 13, fontWeight: '500' },
-  reasonTextActive: { color: '#fca5a5', fontWeight: 'bold' },
-  textArea: { backgroundColor: '#1e293b', borderRadius: 10, padding: 12, color: '#fff', fontSize: 13, borderWidth: 1, borderColor: '#334155', textAlignVertical: 'top', height: 80 },
-  confirmBtn: { backgroundColor: '#10b981', paddingVertical: 14, borderRadius: 12, width: '100%', alignItems: 'center', marginTop: 10 },
-  confirmBtnFail: { backgroundColor: '#ef4444' },
-  confirmText: { color: '#fff', fontSize: 15, fontWeight: 'bold' }
-});
+const s=StyleSheet.create({page:{padding:24,gap:18},title:{fontSize:25,fontWeight:'700'},camera:{height:320,width:'100%',borderRadius:12},button:{backgroundColor:'#ff9900',padding:16,borderRadius:10},input:{borderWidth:1,borderColor:'#cbd5e1',padding:14,borderRadius:10}});

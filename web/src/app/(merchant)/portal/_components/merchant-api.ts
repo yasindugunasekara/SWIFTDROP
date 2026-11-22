@@ -1,3 +1,5 @@
+import {fetchApi} from '../../../../lib/api';
+import {getAccessToken} from '../../../../lib/auth';
 // Member 6 — typed client for the merchant API (/api/v1/merchant/*).
 
 const API_BASE_URL = '/api/v1';
@@ -74,33 +76,10 @@ export class ApiError extends Error {
   }
 }
 
-export function getToken() {
-  if (typeof window === 'undefined') return null;
-  try {
-    return localStorage.getItem(TOKEN_KEY);
-  } catch {
-    return null;
-  }
-}
-
-async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
-  const token = getToken();
-  let res: Response;
-  try {
-    res = await fetch(`${API_BASE_URL}/merchant${path}`, {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: body === undefined ? undefined : JSON.stringify(body),
-    });
-  } catch {
-    throw new ApiError(0, 'Cannot reach the SwiftDrop API. Is the server running?');
-  }
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new ApiError(res.status, data.error || `Request failed (${res.status})`);
-  return data as T;
+export async function getToken(){return getAccessToken();}
+async function request<T>(method:string,path:string,body?:unknown):Promise<T>{
+ try{return await fetchApi<T>('/merchant'+path,{method,body:body===undefined?undefined:JSON.stringify(body)});}
+ catch(error){const failure=error as {status?:number;message?:string};throw new ApiError(failure.status||0,failure.message||'Merchant API unavailable');}
 }
 
 export const merchantApi = {

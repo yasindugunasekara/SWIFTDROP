@@ -1,5 +1,60 @@
 # SwiftDrop - Courier & Parcel Delivery System
 
+## Operational update and test report
+
+The operational database migration must be applied before running the updated booking,
+dispatch, courier, pricing and worker services. On an existing initialized database,
+apply only `server/src/database/migrations/20261122162110_operational_persistence_and_delivery_flows.sql`:
+
+```bash
+npm --prefix server run migrate -- --only 20261122162110_operational_persistence_and_delivery_flows.sql
+```
+
+Customer bookings now persist to the same database used by tracking and dispatch.
+Customer and merchant quotes share persisted LKR rates. Status changes create a
+transactional event outbox; workers must be running to relay events to RabbitMQ and
+deliver notifications/webhooks. SMS delivery uses a durable **mock mailbox** in
+`mock_sms_messages`; no phone-provider delivery is claimed.
+
+```bash
+npm --prefix server run test:audit
+npm --prefix mobile test
+npm --prefix web run build
+```
+
+Run the web client suites from `web/` with
+`node --test tests/auth-session.test.mjs tests/tracking.test.mjs tests/notification-helpers.test.mjs`.
+The backend audit saves reproducible test output and scoped coverage under
+`docs/test-reports/`. See [the design and test report](docs/SwiftDrop-design-and-test-report.pdf)
+for the complete requirement matrix, diagrams, test scope and remaining live checks.
+See [the detailed test report](docs/test-reports/SwiftDrop-detailed-test-report.pdf)
+for test cases, execution results and the complete 208-check inventory.
+
+For a fresh local installation with **containerized database and authentication**:
+
+```bash
+node scripts/sync-local-schema.mjs
+npx supabase start
+npx supabase status
+```
+
+Use the returned local URL, publishable/anon key and database URL in the appropriate
+environment files. App containers reach host services through `host.docker.internal`;
+browser/mobile URLs must use a hostname reachable from that client. Then use the
+Compose instructions below for frontend, API, workers, Redis and RabbitMQ. This local
+Supabase route is an alternative to a hosted project. It downloads and starts Docker
+images; it has not been executed as part of the isolated test report.
+
+The optional `/assistant` page calls `/api/v1/ai/chat`. Configure `GEMINI_API_KEY`
+(or `GOOGLE_GENERATIVE_AI_API_KEY`) and a currently supported `AI_MODEL_NAME`.
+It exposes read-only tracking and pricing tools. The previous address/proof AI stubs
+now return an explicit unconfigured response rather than fabricated verification.
+
+Changes and tests in this update are local. Hosted migrations, Google provider login,
+real-device camera use, Kubernetes deployment and team presentation require separate
+execution and evidence. Member names in the draft responsibility sheet require team
+confirmation.
+
 ## Docker Installation
 
 Docker runs the web application, standalone API/WebSockets, background workers, Redis, and RabbitMQ. Authentication and PostgreSQL use your **existing Supabase project**. The mobile app runs separately through Expo. Node.js does not need to be installed on the host for this Docker setup.

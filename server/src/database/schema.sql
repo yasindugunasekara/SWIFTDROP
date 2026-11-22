@@ -1,5 +1,6 @@
 -- =============================================================================
 -- SWIFTDROP COMPREHENSIVE DATABASE SCHEMA
+-- Operational extensions: apply migrations/20261122162110_operational_persistence_and_delivery_flows.sql after this base schema and notification hardening.
 -- PostgreSQL Architecture Supporting 10 Team Members
 -- =============================================================================
 

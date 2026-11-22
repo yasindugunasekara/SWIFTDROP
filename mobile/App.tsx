@@ -25,6 +25,7 @@ import BottomNavBar, { TabKey } from './src/components/BottomNavBar';
 import { Colors } from './src/theme/colors';
 import { getMobileUser, initializeMobileAuth, logoutMobile, setMobileAuthActive, subscribeMobileAuth, type MobileUser } from './src/services/auth';
 import TaskListScreen from './src/screens/courier/TaskListScreen';
+import NotificationsScreen from './src/screens/NotificationsScreen';
 
 const { width } = Dimensions.get('window');
 
@@ -41,6 +42,7 @@ export default function App() {
   const [logoutError, setLogoutError] = useState('');
   const logoutPending = useRef(false);
   const [bookModalVisible, setBookModalVisible] = useState(false);
+  const [notificationsOpen,setNotificationsOpen]=useState(false);
   const [selectedBookingCategory, setSelectedBookingCategory] = useState('parcels');
   const [selectedBookingPromo, setSelectedBookingPromo] = useState('');
   const [activeTrackingId, setActiveTrackingId] = useState('SWIFT-991122');
@@ -123,6 +125,7 @@ export default function App() {
 
   // Render active content
   const renderMainContent = () => {
+    if(notificationsOpen)return <NotificationsScreen onBack={()=>setNotificationsOpen(false)}/>;
     switch (activeTab) {
       case 'home':
         if (userRole === 'courier') return <TaskListScreen navigation={undefined} />;
@@ -130,7 +133,7 @@ export default function App() {
           <HomeScreen
             onBookNow={handleOpenBookModal}
             onTrackPress={handleTrackPress}
-            onNotifications={() => setActiveTab('orders')}
+            onNotifications={() => setNotificationsOpen(true)}
             userName={user?.fullName || 'Kasun'}
           />
         );
@@ -195,8 +198,8 @@ export default function App() {
 
         {currentScreen === 'main' && user && (
           <View style={styles.appShell}>
-            <View style={styles.screenArea}>{renderMainContent()}</View>
-            <BottomNavBar activeTab={activeTab} onTabChange={setActiveTab} />
+            <TouchableOpacity accessibilityLabel="Open notifications" onPress={()=>setNotificationsOpen(true)}><Text style={{padding:12,textAlign:"right"}}>Notifications</Text></TouchableOpacity><View style={styles.screenArea}>{renderMainContent()}</View>
+            <BottomNavBar activeTab={activeTab} onTabChange={tab=>{setNotificationsOpen(false);setActiveTab(tab);}} />
 
             {/* Global 3-Step Booking Wizard Modal */}
             {userRole === 'customer' && <BookDeliveryModal

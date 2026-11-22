@@ -70,7 +70,7 @@ export default function MerchantPortalPage() {
       .catch((e) => {
         if (cancelled) return;
         // A stored token that is rejected (e.g. another role's session) gets an explanation.
-        if (isSessionError(e)) signOut(getToken() ? 'Please sign in with your merchant account.' : '');
+        if (isSessionError(e)) signOut('Please sign in with your merchant account.');
         else {
           setLoadError(e instanceof Error ? e.message : 'Failed to load your merchant profile');
           setPhase((p) => (p === 'loading' ? 'auth' : p));

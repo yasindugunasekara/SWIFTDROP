@@ -13,7 +13,7 @@ router.use(authenticateToken);
 // -----------------------------------------------------------------------------
 router.get(
   '/exceptions',
-  requireRoles(['DISPATCHER', 'ADMIN', 'COURIER']),
+  requireRoles(['DISPATCHER', 'ADMIN']),
   async (req: AuthRequest, res: Response) => {
     try {
       const { status, search } = req.query;
@@ -27,8 +27,8 @@ router.get(
         exceptions,
       });
     } catch (err: any) {
-      console.error('Error fetching exceptions:', err);
-      return res.status(500).json({ error: err.message || 'Failed to list exceptions' });
+      console.error('support operation unavailable');
+      return res.status(500).json({ error: 'Failed to list exceptions' });
     }
   }
 );
@@ -38,7 +38,7 @@ router.get(
 // -----------------------------------------------------------------------------
 router.get(
   '/exceptions/:id',
-  requireRoles(['DISPATCHER', 'ADMIN', 'COURIER']),
+  requireRoles(['DISPATCHER', 'ADMIN']),
   async (req: AuthRequest, res: Response) => {
     try {
       const exception = await supportService.getExceptionById(req.params.id);
@@ -48,8 +48,8 @@ router.get(
 
       return res.json({ exception });
     } catch (err: any) {
-      console.error('Error fetching exception detail:', err);
-      return res.status(500).json({ error: err.message || 'Failed to retrieve exception details' });
+      console.error('support operation unavailable');
+      return res.status(500).json({ error: 'Failed to retrieve exception details' });
     }
   }
 );
@@ -59,7 +59,7 @@ router.get(
 // -----------------------------------------------------------------------------
 router.post(
   '/exceptions',
-  requireRoles(['DISPATCHER', 'ADMIN', 'COURIER']),
+  requireRoles(['DISPATCHER', 'ADMIN']),
   async (req: AuthRequest, res: Response) => {
     try {
       const { parcelId, reason, initialNotes } = req.body;
@@ -81,8 +81,8 @@ router.post(
         exception: createdException,
       });
     } catch (err: any) {
-      console.error('Error creating exception:', err);
-      return res.status(500).json({ error: err.message || 'Failed to log exception' });
+      console.error('support operation unavailable');
+      return res.status(500).json({ error: 'Failed to log exception' });
     }
   }
 );
@@ -115,8 +115,8 @@ router.post(
         exception: updated,
       });
     } catch (err: any) {
-      console.error('Error adding support note:', err);
-      return res.status(500).json({ error: err.message || 'Failed to record support note' });
+      console.error('support operation unavailable');
+      return res.status(500).json({ error: 'Failed to record support note' });
     }
   }
 );
@@ -154,8 +154,8 @@ router.patch(
         exception: updated,
       });
     } catch (err: any) {
-      console.error('Error updating exception status:', err);
-      return res.status(500).json({ error: err.message || 'Failed to update exception status' });
+      console.error('support operation unavailable');
+      return res.status(500).json({ error: 'Failed to update exception status' });
     }
   }
 );
@@ -175,8 +175,8 @@ router.get(
         auditLogs,
       });
     } catch (err: any) {
-      console.error('Error fetching audit logs:', err);
-      return res.status(500).json({ error: err.message || 'Failed to fetch audit logs' });
+      console.error('support operation unavailable');
+      return res.status(500).json({ error: 'Failed to fetch audit logs' });
     }
   }
 );

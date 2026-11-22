@@ -49,7 +49,7 @@ export default function DispatcherDashboardPage() {
   const [activeNav, setActiveNav] = useState('dispatch');
   const [activeZone, setActiveZone] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   // Data states
   const [parcels, setParcels] = useState<UnassignedParcel[]>([]);
   const [couriers, setCouriers] = useState<CourierWorkload[]>([]);
@@ -78,103 +78,8 @@ export default function DispatcherDashboardPage() {
     try {
       const zoneParam = activeZone !== 'all' ? `?zone=${encodeURIComponent(activeZone)}` : '';
       const [parcelsData, couriersData] = await Promise.all([
-        fetchApi<{ success: boolean; parcels: UnassignedParcel[] }>(`/dispatch/unassigned${zoneParam}`).catch(() => ({
-          success: true,
-          parcels: [
-            {
-              id: 'p-1001',
-              trackingNumber: 'SWIFT-102938',
-              senderName: 'Acme Wholesale Co',
-              senderPhone: '+94 11 234 5678',
-              pickupAddress: '45 Main Street, Pettah, Colombo 11',
-              recipientName: 'Dr. Perera',
-              recipientPhone: '+94 77 112 2334',
-              deliveryAddress: 'Mt. Lavinia Clinic, Hotel Road, Mount Lavinia',
-              weightKg: 3.5,
-              zone: 'Western Province (Colombo Urban)',
-              totalFee: 525.0,
-              status: 'CONFIRMED',
-              specialNotes: 'Fragile medical diagnostic equipment. Handle with care.',
-              createdAt: new Date(Date.now() - 14 * 60000).toISOString()
-            },
-            {
-              id: 'p-1002',
-              trackingNumber: 'SWIFT-102939',
-              senderName: 'Lanka Textiles',
-              senderPhone: '+94 11 345 6789',
-              pickupAddress: '88 Keyzer St, Colombo 11',
-              recipientName: 'Shanika Silva',
-              recipientPhone: '+94 71 223 3445',
-              deliveryAddress: '22 Peradeniya Road, Kandy',
-              weightKg: 2.1,
-              zone: 'Central Province (Kandy Metro)',
-              totalFee: 690.0,
-              status: 'CONFIRMED',
-              specialNotes: 'Call recipient prior to arrival.',
-              createdAt: new Date(Date.now() - 32 * 60000).toISOString()
-            },
-            {
-              id: 'p-1003',
-              trackingNumber: 'SWIFT-102940',
-              senderName: 'Colombo Tech Mart',
-              senderPhone: '+94 11 456 7890',
-              pickupAddress: '150 Galle Road, Colombo 04',
-              recipientName: 'Dilan Jayasinghe',
-              recipientPhone: '+94 76 334 4556',
-              deliveryAddress: '78 Fort Bazaar, Galle Fort',
-              weightKg: 1.5,
-              zone: 'Southern Coastal (Galle / Matara)',
-              totalFee: 650.0,
-              status: 'CONFIRMED',
-              specialNotes: 'Customer requested evening delivery.',
-              createdAt: new Date(Date.now() - 45 * 60000).toISOString()
-            }
-          ]
-        })),
-        fetchApi<{ success: boolean; couriers: CourierWorkload[] }>('/dispatch/couriers').catch(() => ({
-          success: true,
-          couriers: [
-            {
-              id: '10111111-1111-1111-1111-111111111111',
-              name: 'Sunil Silva',
-              email: 'sunil.silva@swiftdrop.com',
-              phone: '+94 77 987 6543',
-              vehicleType: 'Motorcycle',
-              currentLoad: 2,
-              maxCapacity: 15,
-              status: 'AVAILABLE' as const,
-              isOnline: true,
-              distanceKm: 1.2,
-              distanceLabel: '1.2 km away'
-            },
-            {
-              id: '20222222-2222-2222-2222-222222222222',
-              name: 'Sarah Lee',
-              email: 'sarah.lee@swiftdrop.com',
-              phone: '+94 71 234 5678',
-              vehicleType: 'Electric Scooter',
-              currentLoad: 5,
-              maxCapacity: 15,
-              status: 'OPTIMAL' as const,
-              isOnline: true,
-              distanceKm: 3.4,
-              distanceLabel: '3.4 km away'
-            },
-            {
-              id: '30333333-3333-3333-3333-333333333333',
-              name: 'Kamal Perera',
-              email: 'kamal.perera@swiftdrop.com',
-              phone: '+94 76 345 6789',
-              vehicleType: 'Delivery Van',
-              currentLoad: 14,
-              maxCapacity: 15,
-              status: 'NEAR_CAPACITY' as const,
-              isOnline: true,
-              distanceKm: 4.8,
-              distanceLabel: '4.8 km away'
-            }
-          ]
-        }))
+        fetchApi<{ success: boolean; parcels: UnassignedParcel[] }>(`/dispatch/unassigned${zoneParam}`),
+        fetchApi<{ success: boolean; couriers: CourierWorkload[] }>('/dispatch/couriers')
       ]);
 
       const fetchedParcels = parcelsData.parcels || [];
@@ -191,7 +96,7 @@ export default function DispatcherDashboardPage() {
         setSelectedCourierId(available ? available.id : fetchedCouriers[0].id);
       }
     } catch (err: any) {
-      console.warn('Dashboard fetch error:', err);
+      setStatusMessage({type:'error',text:'Unable to load dispatch data. Please retry.'});
     } finally {
       setLoading(false);
     }
@@ -218,16 +123,7 @@ export default function DispatcherDashboardPage() {
         }
       })
       .catch(() => {
-        // Fallback AI recommendation
-        const firstAvailable = couriers.find(c => c.isOnline && c.currentLoad < c.maxCapacity);
-        if (firstAvailable) {
-          setAiRecommendation({
-            recommendedCourier: firstAvailable,
-            confidenceScore: 0.94,
-            reasoning: `${firstAvailable.name} is ${firstAvailable.distanceLabel || 'closest'} with optimal capacity (${firstAvailable.currentLoad}/${firstAvailable.maxCapacity} active stops).`,
-            alternativeCouriers: []
-          });
-        }
+        setAiRecommendation(null);
       });
   }, [selectedParcelId, couriers]);
 
@@ -373,7 +269,7 @@ export default function DispatcherDashboardPage() {
 
   return (
     <div className="w-full min-h-screen bg-white flex flex-col lg:flex-row font-sans antialiased text-slate-800">
-      
+
       {/* ========================================================================= */}
       {/* COLUMN 1: LEFT NAVIGATION SIDEBAR */}
       {/* ========================================================================= */}

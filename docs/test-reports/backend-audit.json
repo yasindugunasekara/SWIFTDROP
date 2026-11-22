@@ -1,0 +1,37 @@
+{
+  "startedAt": "2026-11-22T17:50:06.191Z",
+  "node": "v24.14.1",
+  "durationMs": 5462,
+  "exitCode": 0,
+  "command": "npm --prefix server run test:audit",
+  "tests": 137,
+  "passed": 137,
+  "failed": 0,
+  "skipped": 0,
+  "suites": [
+    "src/modules/operations/operations.integration.test.ts",
+    "src/modules/auth/auth.test.ts",
+    "src/modules/admin/admin.test.ts",
+    "src/modules/booking/booking.test.ts",
+    "src/modules/notifications/notification.events.test.ts",
+    "src/modules/notifications/notification.database.test.ts",
+    "src/modules/notifications/notification.test.ts",
+    "src/modules/notifications/notification.publisher.test.ts",
+    "src/workers/notification-consumer.test.ts",
+    "src/workers/notification-consumer.lifecycle.test.ts",
+    "src/modules/tracking/tracking.socket.test.ts",
+    "src/modules/ai/assistant.test.ts",
+    "src/modules/webhooks/webhook-target.test.ts"
+  ],
+  "coverageScope": [
+    "src/modules/operations/**",
+    "src/modules/booking/**",
+    "src/modules/courier/courier.database.ts",
+    "src/modules/dispatch/dispatch.database.ts",
+    "src/modules/webhooks/webhook.database.ts",
+    "src/modules/webhooks/webhook-target.ts",
+    "src/workers/event-outbox.ts",
+    "src/modules/ai/assistant.ts"
+  ],
+  "coverageReport": "# start of coverage report\n# ---------------------------------------------------------------------------\n# file                      | line % | branch % | funcs % | uncovered lines\n# ---------------------------------------------------------------------------\n# src                       |        |          |         | \n#  modules                  |        |          |         | \n#   ai                      |        |          |         | \n#    assistant.ts           |  69.23 |    80.00 |   87.50 | 16-18 22-26\n#   booking                 |        |          |         | \n#    booking.persistence.ts | 100.00 |   100.00 |  100.00 | \n#    booking.routes.ts      |  93.88 |    63.64 |  100.00 | 27 41-42\n#   courier                 |        |          |         | \n#    courier.database.ts    | 100.00 |    77.78 |  100.00 | \n#   dispatch                |        |          |         | \n#    dispatch.database.ts   |  73.91 |    72.73 |   50.00 | 17-25 30-32\n#   operations              |        |          |         | \n#    pricing.ts             | 100.00 |    73.33 |  100.00 | \n#   webhooks                |        |          |         | \n#    webhook-target.ts      |  86.67 |    86.21 |  100.00 | 7-8\n#    webhook.database.ts    |  91.67 |    74.07 |   81.82 | 22-23 25-28\n#  workers                  |        |          |         | \n#   event-outbox.ts         |  75.68 |    88.89 |   37.50 | 9-10 21-25 28-29\n# ---------------------------------------------------------------------------\n# all files                 |  90.05 |    78.21 |   79.71 | \n# ---------------------------------------------------------------------------\n# end of coverage report\n"
+}

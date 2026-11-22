@@ -32,35 +32,16 @@ interface CourierPerformance {
 }
 
 export default function AnalyticsDashboardPage() {
+  const [fetchError,setFetchError]=useState('');
   const [dateRange, setDateRange] = useState<'today' | '7d' | '30d'>('7d');
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   // Default initial/fallback state
-  const [kpis, setKpis] = useState<AnalyticsKPIs>({
-    totalDispatched: 1482,
-    deliveredCount: 1438,
-    failedCount: 44,
-    successRate: 97.03,
-    failureRate: 2.97,
-    totalRevenue: 845200.0,
-  });
+  const [kpis, setKpis] = useState<AnalyticsKPIs>({totalDispatched:0,deliveredCount:0,failedCount:0,successRate:0,failureRate:0,totalRevenue:0});
 
-  const [dailyVolumes, setDailyVolumes] = useState<DailyVolume[]>([
-    { date: 'Mon', delivered: 180, failed: 4, total: 184 },
-    { date: 'Tue', delivered: 215, failed: 8, total: 223 },
-    { date: 'Wed', delivered: 195, failed: 5, total: 200 },
-    { date: 'Thu', delivered: 240, failed: 11, total: 251 },
-    { date: 'Fri', delivered: 265, failed: 6, total: 271 },
-    { date: 'Sat', delivered: 210, failed: 7, total: 217 },
-    { date: 'Sun', delivered: 133, failed: 3, total: 136 },
-  ]);
+  const [dailyVolumes, setDailyVolumes] = useState<DailyVolume[]>([]);
 
-  const [couriers, setCouriers] = useState<CourierPerformance[]>([
-    { id: 'c-101', name: 'Sunil Silva', phone: '+94 77 123 4567', completedRuns: 184, activeRuns: 3, successRate: 99.1, avgTimeMins: 38 },
-    { id: 'c-102', name: 'Sarah Lee', phone: '+94 71 987 6543', completedRuns: 162, activeRuns: 2, successRate: 98.5, avgTimeMins: 41 },
-    { id: 'c-103', name: 'Kamal Perera', phone: '+94 75 444 3322', completedRuns: 149, activeRuns: 4, successRate: 97.8, avgTimeMins: 44 },
-    { id: 'c-104', name: 'Nimal Jayasooriya', phone: '+94 78 555 1199', completedRuns: 138, activeRuns: 1, successRate: 96.2, avgTimeMins: 49 },
-  ]);
+  const [couriers, setCouriers] = useState<CourierPerformance[]>([]);
 
   const handleLogout = async () => {
     try { await clearAuthSession(); window.location.href = '/login'; }
@@ -70,7 +51,7 @@ export default function AnalyticsDashboardPage() {
   // Fetch telemetry from backend API
   useEffect(() => {
     const fetchAnalyticsData = async () => {
-      setIsLoading(true);
+      setIsLoading(true);setFetchError('');
       try {
         const [kpiData, dailyData, courierData] = await Promise.all([
           fetchApi(`/analytics/summary?range=${dateRange}`),
@@ -82,17 +63,17 @@ export default function AnalyticsDashboardPage() {
           if (kpiData.kpis) setKpis(kpiData.kpis);
         }
         if (dailyData) {
-          if (dailyData.dailyCounts && dailyData.dailyCounts.length > 0) {
+          if (dailyData.dailyCounts) {
             setDailyVolumes(dailyData.dailyCounts);
           }
         }
         if (courierData) {
-          if (courierData.couriers && courierData.couriers.length > 0) {
+          if (courierData.couriers) {
             setCouriers(courierData.couriers);
           }
         }
       } catch (err) {
-        console.warn('Backend API offline. Displaying cached telemetry.');
+        setFetchError('Unable to load analytics. Please retry.');
       } finally {
         setIsLoading(false);
       }
@@ -103,9 +84,10 @@ export default function AnalyticsDashboardPage() {
 
   const maxVolume = Math.max(...dailyVolumes.map((d) => d.delivered + d.failed), 1);
 
+  if(fetchError)return <div role="alert" className="p-10">{fetchError}<button onClick={()=>location.reload()} className="ml-5 underline">Retry</button></div>;
   return (
     <div className="w-full min-h-screen bg-white flex flex-col lg:flex-row font-sans antialiased text-slate-800">
-      
+
       {/* ========================================================================= */}
       {/* COLUMN 1: LEFT NAVIGATION SIDEBAR (Identical to Dispatcher Console) */}
       {/* ========================================================================= */}
@@ -240,7 +222,7 @@ export default function AnalyticsDashboardPage() {
       {/* COLUMN 2: CENTER MAIN CONTENT (Member 9 Analytics Dashboard) */}
       {/* ========================================================================= */}
       <main className="flex-1 p-6 sm:p-8 lg:p-9 bg-[#faf9f6]/40 flex flex-col gap-7 overflow-y-auto">
-        
+
         {/* Header Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>

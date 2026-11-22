@@ -1,4 +1,5 @@
 'use client';
+import PrivateImage from '../../../components/ui/PrivateImage';
 
 import { useState, useEffect, useCallback, useRef, useSyncExternalStore } from 'react';
 import Link from 'next/link';
@@ -499,7 +500,7 @@ export default function ExceptionsPage() {
                 {/* Doorstep Proof / Failure Evidence Photo (if exists) */}
                 {selectedException.photo_url && (
                   <div className="p-4 bg-orange-50/40 rounded-2xl border border-orange-200/60 flex items-center gap-4">
-                    <img
+                    <PrivateImage
                       src={selectedException.photo_url}
                       alt="Delivery attempt proof"
                       className="w-16 h-16 object-cover rounded-xl border border-orange-200 flex-shrink-0"
