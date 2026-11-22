@@ -29,6 +29,7 @@ export interface Queryable {
 export type ProcessEventResult =
   | { status: 'processed'; inserted: number; skipped: number; recipients: number }
   | { status: 'parcel_not_found' }
+  | { status: 'courier_not_assigned' }
   | { status: 'no_recipients' };
 
 export interface NotificationService {
@@ -49,10 +50,6 @@ interface PreferenceRow extends Record<string, unknown> {
 }
 
 interface InsertedNotificationRow extends Record<string, unknown> {
-  id: string;
-}
-
-interface ActiveUserRow extends Record<string, unknown> {
   id: string;
 }
 
@@ -90,6 +87,7 @@ export function createNotificationService(database: Queryable): NotificationServ
          LEFT JOIN public.users customer
            ON customer.id = p.customer_id
           AND customer.is_active = TRUE
+          AND customer.role = 'CUSTOMER'
          LEFT JOIN LATERAL (
            SELECT a.courier_id
              FROM public.courier_assignments a
@@ -115,24 +113,6 @@ export function createNotificationService(database: Queryable): NotificationServ
       courierId: row.assigned_courier_id,
       trackingNumber: row.tracking_number,
     };
-  }
-
-  /**
-   * COURIER_ASSIGNED may arrive before the assignment row is committed. In that
-   * single case the payload courierId is accepted, but only after proving that
-   * the user exists, is active, and really is a courier.
-   */
-  async function verifiedPayloadCourierId(courierId: string): Promise<string | null> {
-    const { rows } = await database.query<ActiveUserRow>(
-      `SELECT id
-         FROM public.users
-        WHERE id = $1
-          AND role = 'COURIER'
-          AND is_active = TRUE
-        LIMIT 1`,
-      [courierId],
-    );
-    return rows[0]?.id ?? null;
   }
 
   async function getPreferences(userId: string): Promise<NotificationPreferences> {
@@ -193,12 +173,21 @@ export function createNotificationService(database: Queryable): NotificationServ
       const context = await resolveContext(event);
       if (!context) return { status: 'parcel_not_found' };
 
-      let courierId = context.courierId;
-      if (!courierId && event.eventType === 'COURIER_ASSIGNED' && event.courierId) {
-        courierId = await verifiedPayloadCourierId(event.courierId);
+      // Recipients come exclusively from trusted database rows. A payload
+      // courierId is never used to route a notification.
+      const courierId = context.courierId;
+      const allowedRoles = new Set(recipientsFor(event.eventType));
+
+      if (
+        event.eventType === 'COURIER_ASSIGNED' &&
+        allowedRoles.has('COURIER') &&
+        !courierId
+      ) {
+        // Member 05 may publish before its assignment row is committed.
+        // The consumer retries briefly instead of trusting the payload.
+        return { status: 'courier_not_assigned' };
       }
 
-      const allowedRoles = new Set(recipientsFor(event.eventType));
       const recipients = new Map<string, Recipient>();
 
       if (context.customerId && allowedRoles.has('CUSTOMER')) {

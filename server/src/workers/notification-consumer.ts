@@ -5,18 +5,27 @@
  *   * The broker is at-least-once, so every message is processed idempotently:
  *     the database enforces UNIQUE (user_id, event_id) and the insert uses
  *     ON CONFLICT DO NOTHING.
- *   * The message is acknowledged ONLY after the database call returns. A crash
- *     before that point causes a redelivery; the redelivery is harmless.
+ *   * The message is acknowledged ONLY after the database call returns.
+ *   * Retry and DLQ copies are published through a publisher-confirm channel.
+ *     The original message is acknowledged only after RabbitMQ confirms the
+ *     copy, so a false return from sendToQueue (write-buffer backpressure) is
+ *     never mistaken for delivery.
  *   * Malformed messages are copied to the dead-letter queue and then acked so
  *     they cannot loop forever.
  *   * Transient database failures are republished with an incremented
- *     x-retry-count header (bounded), then the original is acked. If publishing
+ *     x-retry-count header (bounded), then the original is acked. If confirming
  *     the retry or DLQ copy fails, the original is left unacknowledged so the
  *     broker redelivers it.
+ *   * One consumer per process; one shared connection, with a dedicated
+ *     consumer channel and a dedicated confirm channel.
  */
 
-import type { Channel, ConsumeMessage } from 'amqplib';
-import { connectRabbitMQ } from '../config/rabbitmq.js';
+import type { Channel, ConfirmChannel, ConsumeMessage } from 'amqplib';
+import {
+  connectRabbitMQ,
+  createRabbitMQChannel,
+  createRabbitMQConfirmChannel,
+} from '../config/rabbitmq.js';
 import { normalizeParcelEvent, parseParcelEvent } from '../modules/notifications/notification.events.js';
 import {
   notificationService,
@@ -34,7 +43,7 @@ export interface ConsumerMessage {
   };
 }
 
-/** The subset of amqplib's Channel this consumer needs. */
+/** The subset of amqplib's channels this consumer needs. */
 export interface NotificationChannel {
   prefetch(count: number): Promise<unknown>;
   assertQueue(queue: string, options?: { durable?: boolean }): Promise<unknown>;
@@ -43,11 +52,12 @@ export interface NotificationChannel {
     onMessage: (message: ConsumerMessage | null) => void,
   ): Promise<unknown>;
   ack(message: ConsumerMessage): void;
-  sendToQueue(
+  /** Resolves only after the broker confirms the publish. */
+  publish(
     queue: string,
     content: Buffer,
     options?: { persistent?: boolean; headers?: Record<string, unknown> },
-  ): boolean;
+  ): Promise<void>;
 }
 
 export interface NotificationLogger {
@@ -80,7 +90,10 @@ const DEFAULT_QUEUE = process.env.RABBITMQ_QUEUE_NOTIFICATIONS || 'swiftdrop_not
 const DEFAULT_DEAD_LETTER_QUEUE = process.env.RABBITMQ_QUEUE_DLQ || 'swiftdrop_dead_letter_queue';
 const DEFAULT_MAX_RETRIES = 5;
 const DEFAULT_RETRY_DELAY_MS = 2_000;
+const PUBLISH_CONFIRM_TIMEOUT_MS = 10_000;
 const RETRY_COUNT_HEADER = 'x-retry-count';
+
+let isRunning = false;
 
 // -----------------------------------------------------------------------------
 // Message processing (exported for deterministic tests)
@@ -103,7 +116,7 @@ export async function processNotificationMessage(
     return moveToDeadLetter(
       message,
       channel,
-      { queue, deadLetterQueue, logger },
+      { deadLetterQueue, logger },
       'INVALID_JSON',
       error,
       retryCount(message) + 1,
@@ -115,7 +128,7 @@ export async function processNotificationMessage(
     return moveToDeadLetter(
       message,
       channel,
-      { queue, deadLetterQueue, logger },
+      { deadLetterQueue, logger },
       'INVALID_EVENT',
       parsed.error,
       retryCount(message) + 1,
@@ -141,8 +154,34 @@ export async function processNotificationMessage(
       logger.warn(
         `[notifications] Parcel ${event.parcelId} not found for event ${event.eventId}; treating as transient`,
       );
-      return retryOrDeadLetter(message, channel, options, queue, deadLetterQueue, logger,
-        new Error(`Parcel ${event.parcelId} not found`));
+      return retryOrDeadLetter(
+        message,
+        channel,
+        options,
+        queue,
+        deadLetterQueue,
+        logger,
+        new Error(`Parcel ${event.parcelId} not found`),
+      );
+    }
+
+    if (result.status === 'courier_not_assigned') {
+      // The assignment event may reach the broker before Member 05's
+      // courier_assignments row is committed. Never trust the payload courierId;
+      // retry briefly so the database can become the authoritative source.
+      logger.warn(
+        `[notifications] No active courier assignment for parcel ${event.parcelId}; ` +
+        `delaying event ${event.eventId}`,
+      );
+      return retryOrDeadLetter(
+        message,
+        channel,
+        options,
+        queue,
+        deadLetterQueue,
+        logger,
+        new Error('Courier assignment not yet visible'),
+      );
     }
 
     if (result.status === 'no_recipients') {
@@ -153,6 +192,7 @@ export async function processNotificationMessage(
       return 'ignored';
     }
 
+    // The database write has committed successfully.
     channel.ack(message);
 
     if (result.inserted === 0) {
@@ -188,7 +228,7 @@ async function retryOrDeadLetter(
     return moveToDeadLetter(
       message,
       channel,
-      { queue, deadLetterQueue, logger },
+      { deadLetterQueue, logger },
       'MAX_RETRIES_EXCEEDED',
       error,
       attempt + 1,
@@ -205,17 +245,19 @@ async function retryOrDeadLetter(
   };
 
   try {
-    channel.sendToQueue(queue, message.content, { persistent: true, headers });
+    // Waits for a publisher confirm. A false return from sendToQueue only means
+    // the channel's write buffer is full; it is not a delivery failure.
+    await channel.publish(queue, message.content, { persistent: true, headers });
   } catch (publishError) {
     // The original stays unacknowledged, so the broker will redeliver it.
     logger.error(
-      '[notifications] Failed to republish a message for retry; leaving it unacknowledged',
+      '[notifications] Failed to confirm a retry copy; leaving the original unacknowledged',
       publishError,
     );
     return 'dead-letter-failed';
   }
 
-  // Republish succeeded, so the original can be acknowledged safely.
+  // The retry copy is confirmed by the broker, so the original can be acked.
   channel.ack(message);
   logger.warn(
     `[notifications] Transient failure; retry ${attempt + 1}/${maxRetries} scheduled`,
@@ -226,7 +268,7 @@ async function retryOrDeadLetter(
 async function moveToDeadLetter(
   message: ConsumerMessage,
   channel: NotificationChannel,
-  options: { queue: string; deadLetterQueue: string; logger: NotificationLogger },
+  options: { deadLetterQueue: string; logger: NotificationLogger },
   reason: string,
   error: unknown,
   attempts: number,
@@ -241,15 +283,15 @@ async function moveToDeadLetter(
   };
 
   try {
-    channel.sendToQueue(
+    await channel.publish(
       options.deadLetterQueue,
       Buffer.from(JSON.stringify(envelope)),
       { persistent: true },
     );
   } catch (publishError) {
-    // Never acknowledge before the DLQ copy is safely published.
+    // Never acknowledge before the DLQ copy is confirmed by the broker.
     options.logger.error(
-      '[notifications] Failed to publish to the dead-letter queue; leaving the message unacknowledged',
+      '[notifications] Failed to confirm the DLQ copy; leaving the original unacknowledged',
       publishError,
     );
     return 'dead-letter-failed';
@@ -265,51 +307,113 @@ async function moveToDeadLetter(
 // -----------------------------------------------------------------------------
 
 export const startNotificationConsumer = async () => {
-  console.log('🔄 Initializing Member 7 RabbitMQ Notification Consumer...');
-
-  const broker = await connectRabbitMQ();
-  if (!broker?.channel) {
-    console.warn('⚠️ RabbitMQ not available; notification consumer paused.');
+  if (isRunning) {
+    console.warn('⚠️ Notification consumer is already running in this process.');
     return;
   }
+  isRunning = true;
 
-  const channel = createChannelAdapter(broker.channel);
-  const queue = process.env.RABBITMQ_QUEUE_NOTIFICATIONS || DEFAULT_QUEUE;
-  const deadLetterQueue = process.env.RABBITMQ_QUEUE_DLQ || DEFAULT_DEAD_LETTER_QUEUE;
+  try {
+    console.log('🔄 Initializing Member 7 RabbitMQ Notification Consumer...');
 
-  await channel.assertQueue(queue, { durable: true });
-  await channel.assertQueue(deadLetterQueue, { durable: true });
-  await channel.prefetch(10);
+    const broker = await connectRabbitMQ();
+    if (!broker) {
+      isRunning = false;
+      console.warn('⚠️ RabbitMQ not available; notification consumer paused.');
+      return;
+    }
 
-  await channel.consume(queue, (message) => {
-    if (!message) return;
-    void processNotificationMessage(message, notificationService, channel, {
-      queue,
-      deadLetterQueue,
-    }).catch(error => {
-      // processNotificationMessage handles ack/retry itself. This is a final
-      // guard so an unexpected bug can never crash the worker process.
-      console.error('[notifications] Unhandled consumer error', error);
+    const consumerChannel = await createRabbitMQChannel();
+    const publisherChannel = await createRabbitMQConfirmChannel();
+    if (!consumerChannel || !publisherChannel) {
+      isRunning = false;
+      console.warn('⚠️ Unable to create RabbitMQ channels; notification consumer paused.');
+      return;
+    }
+
+    consumerChannel.on('close', () => {
+      isRunning = false;
+      console.warn('⚠️ Notification consumer channel closed.');
     });
-  });
 
-  console.log(`📡 [Notifications] Consuming '${queue}' (DLQ: '${deadLetterQueue}')`);
+    const channel = createChannelAdapter(consumerChannel, publisherChannel);
+    const queue = process.env.RABBITMQ_QUEUE_NOTIFICATIONS || DEFAULT_QUEUE;
+    const deadLetterQueue = process.env.RABBITMQ_QUEUE_DLQ || DEFAULT_DEAD_LETTER_QUEUE;
+
+    await channel.assertQueue(queue, { durable: true });
+    await channel.assertQueue(deadLetterQueue, { durable: true });
+    await channel.prefetch(10);
+
+    await channel.consume(queue, (message) => {
+      if (!message) return;
+      void processNotificationMessage(message, notificationService, channel, {
+        queue,
+        deadLetterQueue,
+      }).catch(error => {
+        // processNotificationMessage handles ack/retry itself. This is a final
+        // guard so an unexpected bug can never crash the worker process.
+        console.error('[notifications] Unhandled consumer error', error);
+      });
+    });
+
+    console.log(`📡 [Notifications] Consuming '${queue}' (DLQ: '${deadLetterQueue}')`);
+  } catch (error) {
+    isRunning = false;
+    throw error;
+  }
 };
 
 // -----------------------------------------------------------------------------
 // Helpers
 // -----------------------------------------------------------------------------
 
-/** Adapt amqplib's Channel to the small interface above. */
-function createChannelAdapter(channel: Channel): NotificationChannel {
+/** Adapt amqplib's consumer and confirm channels to the interface above. */
+function createChannelAdapter(consumer: Channel, publisher: ConfirmChannel): NotificationChannel {
   return {
-    prefetch: count => channel.prefetch(count),
-    assertQueue: (queue, options) => channel.assertQueue(queue, options),
+    prefetch: count => consumer.prefetch(count),
+    assertQueue: (queue, options) => consumer.assertQueue(queue, options),
     consume: (queue, onMessage) =>
-      channel.consume(queue, (message: ConsumeMessage | null) => onMessage(message)),
-    ack: message => channel.ack(message as ConsumeMessage),
-    sendToQueue: (queue, content, options) => channel.sendToQueue(queue, content, options),
+      consumer.consume(queue, (message: ConsumeMessage | null) => onMessage(message)),
+    ack: message => consumer.ack(message as ConsumeMessage),
+    publish: (queue, content, options) => publishWithConfirm(publisher, queue, content, options),
   };
+}
+
+/**
+ * Publish through a confirm channel and resolve only when RabbitMQ confirms the
+ * message. The boolean returned by sendToQueue is intentionally ignored: in
+ * amqplib it reports write-buffer backpressure, not successful delivery.
+ */
+function publishWithConfirm(
+  channel: ConfirmChannel,
+  queue: string,
+  content: Buffer,
+  options?: { persistent?: boolean; headers?: Record<string, unknown> },
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+
+    const timer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      reject(new Error(`Timed out waiting for a publisher confirm on '${queue}'`));
+    }, PUBLISH_CONFIRM_TIMEOUT_MS);
+    timer.unref?.();
+
+    const settle = (error?: unknown) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      if (error) reject(error instanceof Error ? error : new Error(String(error)));
+      else resolve();
+    };
+
+    try {
+      channel.sendToQueue(queue, content, options, error => settle(error ?? undefined));
+    } catch (error) {
+      settle(error);
+    }
+  });
 }
 
 function retryCount(message: ConsumerMessage): number {

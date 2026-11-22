@@ -31,8 +31,12 @@ class FakeChannel implements NotificationChannel {
   readonly calls: string[] = [];
   readonly sent: SentMessage[] = [];
   acks = 0;
+  private readonly pendingConfirms: Array<() => void> = [];
 
-  constructor(private readonly failures: { dlq?: boolean; retryPublish?: boolean } = {}) {}
+  constructor(
+    private readonly failures: { dlq?: boolean; retryPublish?: boolean } = {},
+    private readonly holdConfirms = false,
+  ) {}
 
   async prefetch(): Promise<void> {}
   async assertQueue(): Promise<void> {}
@@ -43,16 +47,31 @@ class FakeChannel implements NotificationChannel {
     this.acks += 1;
   }
 
-  sendToQueue(
+  publish(
     queue: string,
     content: Buffer,
     options?: { persistent?: boolean; headers?: Record<string, unknown> },
-  ): boolean {
-    if (this.failures.dlq && queue === DLQ) throw new Error('DLQ unavailable');
-    if (this.failures.retryPublish && queue === MAIN_QUEUE) throw new Error('broker unavailable');
-    this.calls.push(`send:${queue}`);
+  ): Promise<void> {
+    if (this.failures.dlq && queue === DLQ) {
+      return Promise.reject(new Error('DLQ unavailable'));
+    }
+    if (this.failures.retryPublish && queue === MAIN_QUEUE) {
+      return Promise.reject(new Error('broker unavailable'));
+    }
+
+    this.calls.push(`publish:${queue}`);
     this.sent.push({ queue, content, options });
-    return true;
+
+    if (this.holdConfirms) {
+      return new Promise<void>(resolve => { this.pendingConfirms.push(resolve); });
+    }
+    return Promise.resolve();
+  }
+
+  /** Simulates RabbitMQ confirming every held publish. */
+  confirmPending(): void {
+    const pending = this.pendingConfirms.splice(0);
+    for (const resolve of pending) resolve();
   }
 }
 
@@ -121,7 +140,7 @@ test('malformed JSON goes to the DLQ and is then acknowledged', async () => {
   }), channel, options);
 
   assert.equal(outcome, 'dead-lettered');
-  assert.deepEqual(channel.calls, [`send:${DLQ}`, 'ack'], 'DLQ copy before ack');
+  assert.deepEqual(channel.calls, [`publish:${DLQ}`, 'ack'], 'DLQ copy before ack');
   assert.equal(channel.sent[0].options?.persistent, true);
 
   const envelope = JSON.parse(channel.sent[0].content.toString('utf8'));
@@ -140,7 +159,7 @@ test('a schema-invalid event goes to the DLQ and is then acknowledged', async ()
   );
 
   assert.equal(outcome, 'dead-lettered');
-  assert.deepEqual(channel.calls, [`send:${DLQ}`, 'ack']);
+  assert.deepEqual(channel.calls, [`publish:${DLQ}`, 'ack']);
 
   const envelope = JSON.parse(channel.sent[0].content.toString('utf8'));
   assert.equal(envelope.reason, 'INVALID_EVENT');
@@ -172,11 +191,30 @@ test('a temporary database failure is republished before the original is acknowl
   assert.equal(outcome, 'retried');
   assert.deepEqual(
     channel.calls,
-    [`send:${MAIN_QUEUE}`, 'ack'],
-    'ack must happen after the retry copy is published',
+    [`publish:${MAIN_QUEUE}`, 'ack'],
+    'ack must happen after the retry copy is confirmed',
   );
   assert.equal(channel.sent[0].options?.headers?.['x-retry-count'], 1);
   assert.equal(channel.sent[0].options?.headers?.['x-last-error'], 'connection terminated unexpectedly');
+});
+
+test('a pending publisher confirm blocks the acknowledgement', async () => {
+  const channel = new FakeChannel({}, true);
+  const processing = processNotificationMessage(
+    message(validPayload),
+    serviceThrowing(new Error('database unavailable')),
+    channel,
+    options,
+  );
+
+  // Give the consumer time to reach the publish call.
+  await new Promise(resolve => setTimeout(resolve, 10));
+  assert.equal(channel.acks, 0, 'must not ack before the broker confirms the copy');
+  assert.deepEqual(channel.calls, [`publish:${MAIN_QUEUE}`]);
+
+  channel.confirmPending();
+  assert.equal(await processing, 'retried');
+  assert.deepEqual(channel.calls, [`publish:${MAIN_QUEUE}`, 'ack']);
 });
 
 test('retries are bounded and then moved to the DLQ', async () => {
@@ -189,7 +227,7 @@ test('retries are bounded and then moved to the DLQ', async () => {
   );
 
   assert.equal(outcome, 'dead-lettered');
-  assert.deepEqual(channel.calls, [`send:${DLQ}`, 'ack']);
+  assert.deepEqual(channel.calls, [`publish:${DLQ}`, 'ack']);
 
   const envelope = JSON.parse(channel.sent[0].content.toString('utf8'));
   assert.equal(envelope.reason, 'MAX_RETRIES_EXCEEDED');
@@ -206,8 +244,27 @@ test('a missing parcel is treated as transient and retried', async () => {
   );
 
   assert.equal(outcome, 'retried');
-  assert.deepEqual(channel.calls, [`send:${MAIN_QUEUE}`, 'ack']);
+  assert.deepEqual(channel.calls, [`publish:${MAIN_QUEUE}`, 'ack']);
   assert.equal(channel.sent[0].options?.headers?.['x-retry-count'], 1);
+});
+
+test('an assignment with no visible courier is retried without trusting the payload', async () => {
+  const channel = new FakeChannel();
+  const outcome = await processNotificationMessage(
+    message({
+      eventId: 'evt-courier',
+      event: 'COURIER_ASSIGNED',
+      parcelId: PARCEL_ID,
+      courierId: '44444444-4444-4444-8444-444444444444',
+      timestamp: '2026-11-22T10:00:00.000Z',
+    }),
+    serviceReturning({ status: 'courier_not_assigned' }),
+    channel,
+    options,
+  );
+
+  assert.equal(outcome, 'retried');
+  assert.deepEqual(channel.calls, [`publish:${MAIN_QUEUE}`, 'ack']);
 });
 
 test('a parcel with no recipients is acknowledged as ignored', async () => {
@@ -223,7 +280,7 @@ test('a parcel with no recipients is acknowledged as ignored', async () => {
   assert.deepEqual(channel.calls, ['ack']);
 });
 
-test('if the DLQ copy cannot be published the message is not acknowledged', async () => {
+test('if the DLQ copy cannot be confirmed the message is not acknowledged', async () => {
   const channel = new FakeChannel({ dlq: true });
   const outcome = await processNotificationMessage(
     message('{not-json'),
@@ -236,7 +293,7 @@ test('if the DLQ copy cannot be published the message is not acknowledged', asyn
   assert.equal(channel.acks, 0, 'no premature acknowledgement');
 });
 
-test('if the retry copy cannot be published the message is not acknowledged', async () => {
+test('if the retry copy cannot be confirmed the message is not acknowledged', async () => {
   const channel = new FakeChannel({ retryPublish: true });
   const outcome = await processNotificationMessage(
     message(validPayload),

@@ -12,8 +12,11 @@ import type { NormalizedParcelEvent } from './notification.types.js';
 
 const CUSTOMER_ID = '11111111-1111-4111-8111-111111111111';
 const COURIER_ID = '22222222-2222-4222-8222-222222222222';
+const OTHER_CUSTOMER_ID = '33333333-3333-4333-8333-333333333333';
 const PARCEL_ID = '66666666-6666-4666-8666-666666666666';
 const MERCHANT_PARCEL_ID = '77777777-7777-4777-8777-777777777777';
+const NO_COURIER_PARCEL_ID = '88888888-8888-4888-8888-888888888888';
+const WRONG_CUSTOMER_PARCEL_ID = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const MISSING_PARCEL_ID = '99999999-9999-4999-8999-999999999999';
 const TIMESTAMP = '2026-11-22T10:15:00.000Z';
 
@@ -66,7 +69,9 @@ const FIXTURE = `
 
   INSERT INTO public.parcels (id, tracking_number, customer_id) VALUES
     ('${PARCEL_ID}', 'SWIFT-991122', '${CUSTOMER_ID}'),
-    ('${MERCHANT_PARCEL_ID}', 'SWIFT-MERCHANT', NULL);
+    ('${MERCHANT_PARCEL_ID}', 'SWIFT-MERCHANT', NULL),
+    ('${NO_COURIER_PARCEL_ID}', 'SWIFT-NO-COURIER', '${OTHER_CUSTOMER_ID}'),
+    ('${WRONG_CUSTOMER_PARCEL_ID}', 'SWIFT-WRONG-CUSTOMER', '${COURIER_ID}');
 
   INSERT INTO public.courier_assignments (parcel_id, courier_id) VALUES
     ('${PARCEL_ID}', '${COURIER_ID}');
@@ -343,6 +348,37 @@ test('a parcel with no eligible recipients is reported without creating rows', a
   });
 
   const result = await service.processEvent(merchantParcel);
+  assert.deepEqual(result, { status: 'no_recipients' });
+});
+
+test('a payload courierId cannot choose a recipient without an active assignment', async () => {
+  const assigned = event({
+    eventId: 'evt-2007',
+    event: 'COURIER_ASSIGNED',
+    parcelId: NO_COURIER_PARCEL_ID,
+    // A real, active courier — but not assigned to this parcel in the database.
+    courierId: '44444444-4444-4444-8444-444444444444',
+    timestamp: TIMESTAMP,
+  });
+
+  const result = await service.processEvent(assigned);
+  assert.deepEqual(result, { status: 'courier_not_assigned' });
+
+  const count = await database.query<{ count: number }>(
+    `SELECT count(*)::int AS count
+       FROM public.notifications WHERE event_id = 'evt-2007'`,
+  );
+  assert.equal(count.rows[0].count, 0, 'no notification was routed from payload data');
+});
+
+test('a parcel whose customer_id is not a CUSTOMER produces no customer notification', async () => {
+  const delivered = event({
+    eventId: 'evt-2008',
+    event: 'PARCEL_DELIVERED',
+    parcelId: WRONG_CUSTOMER_PARCEL_ID,
+  });
+
+  const result = await service.processEvent(delivered);
   assert.deepEqual(result, { status: 'no_recipients' });
 });
 

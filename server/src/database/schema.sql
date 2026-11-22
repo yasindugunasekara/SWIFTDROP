@@ -193,7 +193,24 @@ CREATE INDEX IF NOT EXISTS notifications_user_unread_idx
     ON notifications (user_id)
     WHERE is_read = FALSE;
 
--- RLS and Data API privilege hardening are applied by migration 004.
+-- RLS is defence in depth for direct Supabase Data API access. The Express API
+-- connects as the table owner (DATABASE_URL), which bypasses RLS. anon and
+-- authenticated are revoked so PostgREST cannot read these tables directly.
+ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_notification_preferences ENABLE ROW LEVEL SECURITY;
+
+DO $notification_api_privileges$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
+        REVOKE ALL ON TABLE notifications FROM anon;
+        REVOKE ALL ON TABLE user_notification_preferences FROM anon;
+    END IF;
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
+        REVOKE ALL ON TABLE notifications FROM authenticated;
+        REVOKE ALL ON TABLE user_notification_preferences FROM authenticated;
+    END IF;
+END
+$notification_api_privileges$;
 
 -- -----------------------------------------------------------------------------
 -- MEMBER 8: Merchant Webhook Center
