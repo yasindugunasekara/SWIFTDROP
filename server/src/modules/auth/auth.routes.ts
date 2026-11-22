@@ -5,6 +5,8 @@ import { createAuthenticationMiddleware, type AuthRequest } from '../../middlewa
 import { AuthServiceError, authGateway, type AuthGateway } from './auth.service.js';
 import { config } from '../../config/env.js';
 import { publicAuthConfig } from '../../config/supabase.js';
+import { requireRoles } from '../../middleware/rbac.js';
+import { listApplications, reviewApplication } from './applications.service.js';
 
 const email = z.string().trim().toLowerCase().max(255).email('Enter a valid email address.');
 const name = z.string().trim().min(2, 'Enter your full name.').max(150)
@@ -53,7 +55,7 @@ export function createAuthRouter(gateway: AuthGateway = authGateway) {
     try { res.json(publicAuthConfig()); }
     catch { res.status(503).json({ error: 'Supabase Auth is not configured.' }); }
   });
-  router.post('/register', signupLimit, run(async (req, res) => {
+  router.post(['/register', '/signup'], signupLimit, run(async (req, res) => {
     const input = customerSignupSchema.parse(req.body);
     const result = await gateway.register(input);
     res.status(result.requiresEmailConfirmation ? 202 : 201).json({ ...result,
@@ -72,6 +74,32 @@ export function createAuthRouter(gateway: AuthGateway = authGateway) {
   router.post('/login', loginLimit, run(async (req, res) => {
     const input = z.object({ email, password: z.string().min(1).max(256) }).strict().parse(req.body);
     res.json(await gateway.login(input.email, input.password));
+  }));
+  router.post('/forgot-password', signupLimit, run(async (req, res) => {
+    const input = z.object({ email }).strict().parse(req.body);
+    await gateway.requestPasswordReset(input.email);
+    res.json({ message: 'If an account exists for this email, you will receive a password reset link.' });
+  }));
+  const demoRoles = ['CUSTOMER', 'COURIER', 'MERCHANT', 'DISPATCHER'] as const;
+  router.get('/demo', (_req, res) => { res.json({ roles: config.authDemoEnabled ? demoRoles : [] }); });
+  router.post('/demo', loginLimit, run(async (req, res) => {
+    if (!config.authDemoEnabled) throw new AuthServiceError(404, 'DEMO_DISABLED', 'Demo login is disabled.');
+    const { role } = z.object({ role: z.enum(demoRoles) }).strict().parse(req.body);
+    const result = await gateway.login(`${role.toLowerCase()}@swiftdrop.com`, config.demoPasswords[role]);
+    if (result.user.role !== role) {
+      await gateway.logout(result.accessToken);
+      throw new AuthServiceError(403, 'DEMO_ROLE_MISMATCH', 'This demo account needs administrator attention.');
+    }
+    res.json(result);
+  }));
+  router.get('/applications', authenticate, requireRoles(['DISPATCHER', 'ADMIN']), run(async (req, res) => {
+    const status = z.enum(['PENDING', 'APPROVED', 'REJECTED']).default('PENDING').parse(req.query.status);
+    res.json({ applications: await listApplications(req.headers.authorization!.slice(7), status) });
+  }));
+  router.patch('/applications/:id', authenticate, requireRoles(['DISPATCHER', 'ADMIN']), run(async (req, res) => {
+    const id = z.string().uuid().parse(req.params.id);
+    const input = z.object({ decision: z.enum(['APPROVED', 'REJECTED']), note: z.string().trim().min(3).max(500) }).strict().parse(req.body);
+    res.json({ application: await reviewApplication(req.headers.authorization!.slice(7), id, input.decision, input.note) });
   }));
   router.post('/refresh', refreshLimit, run(async (req, res) => {
     const input = z.object({ refreshToken: z.string().min(1).max(8192) }).strict().parse(req.body);

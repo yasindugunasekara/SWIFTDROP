@@ -7,6 +7,8 @@ import { dashboardFor, signIn, signInWithGoogle, type UserRole } from '../../../
 import styles from '../auth.module.css';
 import AuthBackButton from '../AuthBackButton';
 import AuthInputIcon from '../AuthInputIcon';
+import DemoLogins from '../../../components/auth/DemoLogins';
+import AuthVisual from '../AuthVisual';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -54,21 +56,25 @@ export default function LoginPage() {
   };
 
   return (
-    <div className={`${styles.page} ${styles.loginPage}`}>
+    <div className={`${styles.page} ${styles.loginPage} ${styles.redesignedPage}`}>
+      <div className={styles.authLayout}>
+      <AuthVisual />
       <section className={`${styles.card} ${styles.loginCard}`} aria-labelledby="login-title">
         <div className={styles.topbar}>
           <AuthBackButton />
           <Link href="/" className={styles.brand} aria-label="SwiftDrop home">swiftdrop<span>.</span></Link>
         </div>
         <header className={`${styles.header} ${styles.loginHeader}`}>
+          <p className={styles.eyebrow}>YOUR SWIFTDROP WORKSPACE</p>
           <h1 id="login-title" className={styles.title}>Welcome back</h1>
+          <p className={styles.subtitle}>Sign in to keep things moving.</p>
         </header>
 
         <div className={`${styles.signupRoles} ${styles.loginRoles}`} role="group" aria-label="Choose your workspace">
           {(['CUSTOMER', 'COURIER', 'MERCHANT', 'DISPATCHER'] as UserRole[]).map((role) => (
             <button key={role} type="button" className={styles.signupRole}
               disabled={loading} aria-pressed={activeRole === role} onClick={() => handleRoleTabChange(role)}>
-              {role.charAt(0) + role.slice(1).toLowerCase()}
+              {role === 'MERCHANT' ? 'Business' : role.charAt(0) + role.slice(1).toLowerCase()}
             </button>
           ))}
         </div>
@@ -81,7 +87,7 @@ export default function LoginPage() {
             <label htmlFor="login-email" className={styles.label}>Email address</label>
             <div className={styles.inputControl}>
               <span className={styles.inputIcon}><AuthInputIcon kind="email" /></span>
-            <input id="login-email" name="email" type="email" autoComplete="username" required
+            <input id="login-email" name="email" type="email" autoComplete="username" required disabled={loading}
               value={email} onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com" className={styles.input} />
             </div>
@@ -89,15 +95,15 @@ export default function LoginPage() {
           <div className={styles.field}>
             <div className={styles.labelRow}>
               <label htmlFor="login-password" className={styles.label}>Password</label>
-              <a href="#">Forgot password?</a>
+              <Link href="/forgot-password">Forgot password?</Link>
             </div>
             <div className={`${styles.password} ${styles.inputControl}`}>
               <span className={styles.inputIcon}><AuthInputIcon kind="password" /></span>
               <input id="login-password" name="password" type={showPassword ? 'text' : 'password'}
-                autoComplete="current-password" required value={password}
+                autoComplete="current-password" required disabled={loading} value={password}
                 onChange={(e) => setPassword(e.target.value)} placeholder="Enter your password"
                 className={styles.input} />
-              <button type="button" className={styles.toggle} aria-label={showPassword ? 'Hide password' : 'Show password'}
+              <button type="button" className={styles.toggle} disabled={loading} aria-label={showPassword ? 'Hide password' : 'Show password'}
                 aria-pressed={showPassword} onClick={() => setShowPassword(!showPassword)}>{showPassword ? 'Hide' : 'Show'}</button>
             </div>
           </div>
@@ -124,8 +130,10 @@ export default function LoginPage() {
             <p className={styles.roleNote}>Continue with your {activeRole.toLowerCase()} account.</p>
           </>}
         </div>
+        <DemoLogins disabled={loading} onBusy={setLoading} onError={setErrorMsg} />
         <p className={styles.footer}>New to SwiftDrop? <Link href="/register">Create an account</Link></p>
       </section>
+      </div>
     </div>
   );
 }

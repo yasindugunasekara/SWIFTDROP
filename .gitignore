@@ -31,10 +31,12 @@ pnpm-debug.log*
 uploads/
 tmp/
 temp/
+scratch/
 
 # OS files
 .DS_Store
 Thumbs.db
+*.docx
 
 # IDE files
 .idea/
@@ -49,3 +51,6 @@ AGENTS.md
 # Testing coverage
 coverage/
 .nyc_output/
+
+# Supabase CLI local cache (created by `supabase db query --remote`)
+**/supabase/.temp/

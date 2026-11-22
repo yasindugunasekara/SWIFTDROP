@@ -12,11 +12,11 @@ export default function Navbar() {
   const user = useSyncExternalStore(subscribeAuth, getStoredUser, () => null);
 
   // Remove the public marketing navbar completely when inside any dashboard route
-  const isDashboardRoute = ['/booking', '/tasks', '/portal', '/webhooks', '/dispatch', '/analytics', '/inbox', '/config', '/exceptions'].some(
+  const isDashboardRoute = ['/admin', '/booking', '/history', '/tasks', '/portal', '/webhooks', '/dispatch', '/analytics', '/inbox', '/config', '/exceptions'].some(
     (prefix) => pathname === prefix || pathname.startsWith(prefix + '/')
   );
 
-  const isAuthRoute = pathname === '/login' || pathname === '/register' || pathname === '/auth/callback' || pathname === '/approval';
+  const isAuthRoute = ['/login', '/register', '/auth/callback', '/approval', '/forgot-password', '/reset-password', '/account-applications'].includes(pathname);
 
   if (isDashboardRoute || isAuthRoute) {
     return null;
@@ -29,7 +29,7 @@ export default function Navbar() {
 
   return (
     <div className="w-full fixed top-3 sm:top-5 left-0 right-0 z-50 px-4 sm:px-6 pointer-events-none">
-      <header className="max-w-5xl mx-auto flex items-center justify-between bg-white/80 backdrop-blur-xl px-5 sm:px-7 py-2.5 sm:py-3 rounded-full shadow-[0_8px_32px_0_rgba(0,0,0,0.06)] border border-white/80 transition-all pointer-events-auto">
+      <header className="max-w-6xl mx-auto flex items-center justify-between bg-white/80 backdrop-blur-xl px-5 sm:px-7 py-2.5 sm:py-3 rounded-full shadow-[0_8px_32px_0_rgba(0,0,0,0.06)] border border-white/80 transition-all pointer-events-auto">
         {/* Brand Logo */}
         <div className="flex items-center">
           <Link href="/" className="flex items-center no-underline group">
@@ -40,7 +40,7 @@ export default function Navbar() {
         </div>
 
         {/* Center Navigation Links - Exact user requested links */}
-        <nav className="hidden md:flex items-center gap-7 lg:gap-9">
+        <nav className="hidden xl:flex items-center gap-4">
           <Link href="/#services" className="text-xs sm:text-sm font-bold text-slate-700 hover:text-[#ff6600] transition-colors tracking-wide">
             OUR SERVICES
           </Link>
@@ -53,17 +53,23 @@ export default function Navbar() {
           <Link href="/#pricing" className="text-xs sm:text-sm font-bold text-slate-700 hover:text-[#ff6600] transition-colors tracking-wide">
             PRICING
           </Link>
+          <Link href="/tracking" className="text-xs sm:text-sm font-bold text-slate-700 hover:text-[#ff6600] transition-colors tracking-wide">
+            TRACK
+          </Link>
         </nav>
 
         {/* Right Action: login only */}
         <div className="flex items-center gap-3">
           {user ? (
             <div className="flex items-center gap-3">
+              <span className="hidden lg:block max-w-32 truncate text-xs text-slate-600" title={`${user.fullName} (${user.role})`}>
+                {user.fullName}<span className="block font-semibold text-orange-600">{user.role.charAt(0) + user.role.slice(1).toLowerCase()}</span>
+              </span>
               <Link
                 href={dashboardFor(user)}
                 className="px-4 py-1.5 text-xs sm:text-sm font-bold text-white bg-[#ff6600] hover:bg-[#ea580c] rounded-full shadow-sm transition-all"
               >
-                Dashboard &rarr;
+                {user.application && user.application.status !== 'APPROVED' ? 'Approval status' : ({ CUSTOMER: 'Book delivery', COURIER: 'My tasks', MERCHANT: 'Merchant portal', DISPATCHER: 'Dispatch', ADMIN: 'Administration' }[user.role])} &rarr;
               </Link>
               <button
                 onClick={handleLogout}
