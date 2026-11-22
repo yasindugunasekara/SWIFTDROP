@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { authenticateToken, AuthRequest } from '../../middleware/auth.js';
 import { requireRoles } from '../../middleware/rbac.js';
 import { apiRateLimiter } from '../../middleware/rate-limiter.js';
+import { authGateway } from '../auth/auth.service.js';
 import { asyncHandler, HttpError } from './merchant.utils.js';
 import {
   APPROVAL_STATUSES,
@@ -121,13 +122,7 @@ router.post(
   '/register',
   apiRateLimiter,
   asyncHandler(async (req, res) => {
-    const account = await registerMerchant(merchantRegisterSchema.parse(req.body));
-    res.status(201).json({
-      message: 'Merchant registered. Your account is pending approval.',
-      user: toSessionUser(account),
-      merchant: toPublicAccount(account),
-      ...issueMerchantToken(account),
-    });
+    res.status(410).json({error:'Use /api/v1/auth/register-application for verified business registration.',registrationUrl:'/register'});
   })
 );
 
@@ -136,12 +131,14 @@ router.post(
   loginRateLimiter,
   asyncHandler(async (req, res) => {
     const { email, password } = merchantLoginSchema.parse(req.body);
-    const account = await authenticateMerchant(email, password);
+    const session = await authGateway.login(email,password);
+    if(session.user.role!=='MERCHANT') throw new HttpError(403,'A business account is required');
+    const account = await getMerchantByUserId(session.user.id);
+    if(!account) throw new HttpError(403,'Business profile is unavailable');
     res.json({
       message: 'Login successful',
-      user: toSessionUser(account),
       merchant: toPublicAccount(account),
-      ...issueMerchantToken(account),
+      ...session,
     });
   })
 );

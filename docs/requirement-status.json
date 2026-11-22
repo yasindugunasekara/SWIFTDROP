@@ -1,0 +1,610 @@
+[
+  {
+    "id": 1,
+    "group": "Customer functionality - assignment page 1",
+    "requirement": "Secure signup and password login",
+    "status": "TRUE",
+    "finding": "Supabase-backed signup, email confirmation, login, refresh and logout. Selected auth tests passed.",
+    "source": "server/src/modules/auth/auth.routes.ts; auth.service.ts"
+  },
+  {
+    "id": 2,
+    "group": "Customer functionality - assignment page 1",
+    "requirement": "Login with Google (OAuth 2.0)",
+    "status": "TRUE",
+    "finding": "Google OAuth/PKCE client flow and callback handling exist. Live provider login was not exercised in this audit.",
+    "source": "web/src/lib/auth.ts; web/src/app/(auth)/auth/callback/page.tsx"
+  },
+  {
+    "id": 3,
+    "group": "Customer functionality - assignment page 1",
+    "requirement": "Create a delivery request integrated with the system",
+    "status": "TRUE",
+    "finding": "Fixed: database-backed booking API and real web/mobile booking forms; initial history and event captured atomically. 13 operational integration tests cover the shared flow.",
+    "source": "server/src/modules/booking/booking.routes.ts"
+  },
+  {
+    "id": 4,
+    "group": "Customer functionality - assignment page 1",
+    "requirement": "Estimate delivery fee before confirmation",
+    "status": "TRUE",
+    "finding": "Server quote uses shared persisted LKR pricing. Changing pricing affects the next quote.",
+    "source": "server/src/modules/booking/booking.routes.ts; web/src/app/(customer)/booking/page.tsx"
+  },
+  {
+    "id": 5,
+    "group": "Customer functionality - assignment page 1",
+    "requirement": "Real-time status tracking through delivery/failure stages",
+    "status": "TRUE",
+    "finding": "Web tracking consumes database status through WebSockets/polling. New bookings now persist to that database.",
+    "source": "server/src/modules/tracking/tracking.service.ts; tracking.socket.ts; web/src/lib/useLiveTracking.ts"
+  },
+  {
+    "id": 6,
+    "group": "Customer functionality - assignment page 1",
+    "requirement": "View customer delivery history",
+    "status": "TRUE",
+    "finding": "Owner-scoped database history now includes new persistent bookings.",
+    "source": "server/src/modules/tracking/tracking.service.ts; web/src/app/(customer)/history/page.tsx"
+  },
+  {
+    "id": 7,
+    "group": "Customer functionality - assignment page 1",
+    "requirement": "Download a delivery receipt",
+    "status": "TRUE",
+    "finding": "Owner-scoped HTML receipt download and browser Print / Save as PDF exist.",
+    "source": "server/src/modules/tracking/tracking.routes.ts; web/src/app/(customer)/history/[trackingNumber]/receipt/page.tsx"
+  },
+  {
+    "id": 8,
+    "group": "Customer functionality - assignment page 1",
+    "requirement": "Mobile-friendly public tracking by tracking number",
+    "status": "TRUE",
+    "finding": "Responsive public web tracking and API polling are implemented. The native tracking screen is now connected to the same public tracking API.",
+    "source": "web/src/app/tracking/page.tsx; web/src/app/tracking/[id]/page.tsx; server/src/modules/tracking/tracking.routes.ts"
+  },
+  {
+    "id": 9,
+    "group": "Merchant functionality - assignment page 1",
+    "requirement": "Merchant registration with staff/admin approval",
+    "status": "TRUE",
+    "finding": "Unified business registration, email confirmation and staff approval are implemented. Portal sign-in uses the managed session flow.",
+    "source": "server/src/modules/auth/auth.routes.ts; applications.service.ts; server/src/modules/merchant/merchant.service.ts"
+  },
+  {
+    "id": 10,
+    "group": "Merchant functionality - assignment page 1",
+    "requirement": "Create delivery orders through secured partner API",
+    "status": "TRUE",
+    "finding": "API-key authentication, hashed keys, approval checks, rate limits, validated inputs and transactional database inserts exist. API keys satisfy the assignment alternative to client credentials.",
+    "source": "server/src/modules/merchant/merchant.routes.ts; merchant.service.ts"
+  },
+  {
+    "id": 11,
+    "group": "Merchant functionality - assignment page 1",
+    "requirement": "Merchant dashboard showing orders and delivery states",
+    "status": "TRUE",
+    "finding": "Merchant-scoped order dashboard uses the shared authenticated API client, including refresh/session handling.",
+    "source": "web/src/app/(merchant)/portal/page.tsx; _components/OrdersPanel.tsx"
+  },
+  {
+    "id": 12,
+    "group": "Merchant functionality - assignment page 1",
+    "requirement": "Receive webhooks for courier parcel status changes",
+    "status": "TRUE",
+    "finding": "Fixed: status-event trigger includes merchantId, parcel data and stable eventId. Webhook worker consumes the same contract; durable delivery/retry tested with mocked HTTP.",
+    "source": "server/src/modules/courier/courier.service.ts: publishStatusEvent; server/src/workers/webhook-worker.ts"
+  },
+  {
+    "id": 13,
+    "group": "Courier functionality - assignment page 2",
+    "requirement": "Courier login and authentication",
+    "status": "TRUE",
+    "finding": "Shared auth verifies server profile and courier role; courier operational endpoints restrict roles.",
+    "source": "server/src/modules/auth/auth.service.ts; server/src/modules/courier/courier.routes.ts"
+  },
+  {
+    "id": 14,
+    "group": "Courier functionality - assignment page 2",
+    "requirement": "View assigned deliveries",
+    "status": "TRUE",
+    "finding": "Production courier jobs come from the database. Seeded data is no longer a runtime fallback.",
+    "source": "server/src/modules/courier/courier.service.ts: getAssignedJobs; web/src/app/(courier)/tasks/page.tsx"
+  },
+  {
+    "id": 15,
+    "group": "Courier functionality - assignment page 2",
+    "requirement": "Restrict assigned-delivery list to the day",
+    "status": "TRUE",
+    "finding": "Fixed: courier jobs query uses the current Asia/Colombo assignment date.",
+    "source": "server/src/modules/courier/courier.service.ts: getAssignedJobs"
+  },
+  {
+    "id": 16,
+    "group": "Courier functionality - assignment page 2",
+    "requirement": "Update parcel stages with delivery notes",
+    "status": "TRUE",
+    "finding": "Production courier updates validate assignment and transition, then persist history and status.",
+    "source": "server/src/modules/courier/courier.routes.ts; courier.service.ts"
+  },
+  {
+    "id": 17,
+    "group": "Courier functionality - assignment page 2",
+    "requirement": "Upload delivery proof",
+    "status": "TRUE",
+    "finding": "Web file capture and native camera upload use the proof API; delivery requires an uploaded proof record.",
+    "source": "server/src/modules/courier/courier.routes.ts: /jobs/:parcelId/proof; courier.service.ts"
+  },
+  {
+    "id": 18,
+    "group": "Courier functionality - assignment page 2",
+    "requirement": "Record a failed delivery with a reason",
+    "status": "TRUE",
+    "finding": "Failure reason is required and persisted in the parcel timeline.",
+    "source": "server/src/modules/courier/courier.routes.ts: /jobs/:parcelId/fail; courier.service.ts"
+  },
+  {
+    "id": 19,
+    "group": "Dispatcher/admin functionality - assignment page 2",
+    "requirement": "View unassigned parcels",
+    "status": "TRUE",
+    "finding": "Dispatch board uses database parcels; errors are displayed instead of fabricated records.",
+    "source": "server/src/modules/dispatch/dispatch.service.ts; web/src/app/(dispatcher)/dispatch/page.tsx"
+  },
+  {
+    "id": 20,
+    "group": "Dispatcher/admin functionality - assignment page 2",
+    "requirement": "Assign parcels to couriers",
+    "status": "TRUE",
+    "finding": "Assignment runs in a database function with courier/parcel locks and capacity enforcement.",
+    "source": "server/src/modules/dispatch/dispatch.routes.ts; dispatch.service.ts"
+  },
+  {
+    "id": 21,
+    "group": "Dispatcher/admin functionality - assignment page 2",
+    "requirement": "Monitor courier active-delivery workloads",
+    "status": "TRUE",
+    "finding": "Database workload aggregation is connected to the dispatcher board.",
+    "source": "server/src/modules/dispatch/dispatch.service.ts: getCourierWorkloads; web/src/app/(dispatcher)/dispatch/page.tsx"
+  },
+  {
+    "id": 22,
+    "group": "Dispatcher/admin functionality - assignment page 2",
+    "requirement": "Manage users",
+    "status": "TRUE",
+    "finding": "Fixed: admin can activate/deactivate accounts and update names/contact fields through an admin-only endpoint. Self-deactivation and last-admin safeguards are enforced. UI includes activation controls.",
+    "source": "server/src/modules/admin/admin.routes.ts; web/src/app/admin/_components/AdminDashboard.tsx"
+  },
+  {
+    "id": 23,
+    "group": "Dispatcher/admin functionality - assignment page 2",
+    "requirement": "Manage/approve merchants",
+    "status": "TRUE",
+    "finding": "Merchant registration/approval remains in the unified managed-auth workflow.",
+    "source": "server/src/modules/merchant/merchant.service.ts; server/src/modules/auth/applications.service.ts; server/src/modules/dispatch/dispatch.service.ts"
+  },
+  {
+    "id": 24,
+    "group": "Dispatcher/admin functionality - assignment page 2",
+    "requirement": "Manage persistent delivery zones",
+    "status": "TRUE",
+    "finding": "Fixed: zone edits persist in PostgreSQL. Disabled zones cannot be quoted. Configuration reloads from the database.",
+    "source": "server/src/modules/dispatch/dispatch.service.ts: getServiceConfig / updateServiceConfig"
+  },
+  {
+    "id": 25,
+    "group": "Dispatcher/admin functionality - assignment page 2",
+    "requirement": "Manage pricing used by bookings",
+    "status": "TRUE",
+    "finding": "Fixed: customer and merchant calculations share persisted pricing. Default quotes use global rates; explicit zones use zone rates. No client price is trusted.",
+    "source": "server/src/modules/dispatch/dispatch.service.ts; server/src/modules/booking/booking.routes.ts; server/src/modules/merchant/merchant.service.ts"
+  },
+  {
+    "id": 26,
+    "group": "Dispatcher/admin functionality - assignment page 2",
+    "requirement": "Reports: deliveries/day and success/failure rates",
+    "status": "TRUE",
+    "finding": "Analytics returns database results or an error, never sample figures after database failure.",
+    "source": "server/src/modules/analytics/analytics.routes.ts; web/src/app/analytics/page.tsx"
+  },
+  {
+    "id": 27,
+    "group": "System and implementation requirements - assignment pages 2-3",
+    "requirement": "Real-time transport (WebSockets/SSE/polling)",
+    "status": "TRUE",
+    "finding": "Tracking WebSocket server, browser client and HTTP polling fallback are implemented.",
+    "source": "server/src/modules/tracking/tracking.socket.ts; web/src/lib/useLiveTracking.ts"
+  },
+  {
+    "id": 28,
+    "group": "System and implementation requirements - assignment pages 2-3",
+    "requirement": "Role-based access for all five roles",
+    "status": "TRUE",
+    "finding": "Shared authentication and role middleware protect five roles; owner checks protect private history/proofs and staff alone browse support exceptions.",
+    "source": "server/src/middleware/auth.ts; rbac.ts; module route files"
+  },
+  {
+    "id": 29,
+    "group": "System and implementation requirements - assignment pages 2-3",
+    "requirement": "JWT application authentication plus OAuth social login",
+    "status": "TRUE",
+    "finding": "Managed JWT validation plus Google OAuth; merchant UI now uses the shared authenticated client.",
+    "source": "server/src/modules/auth/auth.service.ts; web/src/lib/auth.ts; server/src/modules/merchant/merchant.service.ts"
+  },
+  {
+    "id": 30,
+    "group": "System and implementation requirements - assignment pages 2-3",
+    "requirement": "Asynchronous parcel status events through a broker",
+    "status": "TRUE",
+    "finding": "Transactional status-event capture and broker-confirmed relay are implemented.",
+    "source": "server/src/modules/courier/courier.service.ts; server/src/config/rabbitmq.ts; server/src/workers/notification-consumer.ts"
+  },
+  {
+    "id": 31,
+    "group": "System and implementation requirements - assignment pages 2-3",
+    "requirement": "Complete broker flow triggering notifications AND merchant webhooks",
+    "status": "TRUE",
+    "finding": "Fixed in code: transactional event outbox, confirmed dual-queue relay and idempotent notification/webhook consumers. Live broker/hosted deployment still requires verification.",
+    "source": "server/src/workers/notification-consumer.ts; webhook-worker.ts; server/src/modules/courier/courier.service.ts"
+  },
+  {
+    "id": 32,
+    "group": "System and implementation requirements - assignment pages 2-3",
+    "requirement": "Email or mock-SMS notification consumer",
+    "status": "TRUE",
+    "finding": "Fixed: durable mock_sms_messages mailbox is populated on SMS-enabled notification insertion. Preferences and duplicate suppression tested. This is mock SMS, not a real phone delivery.",
+    "source": "server/src/modules/notifications/notification.service.ts: processEvent / enabledChannels"
+  },
+  {
+    "id": 33,
+    "group": "System and implementation requirements - assignment pages 2-3",
+    "requirement": "Input validation",
+    "status": "TRUE",
+    "finding": "Zod schemas plus route/service validation exist for auth, booking, partner API and other modules. Not every route uses the same strictness.",
+    "source": "server/src/modules/auth/auth.routes.ts; server/src/modules/booking/booking.routes.ts; server/src/modules/merchant/merchant.routes.ts"
+  },
+  {
+    "id": 34,
+    "group": "System and implementation requirements - assignment pages 2-3",
+    "requirement": "Hashed password storage",
+    "status": "TRUE",
+    "finding": "Unified login uses managed Supabase Auth; the legacy merchant registration hashes passwords with bcrypt.",
+    "source": "server/src/modules/auth/auth.service.ts; server/src/modules/merchant/merchant.service.ts"
+  },
+  {
+    "id": 35,
+    "group": "System and implementation requirements - assignment pages 2-3",
+    "requirement": "No sensitive personal data in errors/logs",
+    "status": "TRUE",
+    "finding": "Improved: private, ownership-checked proof downloads; staff-only exception browsing; generic internal errors and redacted operational logs. A complete production privacy assessment remains outside these tests.",
+    "source": "server/src/modules/support/support.routes.ts; server/src/modules/dispatch/dispatch.routes.ts; server/src/app.ts"
+  },
+  {
+    "id": 36,
+    "group": "System and implementation requirements - assignment pages 2-3",
+    "requirement": "Responsive React frontend",
+    "status": "TRUE",
+    "finding": "Next.js/React pages use responsive CSS/Tailwind layouts. This audit did not visually test every viewport.",
+    "source": "web/package.json; web/src/app/; web/src/components/"
+  },
+  {
+    "id": 37,
+    "group": "System and implementation requirements - assignment pages 2-3",
+    "requirement": "Backend using a suitable framework",
+    "status": "TRUE",
+    "finding": "Express/TypeScript modular backend, database layer, middleware and workers are implemented; backend TypeScript build passed.",
+    "source": "server/package.json; server/src/app.ts"
+  },
+  {
+    "id": 38,
+    "group": "System and implementation requirements - assignment pages 2-3",
+    "requirement": "Versioned REST APIs",
+    "status": "TRUE",
+    "finding": "Application routes are mounted under /api/v1.",
+    "source": "server/src/app.ts"
+  },
+  {
+    "id": 39,
+    "group": "System and implementation requirements - assignment pages 2-3",
+    "requirement": "Centralized error handling",
+    "status": "TRUE",
+    "finding": "Global error handling is installed; internal operational failures are generic and raw operational exception logs were removed.",
+    "source": "server/src/middleware/error-handler.ts; server/src/app.ts"
+  },
+  {
+    "id": 40,
+    "group": "System and implementation requirements - assignment pages 2-3",
+    "requirement": "Webhook retry on failure",
+    "status": "TRUE",
+    "finding": "Webhook attempts, retry times and DLQ state persist across process restarts.",
+    "source": "server/src/modules/webhooks/webhook.service.ts; server/src/workers/webhook-worker.ts"
+  },
+  {
+    "id": 41,
+    "group": "System and implementation requirements - assignment pages 2-3",
+    "requirement": "Meaningful failures rather than fabricated success/data",
+    "status": "TRUE",
+    "finding": "Fixed core operational paths: no fabricated booking, courier, dispatcher or analytics success on infrastructure failure. Production routes use database services; seeded classes are retained only for legacy demos/tests.",
+    "source": "server/src/modules/ai/ai.routes.ts; server/src/modules/analytics/analytics.routes.ts; courier.service.ts; dispatch.service.ts"
+  },
+  {
+    "id": 42,
+    "group": "System and implementation requirements - assignment pages 2-3",
+    "requirement": "Environment configuration without unsafe secret defaults",
+    "status": "TRUE",
+    "finding": "Fixed: legacy JWT/HMAC sample-secret fallbacks removed; legacy token generation fails without a strong configured secret. Unified production login uses Supabase.",
+    "source": "server/src/config/env.ts"
+  },
+  {
+    "id": 43,
+    "group": "System and implementation requirements - assignment pages 2-3",
+    "requirement": "Dockerize frontend and backend/worker services",
+    "status": "TRUE",
+    "finding": "Frontend and server Dockerfiles plus worker container configuration exist. Docker images were not built in this audit.",
+    "source": "web/Dockerfile; server/Dockerfile; docker-compose.yml"
+  },
+  {
+    "id": 44,
+    "group": "System and implementation requirements - assignment pages 2-3",
+    "requirement": "Docker Compose local orchestration",
+    "status": "TRUE",
+    "finding": "Compose configures web, API, worker, Redis and RabbitMQ with health checks and volumes.",
+    "source": "docker-compose.yml"
+  },
+  {
+    "id": 45,
+    "group": "System and implementation requirements - assignment pages 2-3",
+    "requirement": "Containerized full stack including database",
+    "status": "TRUE",
+    "finding": "Added an official Supabase local container configuration and schema synchronization script. Together with Compose, database/auth/API/broker/frontend can run in containers; images were not started in this audit.",
+    "source": "docker-compose.yml; README.md"
+  },
+  {
+    "id": 46,
+    "group": "Design documentation - assignment page 2",
+    "requirement": "Use case diagrams for customer, merchant, courier and dispatcher",
+    "status": "TRUE",
+    "finding": "Added use-case diagram covering all four actor groups in docs/diagrams/use-cases.png.",
+    "source": "git ls-files; tracked documentation inventory"
+  },
+  {
+    "id": 47,
+    "group": "Design documentation - assignment page 2",
+    "requirement": "ER diagram of users, roles, merchants, parcels, history, couriers, zones, pricing",
+    "status": "TRUE",
+    "finding": "Added ER relationship diagram including users/roles, merchant credentials, parcels, zones/pricing, assignment/history/proof and asynchronous data.",
+    "source": "server/src/database/schema.sql; tracked documentation inventory"
+  },
+  {
+    "id": 48,
+    "group": "Design documentation - assignment page 2",
+    "requirement": "Architecture proposal with layers and justification",
+    "status": "TRUE",
+    "finding": "Added architecture diagram and layered modular-monolith justification in the design report.",
+    "source": "README.md; tracked documentation inventory"
+  },
+  {
+    "id": 49,
+    "group": "Design documentation - assignment page 2",
+    "requirement": "Integration-pattern design and rationale",
+    "status": "TRUE",
+    "finding": "Added request/reply, transactional outbox, broker fan-out, idempotent consumer and signed HTTP webhook rationale.",
+    "source": "README.md; tracked documentation inventory"
+  },
+  {
+    "id": 50,
+    "group": "Design documentation - assignment page 2",
+    "requirement": "Sequence/activity diagrams for all four key flows",
+    "status": "TRUE",
+    "finding": "Added sequence diagrams for booking, merchant API order creation, courier status/events and Google OAuth.",
+    "source": "git ls-files; tracked documentation inventory"
+  },
+  {
+    "id": 51,
+    "group": "Design documentation - assignment page 2",
+    "requirement": "Design patterns/principles explanation",
+    "status": "TRUE",
+    "finding": "Added a design-principles section covering separation of concerns, dependency injection, DRY pricing, state transitions and idempotency.",
+    "source": "README.md; tracked documentation inventory"
+  },
+  {
+    "id": 52,
+    "group": "Testing and submission - assignment pages 3-4",
+    "requirement": "Backend unit and integration test source",
+    "status": "TRUE",
+    "finding": "137 selected backend tests passed, 0 failed or skipped. Includes isolated PGlite integration tests.",
+    "source": "server/src/modules/**/**.test.ts; server/src/workers/**.test.ts; tmp/assignment-audit-tests.log"
+  },
+  {
+    "id": 53,
+    "group": "Testing and submission - assignment pages 3-4",
+    "requirement": "At least one event/integration-flow test",
+    "status": "TRUE",
+    "finding": "Outbox confirmation, event contracts, preferences/idempotency and durable webhook recovery are tested. Live broker test remains unrun.",
+    "source": "server/src/modules/notifications/notification.integration.test.ts; notification.database.test.ts; server/src/workers/notification-consumer.test.ts"
+  },
+  {
+    "id": 54,
+    "group": "Testing and submission - assignment pages 3-4",
+    "requirement": "Authorization tests including courier ownership",
+    "status": "TRUE",
+    "finding": "Role/owner and self-deactivation tests passed; production checks remain authoritative.",
+    "source": "server/src/modules/auth/auth.test.ts; admin/admin.test.ts; courier/courier.test.ts; notifications/notification.test.ts"
+  },
+  {
+    "id": 55,
+    "group": "Testing and submission - assignment pages 3-4",
+    "requirement": "Measurable coverage with submitted results",
+    "status": "TRUE",
+    "finding": "Measured changed-backend coverage: 90.05% lines, 78.21% branches, 79.71% functions. Scope is the selected new backend files; not whole-repository coverage.",
+    "source": "scripts/auth-test-module.mjs; git ls-files"
+  },
+  {
+    "id": 56,
+    "group": "Testing and submission - assignment pages 3-4",
+    "requirement": "Source repository link and README setup instructions",
+    "status": "TRUE",
+    "finding": "GitHub repository URL, environment setup, auth setup and local/Docker startup instructions are included.",
+    "source": "README.md; origin=https://github.com/yasindugunasekara/SWIFTDROP.git"
+  },
+  {
+    "id": 57,
+    "group": "Testing and submission - assignment pages 3-4",
+    "requirement": "Design documentation PDF",
+    "status": "TRUE",
+    "finding": "Added docs/SwiftDrop-design-and-test-report.pdf and corresponding diagrams.",
+    "source": "git ls-files *.pdf; supplied assignment brief"
+  },
+  {
+    "id": 58,
+    "group": "Testing and submission - assignment pages 3-4",
+    "requirement": "Submitted test reports and coverage summary",
+    "status": "TRUE",
+    "finding": "Added backend-audit.txt/json, web-tests.txt and mobile-tests.txt, plus test summary and reproducible commands.",
+    "source": "git ls-files; scripts/auth-test-module.mjs"
+  },
+  {
+    "id": 59,
+    "group": "Testing and submission - assignment pages 3-4",
+    "requirement": "Contribution sheet listing each member responsibilities",
+    "status": "FALSE",
+    "finding": "Draft responsibility map provided for Members 1-10. Actual member names/contributions have not been supplied or confirmed, so the final signed contribution sheet remains pending.",
+    "source": "git ls-files; commit bafb224 removed previous planning documents"
+  },
+  {
+    "id": 60,
+    "group": "Presentation/demo requirements - assignment page 3",
+    "requirement": "Live demo: customer login including Google",
+    "status": "FALSE",
+    "finding": "Pending live/manual evidence. Demonstration instructions are provided; this audit does not claim a completed team presentation or a live provider/broker demonstration.",
+    "source": "Presentation evidence required; auth source exists"
+  },
+  {
+    "id": 61,
+    "group": "Presentation/demo requirements - assignment page 3",
+    "requirement": "Live demo: customer creation and real-time tracking together",
+    "status": "FALSE",
+    "finding": "Pending live/manual evidence. Demonstration instructions are provided; this audit does not claim a completed team presentation or a live provider/broker demonstration.",
+    "source": "server/src/modules/booking/booking.routes.ts; server/src/modules/tracking/tracking.service.ts"
+  },
+  {
+    "id": 62,
+    "group": "Presentation/demo requirements - assignment page 3",
+    "requirement": "Live demo: merchant API order followed by received webhook",
+    "status": "FALSE",
+    "finding": "Pending live/manual evidence. Demonstration instructions are provided; this audit does not claim a completed team presentation or a live provider/broker demonstration.",
+    "source": "server/src/modules/merchant/merchant.routes.ts; server/src/workers/webhook-worker.ts"
+  },
+  {
+    "id": 63,
+    "group": "Presentation/demo requirements - assignment page 3",
+    "requirement": "Live demo: dispatcher assignment and courier update",
+    "status": "FALSE",
+    "finding": "Pending live/manual evidence. Demonstration instructions are provided; this audit does not claim a completed team presentation or a live provider/broker demonstration.",
+    "source": "server/src/scripts/dispatch-demo.ts; courier-demo.ts"
+  },
+  {
+    "id": 64,
+    "group": "Presentation/demo requirements - assignment page 3",
+    "requirement": "Live demo: status change triggers notification",
+    "status": "FALSE",
+    "finding": "Pending live/manual evidence. Demonstration instructions are provided; this audit does not claim a completed team presentation or a live provider/broker demonstration.",
+    "source": "server/src/modules/notifications/notification.integration.test.ts"
+  },
+  {
+    "id": 65,
+    "group": "Presentation/demo requirements - assignment page 3",
+    "requirement": "Walkthrough of architecture, diagrams, integrations and security",
+    "status": "FALSE",
+    "finding": "Pending live/manual evidence. Demonstration instructions are provided; this audit does not claim a completed team presentation or a live provider/broker demonstration.",
+    "source": "Presentation evidence required"
+  },
+  {
+    "id": 66,
+    "group": "Presentation/demo requirements - assignment page 3",
+    "requirement": "Each member explains their own contribution",
+    "status": "FALSE",
+    "finding": "Pending live/manual evidence. Demonstration instructions are provided; this audit does not claim a completed team presentation or a live provider/broker demonstration.",
+    "source": "Presentation evidence required"
+  },
+  {
+    "id": 67,
+    "group": "Bonus requirements - assignment page 3",
+    "requirement": "Kubernetes manifest foundations",
+    "status": "TRUE",
+    "finding": "Deployments, Services, ConfigMap, sample Secret, PostgreSQL, RabbitMQ, Redis and Ingress files exist.",
+    "source": "k8s/base/"
+  },
+  {
+    "id": 68,
+    "group": "Bonus requirements - assignment page 3",
+    "requirement": "Full working Kubernetes deployment (+5)",
+    "status": "FALSE",
+    "finding": "Manifest credentials/configuration improved. No Kubernetes cluster deployment was performed; full in-cluster Supabase Auth/database and durable storage still need deployment work and evidence.",
+    "source": "k8s/base/configmap.yaml; secrets.example.yaml; README.md"
+  },
+  {
+    "id": 69,
+    "group": "Bonus requirements - assignment page 3",
+    "requirement": "Generative AI delivery chatbot calling backend APIs (+5)",
+    "status": "TRUE",
+    "finding": "Added authenticated /ai/chat, a web assistant and AI SDK tools for tracking/pricing. Two mocked-model tool-loop tests passed. Configure a supported AI_MODEL_NAME and provider key; live model execution is unverified.",
+    "source": "server/src/modules/ai/ai.routes.ts; server/src/modules/dispatch/dispatch.service.ts; server/package.json"
+  },
+  {
+    "id": 70,
+    "group": "Bonus requirements - assignment page 3",
+    "requirement": "Optional MCP exposure for assistant tools",
+    "status": "FALSE",
+    "finding": "Optional MCP server not implemented; the brief encourages it but does not require it.",
+    "source": "server/src/; server/package.json"
+  },
+  {
+    "id": 71,
+    "group": "Additional codebase gaps (not separate requirements in the brief)",
+    "requirement": "Native mobile tracking connected to backend",
+    "status": "TRUE",
+    "finding": "Fixed: native tracking loads the public API and refreshes every 15 seconds; errors/empty state replace fixed tracking data.",
+    "source": "mobile/src/screens/TrackScreen.tsx; customer/MobileTrackingScreen.tsx"
+  },
+  {
+    "id": 72,
+    "group": "Additional codebase gaps (not separate requirements in the brief)",
+    "requirement": "Native courier tasks/proof/failure connected end to end",
+    "status": "TRUE",
+    "finding": "Fixed: native tasks load assigned jobs and call real status/failure APIs. Proof screen uses Expo CameraView, multipart upload and confirmed server updates. Real-device camera execution remains unverified.",
+    "source": "mobile/src/screens/courier/TaskListScreen.tsx; ProofPhotoScreen.tsx; mobile/App.tsx"
+  },
+  {
+    "id": 73,
+    "group": "Additional codebase gaps (not separate requirements in the brief)",
+    "requirement": "Native mobile notification inbox",
+    "status": "TRUE",
+    "finding": "Fixed: native inbox, mark-read and saved preference toggles are wired to the notification API.",
+    "source": "mobile/App.tsx: onNotifications"
+  },
+  {
+    "id": 74,
+    "group": "Additional codebase gaps (not separate requirements in the brief)",
+    "requirement": "Legacy merchant login compatible with unified protected routes",
+    "status": "TRUE",
+    "finding": "Fixed: legacy merchant login delegates to managed auth; portal uses the shared session-aware API client and links to unified signup/login.",
+    "source": "server/src/modules/merchant/merchant.service.ts: issueMerchantToken; server/src/modules/auth/auth.service.ts: authenticate"
+  },
+  {
+    "id": 75,
+    "group": "Additional codebase gaps (not separate requirements in the brief)",
+    "requirement": "Complete record-level privacy for support exception browsing",
+    "status": "TRUE",
+    "finding": "Fixed: exception list/detail routes require staff, and proof downloads enforce record ownership or staff privileges.",
+    "source": "server/src/modules/support/support.routes.ts: GET /exceptions and /exceptions/:id"
+  },
+  {
+    "id": 76,
+    "group": "Additional codebase gaps (not separate requirements in the brief)",
+    "requirement": "Durable webhook retry state across worker restarts",
+    "status": "TRUE",
+    "finding": "Fixed: webhook retries are loaded from PostgreSQL, leased for processing and restored by a new service instance; event IDs suppress duplicate sends.",
+    "source": "server/src/workers/webhook-worker.ts: startRetryEngine; server/src/modules/webhooks/webhook.service.ts"
+  }
+]

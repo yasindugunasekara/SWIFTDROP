@@ -11,7 +11,7 @@ export async function fetchApi<T = any>(
   const token = typeof window !== 'undefined' ? await getAccessToken() : null;
 
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+    ...(typeof FormData !== 'undefined' && options.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
     ...(options.headers as Record<string, string> || {}),
   };
 
@@ -35,7 +35,7 @@ export async function fetchApi<T = any>(
   if (!response.ok) {
     if (response.status === 401 && token) await clearAuthSession().catch(() => discardAuthSession());
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || errorData.message || `Request failed with status ${response.status}`);
+    throw Object.assign(new Error(errorData.error || errorData.message || `Request failed with status ${response.status}`),{status:response.status});
   }
 
   return response.json();

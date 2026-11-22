@@ -23,7 +23,26 @@ app.use(cors({
 app.use('/api/v1/auth', express.json({ limit: '16kb' }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+app.use((_req,res,next)=>{
+  const json=res.json.bind(res);
+  res.json=((body:any)=>json(res.statusCode>=500?{error:'Service temporarily unavailable. Please retry.'}:body)) as typeof res.json;
+  next();
+});
+// Proof images are private. Fetch them with an application bearer token.
+import { authenticateToken } from './middleware/auth.js';
+import { requireRoles } from './middleware/rbac.js';
+import { db } from './config/database.js';
+app.get('/api/v1/proof-file',authenticateToken,async(req:any,res)=>{
+  try {
+    const requested=String(req.query.path??'');
+    if(!/^\/uploads\/proof-[a-zA-Z0-9.-]+$/.test(requested)){res.status(400).json({error:'Invalid proof path'});return;}
+    const proof=await db.query(`SELECT d.id FROM public.courier_delivery_proofs d JOIN public.parcels p ON p.id=d.parcel_id
+      WHERE d.photo_url=$1 AND ($3 IN ('ADMIN','DISPATCHER') OR p.customer_id=$2 OR EXISTS(
+        SELECT 1 FROM public.courier_assignments ca WHERE ca.parcel_id=p.id AND ca.courier_id=$2 AND ca.is_active)) LIMIT 1`,[requested,req.user.id,req.user.role]);
+    if(!proof.rows.length){res.status(404).json({error:'Proof not found'});return;}
+    res.set('Cache-Control','private,no-store');res.sendFile(path.basename(requested),{root:path.join(process.cwd(),'uploads')},error=>{if(error&&!res.headersSent)res.status(404).end();});
+  } catch {res.status(503).json({error:'Proof image unavailable'});}
+});
 
 // Health Check Endpoint
 app.get(['/health', '/api/v1/health'], (req: Request, res: Response) => {

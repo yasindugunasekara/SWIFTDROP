@@ -13,6 +13,7 @@ const access: Record<string, UserRole[]> = {
   '/dispatch': ['DISPATCHER', 'ADMIN'], '/config': ['DISPATCHER', 'ADMIN'],
   '/analytics': ['DISPATCHER', 'ADMIN'], '/exceptions': ['DISPATCHER', 'ADMIN'], '/approval': ['CUSTOMER', 'COURIER', 'MERCHANT'],
   '/account-applications': ['DISPATCHER', 'ADMIN'],
+  '/assistant':['CUSTOMER','COURIER','MERCHANT','DISPATCHER','ADMIN'],
 };
 export default function AuthBoundary({ children }: { children: React.ReactNode }) {
   const user = useSyncExternalStore(subscribeAuth, getStoredUser, () => null);

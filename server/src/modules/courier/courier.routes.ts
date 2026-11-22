@@ -4,7 +4,8 @@ import path from 'path';
 import fs from 'fs';
 import { authenticateToken, AuthRequest } from '../../middleware/auth.js';
 import { requireRoles } from '../../middleware/rbac.js';
-import { courierService, ParcelStatus, inMemoryCourierStore } from './courier.service.js';
+import { type ParcelStatus } from './courier.service.js';
+import { databaseCourierService as courierService } from './courier.database.js';
 
 const router = Router();
 
@@ -63,7 +64,7 @@ router.get('/jobs', async (req: AuthRequest, res: Response) => {
       assignedJobs
     });
   } catch (err: any) {
-    return res.status(500).json({ error: err.message || 'Failed to fetch assigned delivery jobs' });
+    return res.status(500).json({ error: 'Failed to fetch assigned delivery jobs' });
   }
 });
 
@@ -86,7 +87,7 @@ router.get('/jobs/:parcelId', async (req: AuthRequest, res: Response) => {
     if (err.message?.includes('FORBIDDEN') || err.message?.includes('Forbidden')) {
       return res.status(403).json({ error: err.message.replace('FORBIDDEN: ', '') });
     }
-    return res.status(500).json({ error: err.message || 'Failed to fetch job details' });
+    return res.status(500).json({ error: 'Failed to fetch job details' });
   }
 });
 
@@ -120,12 +121,12 @@ router.patch('/jobs/:parcelId/status', async (req: AuthRequest, res: Response) =
   } catch (err: any) {
     const msg = err.message || '';
     if (msg.includes('Forbidden') || msg.includes('not authorized')) {
-      return res.status(403).json({ error: msg });
+      return res.status(403).json({ error: 'Delivery operation was not accepted. Verify assignment, status and proof requirements.' });
     }
     if (msg.includes('Invalid transition') || msg.includes('Proof photo required') || msg.includes('terminal')) {
       return res.status(400).json({ error: msg });
     }
-    return res.status(500).json({ error: msg || 'Internal server error updating parcel status' });
+    return res.status(500).json({ error: 'Internal server error updating parcel status' });
   }
 });
 
@@ -138,7 +139,7 @@ router.post('/jobs/:parcelId/proof', upload.single('photo'), async (req: AuthReq
     const role = req.user?.role || 'COURIER';
     const parcelId = req.params.parcelId;
 
-    let photoUrl = req.body.photoUrl;
+    let photoUrl: string | undefined;
     if (req.file) {
       photoUrl = `/uploads/${req.file.filename}`;
     }
@@ -168,7 +169,7 @@ router.post('/jobs/:parcelId/proof', upload.single('photo'), async (req: AuthReq
     if (msg.includes('Forbidden') || msg.includes('not authorized')) {
       return res.status(403).json({ error: msg });
     }
-    return res.status(400).json({ error: msg || 'Failed to upload proof of delivery' });
+    return res.status(400).json({ error: 'Failed to upload proof of delivery' });
   }
 });
 
@@ -206,7 +207,7 @@ router.post('/jobs/:parcelId/fail', async (req: AuthRequest, res: Response) => {
     if (msg.includes('Invalid transition')) {
       return res.status(400).json({ error: msg });
     }
-    return res.status(500).json({ error: msg || 'Failed to log delivery failure' });
+    return res.status(500).json({ error: 'Failed to log delivery failure' });
   }
 });
 

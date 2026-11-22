@@ -16,6 +16,17 @@ spec:
       containers:
         - name: rabbitmq
           image: rabbitmq:3.13-management-alpine
+          env:
+            - name: RABBITMQ_DEFAULT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: swiftdrop-secrets
+                  key: RABBITMQ_USER
+            - name: RABBITMQ_DEFAULT_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: swiftdrop-secrets
+                  key: RABBITMQ_PASSWORD
           ports:
             - containerPort: 5672
             - containerPort: 15672

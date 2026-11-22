@@ -124,10 +124,10 @@ export interface PublicTracking {
   events: PublicTrackingEvent[];
 }
 
-export async function getPublicTracking(rawTrackingNumber: unknown): Promise<PublicTracking> {
+export async function getPublicTracking(rawTrackingNumber: unknown, database = db): Promise<PublicTracking> {
   const trackingNumber = normaliseTrackingNumber(rawTrackingNumber);
 
-  const parcel = await db.query(
+  const parcel = await database.query(
     `SELECT id, tracking_number, status::text AS status, created_at, updated_at
        FROM parcels WHERE tracking_number = $1`,
     [trackingNumber]
@@ -135,7 +135,7 @@ export async function getPublicTracking(rawTrackingNumber: unknown): Promise<Pub
   const row = parcel.rows[0];
   if (!row) throw new TrackingError(404, `No parcel found for tracking number ${trackingNumber}.`);
 
-  const history = await db.query(
+  const history = await database.query(
     `SELECT status::text AS status, location_name, created_at
        FROM parcel_status_history h WHERE h.parcel_id = $1 ${HISTORY_ORDER}`,
     [row.id]

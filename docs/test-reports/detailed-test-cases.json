@@ -1,0 +1,2561 @@
+{
+  "title": "SwiftDrop test report and test cases",
+  "baseline": "baseline main bafb224 with operational changes verified before commit",
+  "executionUtc": "2026-11-22T17:50:06.191Z",
+  "node": "v24.14.1",
+  "backendCount": 137,
+  "webCount": 41,
+  "mobileCount": 30,
+  "totalCount": 208,
+  "passedCount": 208,
+  "failedCount": 0,
+  "skippedCount": 0,
+  "cases": [
+    {
+      "group": "Authentication, approvals and account security",
+      "id": "AUTH-01",
+      "title": "Normalized customer signup",
+      "data": "Customer@Example.com with surrounding spaces; valid matching passwords.",
+      "steps": "Submit signup to the in-process auth API with the stub registration gateway.",
+      "expected": "HTTP 202; normalized name/email; requires email confirmation; no password or access token returned.",
+      "actual": "Assertions confirmed normalization, confirmation response and no-store/no-credential response.",
+      "status": "PASS",
+      "evidence": "BE-004",
+      "source": "server/src/modules/auth/auth.test.ts:92"
+    },
+    {
+      "group": "Authentication, approvals and account security",
+      "id": "AUTH-02",
+      "title": "Reject invalid signup and role escalation",
+      "data": "Empty name; invalid email; short/mismatched passwords; ADMIN/COURIER role; injected password_hash.",
+      "steps": "Submit each invalid variant and count registration-gateway calls.",
+      "expected": "HTTP 400 for every invalid variant; gateway is never called.",
+      "actual": "All invalid variants were rejected before provider access.",
+      "status": "PASS",
+      "evidence": "BE-006",
+      "source": "server/src/modules/auth/auth.test.ts:105"
+    },
+    {
+      "group": "Authentication, approvals and account security",
+      "id": "AUTH-03",
+      "title": "Login uses verified credentials and role",
+      "data": "Valid fixture email/password; wrong password; request containing role=ADMIN.",
+      "steps": "Send each login request to the auth router.",
+      "expected": "Valid credentials return 200; wrong password 401; client-selected role 400.",
+      "actual": "Expected HTTP status assertions passed.",
+      "status": "PASS",
+      "evidence": "BE-007",
+      "source": "server/src/modules/auth/auth.test.ts:115"
+    },
+    {
+      "group": "Authentication, approvals and account security",
+      "id": "AUTH-04",
+      "title": "Token, refresh and role boundaries",
+      "data": "Missing/expired token; valid customer access token; valid/expired refresh token.",
+      "steps": "Request /auth/me and a staff route; then attempt token refresh.",
+      "expected": "Invalid identity returns 401; customer receives own profile and is denied staff access; only valid refresh succeeds.",
+      "actual": "Profile, 401/403 and refresh assertions passed against the injected gateway.",
+      "status": "PASS",
+      "evidence": "BE-008",
+      "source": "server/src/modules/auth/auth.test.ts:121"
+    },
+    {
+      "group": "Authentication, approvals and account security",
+      "id": "AUTH-05",
+      "title": "Prevent direct profile escalation",
+      "data": "Two fixture auth users and app profiles; authenticated database role.",
+      "steps": "Read own/other profile; update safe fields; attempt role and credential access.",
+      "expected": "Own permitted profile operations succeed; other profiles, role escalation and password reads fail.",
+      "actual": "PGlite RLS assertions passed.",
+      "status": "PASS",
+      "evidence": "BE-014",
+      "source": "server/src/modules/auth/auth.test.ts:169"
+    },
+    {
+      "group": "Authentication, approvals and account security",
+      "id": "AUTH-06",
+      "title": "Reject expired, revoked and foreign sessions",
+      "data": "Fixture sessions: active, expired, removed and owned by another user.",
+      "steps": "Invoke the session validation function under each simulated identity/session.",
+      "expected": "Only the active session belonging to the current user is accepted; session records are not exposed.",
+      "actual": "All session validity and privacy assertions passed.",
+      "status": "PASS",
+      "evidence": "BE-015",
+      "source": "server/src/modules/auth/auth.test.ts:182"
+    },
+    {
+      "group": "Authentication, approvals and account security",
+      "id": "AUTH-07",
+      "title": "Partner applications cannot self-grant roles",
+      "data": "Courier application with vehicle details; business application with company details.",
+      "steps": "Submit registration applications and inspect forwarded application data and response.",
+      "expected": "Details are preserved; response requires approval; no operational role or access token is granted immediately.",
+      "actual": "Both application variants met the approval-boundary assertions.",
+      "status": "PASS",
+      "evidence": "BE-016",
+      "source": "server/src/modules/auth/auth.test.ts:213"
+    },
+    {
+      "group": "Authentication, approvals and account security",
+      "id": "AUTH-08",
+      "title": "Atomic staff approval",
+      "data": "Pending courier/merchant applications; active staff reviewer.",
+      "steps": "Approve the application through the tested database review function.",
+      "expected": "Role is granted, merchant row is created where appropriate, and reviewer is recorded atomically.",
+      "actual": "PGlite approval assertions passed for both roles.",
+      "status": "PASS",
+      "evidence": "BE-025",
+      "source": "server/src/modules/auth/auth.test.ts:321"
+    },
+    {
+      "group": "Authentication, approvals and account security",
+      "id": "AUTH-09",
+      "title": "Generic password reset and redirect protection",
+      "data": "Mixed-case email; malformed email; unexpected external redirectTo parameter.",
+      "steps": "Submit reset requests to the in-process auth API.",
+      "expected": "Email is normalized; valid request returns a generic response; invalid email/redirect injection returns 400.",
+      "actual": "Normalization and non-disclosure assertions passed.",
+      "status": "PASS",
+      "evidence": "BE-018",
+      "source": "server/src/modules/auth/auth.test.ts:242"
+    },
+    {
+      "group": "Authentication, approvals and account security",
+      "id": "AUTH-10",
+      "title": "Admin routes reject forged identity",
+      "data": "Missing, forged and expired tokens; CUSTOMER/COURIER/MERCHANT/DISPATCHER/ADMIN profiles.",
+      "steps": "Request the guarded admin test route with each identity.",
+      "expected": "Missing/forged identities get 401, non-admin roles 403, and verified admin 200.",
+      "actual": "The admin guard matrix passed.",
+      "status": "PASS",
+      "evidence": "BE-001",
+      "source": "server/src/modules/admin/admin.test.ts:10"
+    },
+    {
+      "group": "Customer booking, persisted pricing and migration",
+      "id": "BOOK-01",
+      "title": "Validate parcel/contact boundaries",
+      "data": "Valid contact/address fixture; weight 0 or 101 kg; negative dimension; dimension over 500 cm; invalid zone ID.",
+      "steps": "Parse valid and invalid requests through the actual Zod schemas.",
+      "expected": "Valid fixture passes; invalid contacts, weights, dimensions and zone ID fail.",
+      "actual": "All schema boundary assertions passed.",
+      "status": "PASS",
+      "evidence": "BE-028",
+      "source": "server/src/modules/booking/booking.test.ts:8"
+    },
+    {
+      "group": "Customer booking, persisted pricing and migration",
+      "id": "BOOK-02",
+      "title": "Persist booking and expose it to tracking/dispatch",
+      "data": "Two customer IDs; 2 kg parcel; default rates 350 + 50/kg + 20/km; 10 km estimate; client fee 0.01.",
+      "steps": "Create a booking; reopen the persistence service; list both customers; inspect history, public tracking and unassigned board.",
+      "expected": "Server fee is LKR 650; real tracking number persists; owner can list it; other customer cannot; CONFIRMED history/tracking and dispatch row exist.",
+      "actual": "Persistence, ownership, ignored client price, initial history and integration assertions passed.",
+      "status": "PASS",
+      "evidence": "BE-098",
+      "source": "server/src/modules/operations/operations.integration.test.ts:34"
+    },
+    {
+      "group": "Customer booking, persisted pricing and migration",
+      "id": "BOOK-03",
+      "title": "Persist changes to global pricing",
+      "data": "Set base fee 500 and weight rate 100; 2 kg and 10 km.",
+      "steps": "Save rates, create a new quote and booking from a new service instance, then restore fixture settings.",
+      "expected": "Both next quote and booking use LKR 900.",
+      "actual": "New quote and persisted booking both matched 900.",
+      "status": "PASS",
+      "evidence": "BE-099",
+      "source": "server/src/modules/operations/operations.integration.test.ts:45"
+    },
+    {
+      "group": "Customer booking, persisted pricing and migration",
+      "id": "BOOK-04",
+      "title": "Zone-specific pricing and disabled zones",
+      "data": "Zone base 1000; rate/kg 10; rate/km 1; 2 kg; 10 km.",
+      "steps": "Edit the zone; quote explicitly against its ID; disable it and retry.",
+      "expected": "Active zone quote is LKR 1030; disabled zone cannot be quoted.",
+      "actual": "Persisted zone and disabled-zone rejection assertions passed.",
+      "status": "PASS",
+      "evidence": "BE-100",
+      "source": "server/src/modules/operations/operations.integration.test.ts:52"
+    },
+    {
+      "group": "Customer booking, persisted pricing and migration",
+      "id": "BOOK-05",
+      "title": "Derive booking owner from authenticated identity",
+      "data": "Anonymous caller; COURIER caller; CUSTOMER caller with forged customerId in body.",
+      "steps": "Call list/create routes using injected authentication and a recording persistence boundary.",
+      "expected": "Anonymous is 401; courier is 403; persistence receives the verified customer ID, not the body value.",
+      "actual": "HTTP and recorded-owner assertions passed.",
+      "status": "PASS",
+      "evidence": "BE-029",
+      "source": "server/src/modules/booking/booking.test.ts:13"
+    },
+    {
+      "group": "Customer booking, persisted pricing and migration",
+      "id": "BOOK-06",
+      "title": "No fabricated booking on storage failure",
+      "data": "Persistence boundary throws an error containing private detail.",
+      "steps": "Call quote/create routes with valid data while storage fails.",
+      "expected": "HTTP 503; no confirmation or synthetic tracking number; private detail not returned.",
+      "actual": "Both endpoints returned the expected safe errors.",
+      "status": "PASS",
+      "evidence": "BE-030",
+      "source": "server/src/modules/booking/booking.test.ts:29"
+    },
+    {
+      "group": "Customer booking, persisted pricing and migration",
+      "id": "BOOK-07",
+      "title": "Repeat operational migration safely",
+      "data": "Populated isolated database with the feature migration already applied.",
+      "steps": "Apply the same operational migration again; query existing customer bookings.",
+      "expected": "Migration succeeds and existing operational records remain.",
+      "actual": "Reapplication and preserved-data assertions passed.",
+      "status": "PASS",
+      "evidence": "BE-110",
+      "source": "server/src/modules/operations/operations.integration.test.ts:142"
+    },
+    {
+      "group": "Courier execution, dispatch and user administration",
+      "id": "OPS-01",
+      "title": "Real parcel assignment and valid delivery pipeline",
+      "data": "Persisted booking; verified courier/admin fixture IDs.",
+      "steps": "Assign the parcel; list jobs; advance PICKED_UP, IN_TRANSIT, OUT_FOR_DELIVERY; upload proof; mark DELIVERED.",
+      "expected": "Parcel is assigned and visible to its courier; valid transitions persist; tracking reaches DELIVERED.",
+      "actual": "Database service and public-tracking assertions passed.",
+      "status": "PASS",
+      "evidence": "BE-101",
+      "source": "server/src/modules/operations/operations.integration.test.ts:60"
+    },
+    {
+      "group": "Courier execution, dispatch and user administration",
+      "id": "OPS-02",
+      "title": "Courier isolation and mandatory proof",
+      "data": "Assigned parcel; a second courier; no proof initially.",
+      "steps": "Request/update/upload proof as the other courier; attempt delivery before proof; retry after a proof record.",
+      "expected": "Foreign courier cannot read/update/upload; DELIVERED requires proof; terminal transition back to IN_TRANSIT is rejected.",
+      "actual": "Assignment ownership, proof requirement and terminal-state assertions passed.",
+      "status": "PASS",
+      "evidence": "BE-101",
+      "source": "server/src/modules/operations/operations.integration.test.ts:60"
+    },
+    {
+      "group": "Courier execution, dispatch and user administration",
+      "id": "OPS-03",
+      "title": "Today-only assigned jobs",
+      "data": "Assigned parcel whose assigned_at is moved back two days.",
+      "steps": "List the courier jobs through the database service.",
+      "expected": "The old assignment is excluded from today’s list.",
+      "actual": "Daily-filter assertion passed.",
+      "status": "PASS",
+      "evidence": "BE-102",
+      "source": "server/src/modules/operations/operations.integration.test.ts:74"
+    },
+    {
+      "group": "Courier execution, dispatch and user administration",
+      "id": "OPS-04",
+      "title": "Capacity and duplicate assignment protection",
+      "data": "Capacity=1; two unassigned parcels; two couriers.",
+      "steps": "Assign the first parcel; attempt a second assignment to the full courier and another assignment of the first parcel.",
+      "expected": "Capacity and duplicate assignment attempts fail; only one active assignment remains.",
+      "actual": "Sequential database-function capacity/duplicate assertions passed. Parallel multi-connection contention was not exercised.",
+      "status": "PASS",
+      "evidence": "BE-103",
+      "source": "server/src/modules/operations/operations.integration.test.ts:79"
+    },
+    {
+      "group": "Courier execution, dispatch and user administration",
+      "id": "OPS-05",
+      "title": "Persist failed delivery reason",
+      "data": "Assigned parcel advanced to PICKED_UP; blank reason then RECIPIENT_UNAVAILABLE.",
+      "steps": "Attempt failure with blank reason; retry with a valid reason; query public tracking.",
+      "expected": "Blank reason is rejected; valid failure persists and public status becomes FAILED.",
+      "actual": "Reason and FAILED tracking assertions passed.",
+      "status": "PASS",
+      "evidence": "BE-104",
+      "source": "server/src/modules/operations/operations.integration.test.ts:88"
+    },
+    {
+      "group": "Courier execution, dispatch and user administration",
+      "id": "OPS-06",
+      "title": "Protected user administration",
+      "data": "Admin actor; courier actor; another customer account.",
+      "steps": "Attempt admin self-deactivation and non-admin update; then deactivate/rename another customer as admin.",
+      "expected": "Self-deactivation and non-admin action fail; authorized update persists inactive state and new name.",
+      "actual": "Database function assertions passed. Admin browser interaction and last-admin concurrent scenarios remain manual.",
+      "status": "PASS",
+      "evidence": "BE-109",
+      "source": "server/src/modules/operations/operations.integration.test.ts:136"
+    },
+    {
+      "group": "Courier execution, dispatch and user administration",
+      "id": "OPS-07",
+      "title": "Block public Data API access and retain server access",
+      "data": "anon, authenticated and service_role database roles; operational tables and functions.",
+      "steps": "Inspect public-client SELECT/EXECUTE privileges and server-role privileges for both functions and the three new tables.",
+      "expected": "Public client roles cannot bypass the API; service_role retains the intended operational function/table access.",
+      "actual": "Public-client denial and explicit server-role access assertions passed.",
+      "status": "PASS",
+      "evidence": "BE-111",
+      "source": "server/src/modules/operations/operations.integration.test.ts:146"
+    },
+    {
+      "group": "Notifications and preference enforcement",
+      "id": "NOT-01",
+      "title": "Mock SMS preferences and duplicate suppression",
+      "data": "Customer with SMS enabled; captured booking event; then SMS disabled.",
+      "steps": "Process the same event twice; count mock messages; disable SMS and process another event.",
+      "expected": "First event creates one durable mock message; duplicate creates none; disabled SMS produces no additional message.",
+      "actual": "Durable mock mailbox count remained one. No real SMS delivery was tested.",
+      "status": "PASS",
+      "evidence": "BE-105",
+      "source": "server/src/modules/operations/operations.integration.test.ts:95"
+    },
+    {
+      "group": "Notifications and preference enforcement",
+      "id": "NOT-02",
+      "title": "Fan out assignment notifications per recipient",
+      "data": "Customer and active assigned courier with different channel preferences.",
+      "steps": "Process COURIER_ASSIGNED and inspect recipient notification/channel records.",
+      "expected": "One notification per eligible recipient; each recipient’s preferences determine channel intent.",
+      "actual": "Database fan-out and preference assertions passed.",
+      "status": "PASS",
+      "evidence": "BE-035",
+      "source": "server/src/modules/notifications/notification.database.test.ts:220"
+    },
+    {
+      "group": "Notifications and preference enforcement",
+      "id": "NOT-03",
+      "title": "Concurrent duplicate event processing",
+      "data": "One parcel event delivered concurrently more than once.",
+      "steps": "Process the identical event concurrently, then inspect stored notification count.",
+      "expected": "Unique recipient/event rules prevent duplicate inbox records.",
+      "actual": "Concurrent idempotency assertion passed.",
+      "status": "PASS",
+      "evidence": "BE-039",
+      "source": "server/src/modules/notifications/notification.database.test.ts:308"
+    },
+    {
+      "group": "Notifications and preference enforcement",
+      "id": "NOT-04",
+      "title": "Private customer/courier inbox",
+      "data": "Two customers and a courier; each has different notification rows.",
+      "steps": "Read own inbox; attempt to read or modify another user’s notification.",
+      "expected": "Only own records are returned; foreign access is hidden/rejected.",
+      "actual": "Owner-isolation assertions passed.",
+      "status": "PASS",
+      "evidence": "BE-081",
+      "source": "server/src/modules/notifications/notification.test.ts:347"
+    },
+    {
+      "group": "Notifications and preference enforcement",
+      "id": "NOT-05",
+      "title": "Stable cursor pagination",
+      "data": "Multiple notifications including equal created_at timestamps.",
+      "steps": "Read successive pages using returned keyset cursors.",
+      "expected": "Pages neither duplicate nor skip rows, including timestamp ties.",
+      "actual": "Equal-timestamp keyset assertion passed.",
+      "status": "PASS",
+      "evidence": "BE-083",
+      "source": "server/src/modules/notifications/notification.test.ts:417"
+    },
+    {
+      "group": "Notifications and preference enforcement",
+      "id": "NOT-06",
+      "title": "Read/unread filtering and counts",
+      "data": "Read and unread notifications of several types.",
+      "steps": "Apply read/type filters and request unread count for the caller.",
+      "expected": "Filters return matching records; count is scoped to the caller.",
+      "actual": "The recorded filter and per-user unread-count checks passed.",
+      "status": "PASS",
+      "evidence": "BE-085",
+      "source": "server/src/modules/notifications/notification.test.ts:462"
+    },
+    {
+      "group": "Notifications and preference enforcement",
+      "id": "NOT-07",
+      "title": "Idempotent mark-read actions",
+      "data": "Unread inbox records belonging to the caller.",
+      "steps": "Mark one record read twice; then mark remaining records read twice.",
+      "expected": "Read state updates only within the caller’s inbox; repeating the action is safe.",
+      "actual": "Single-read and read-all checks passed.",
+      "status": "PASS",
+      "evidence": "BE-089",
+      "source": "server/src/modules/notifications/notification.test.ts:546"
+    },
+    {
+      "group": "Notifications and preference enforcement",
+      "id": "NOT-08",
+      "title": "Preference validation and isolation",
+      "data": "Partial preference changes; invalid value types, unknown fields and empty payload.",
+      "steps": "Save valid partial changes; submit invalid variants; reload the user’s preferences.",
+      "expected": "Valid fields persist per user; invalid writes are rejected without changing saved state.",
+      "actual": "Partial-persistence and invalid-payload checks passed.",
+      "status": "PASS",
+      "evidence": "BE-095",
+      "source": "server/src/modules/notifications/notification.test.ts:706"
+    },
+    {
+      "group": "Asynchronous events, publisher and consumer recovery",
+      "id": "EVT-01",
+      "title": "Complete merchant status-event contract",
+      "data": "Database parcel linked to a merchant; assigned courier.",
+      "steps": "Change parcel status through assignment; inspect the captured outbox payload.",
+      "expected": "Payload includes stable eventId, merchantId, parcel ID and tracking/status data.",
+      "actual": "Merchant/event contract assertions passed.",
+      "status": "PASS",
+      "evidence": "BE-106",
+      "source": "server/src/modules/operations/operations.integration.test.ts:109"
+    },
+    {
+      "group": "Asynchronous events, publisher and consumer recovery",
+      "id": "EVT-02",
+      "title": "Outbox requires broker confirmations",
+      "data": "Pending outbox events; mocked notification publish succeeds; mocked webhook publish initially fails.",
+      "steps": "Flush once with missing webhook confirmation; flush again with both confirms.",
+      "expected": "Unconfirmed event remains pending; published_at is set only after required confirms.",
+      "actual": "Pending/published database-state assertions passed. Live RabbitMQ was not used.",
+      "status": "PASS",
+      "evidence": "BE-107",
+      "source": "server/src/modules/operations/operations.integration.test.ts:115"
+    },
+    {
+      "group": "Asynchronous events, publisher and consumer recovery",
+      "id": "EVT-03",
+      "title": "Lazy shared publisher initialization",
+      "data": "Fake confirm channel; concurrent publish calls.",
+      "steps": "Create publisher without publishing; issue concurrent publishes; inspect channel/initialization calls.",
+      "expected": "Connection is lazy; concurrent calls share initialization and preserve the payload/queue.",
+      "actual": "Publisher lazy/reuse/concurrency checks passed.",
+      "status": "PASS",
+      "evidence": "BE-059",
+      "source": "server/src/modules/notifications/notification.publisher.test.ts:122"
+    },
+    {
+      "group": "Asynchronous events, publisher and consumer recovery",
+      "id": "EVT-04",
+      "title": "Publisher nack and confirmation timeout",
+      "data": "Fake channel sends nack, or never confirms.",
+      "steps": "Publish and inspect returned status, channel closure and next initialization.",
+      "expected": "Publish fails safely; failed channel is invalidated; timeout does not imply delivery.",
+      "actual": "Nack and confirmation-timeout tests passed.",
+      "status": "PASS",
+      "evidence": "BE-060",
+      "source": "server/src/modules/notifications/notification.publisher.test.ts:150"
+    },
+    {
+      "group": "Asynchronous events, publisher and consumer recovery",
+      "id": "EVT-05",
+      "title": "Acknowledge only after successful processing",
+      "data": "Valid event and a controlled notification processor.",
+      "steps": "Delay processing, then complete it; inspect consumer acknowledgement order.",
+      "expected": "No acknowledgement occurs before successful processing.",
+      "actual": "Acknowledgement-order assertion passed.",
+      "status": "PASS",
+      "evidence": "BE-125",
+      "source": "server/src/workers/notification-consumer.test.ts:112"
+    },
+    {
+      "group": "Asynchronous events, publisher and consumer recovery",
+      "id": "EVT-06",
+      "title": "Malformed events go to the dead-letter path",
+      "data": "Invalid JSON and schema-invalid event fixtures.",
+      "steps": "Feed invalid payloads to the consumer handler with a fake confirm channel.",
+      "expected": "Confirmed DLQ copy precedes acknowledgement; poison messages do not loop indefinitely.",
+      "actual": "Malformed JSON and schema-invalid DLQ tests passed.",
+      "status": "PASS",
+      "evidence": "BE-127",
+      "source": "server/src/workers/notification-consumer.test.ts:141"
+    },
+    {
+      "group": "Asynchronous events, publisher and consumer recovery",
+      "id": "EVT-07",
+      "title": "Do not acknowledge unconfirmed retry/DLQ copies",
+      "data": "Processing failure; fake publisher fails retry or DLQ confirmation.",
+      "steps": "Attempt retry/dead-letter publication and inspect acknowledgement state.",
+      "expected": "Original message remains unacknowledged when the durable copy is not confirmed.",
+      "actual": "Both retry and DLQ failure cases passed.",
+      "status": "PASS",
+      "evidence": "BE-136",
+      "source": "server/src/workers/notification-consumer.test.ts:288"
+    },
+    {
+      "group": "Asynchronous events, publisher and consumer recovery",
+      "id": "EVT-08",
+      "title": "Reconnect supervision and clean shutdown",
+      "data": "Fake channel lifecycle and controlled scheduler.",
+      "steps": "Trigger repeated disconnects; advance timers; reconnect; stop during wait or connection startup.",
+      "expected": "One reconnect loop; exponential delay capped at 30 seconds; stop prevents late consumers.",
+      "actual": "Consumer supervisor backoff, deduplication and stop cases passed.",
+      "status": "PASS",
+      "evidence": "BE-117",
+      "source": "server/src/workers/notification-consumer.lifecycle.test.ts:225"
+    },
+    {
+      "group": "Web client session, tracking and display behavior",
+      "id": "WEB-01",
+      "title": "One refresh for concurrent expired-token requests",
+      "data": "Mocked expired access token and multiple concurrent requests.",
+      "steps": "Start requests together, return 401, then complete a single refresh.",
+      "expected": "Refresh rotates once; requests retry once with the new token.",
+      "actual": "Shared-refresh test passed.",
+      "status": "PASS",
+      "evidence": "WEB-013",
+      "source": "web/tests/auth-session.test.mjs:199"
+    },
+    {
+      "group": "Web client session, tracking and display behavior",
+      "id": "WEB-02",
+      "title": "Logout prevents late session restoration",
+      "data": "Deferred login/profile/refresh results and a logout in between.",
+      "steps": "Start the delayed operation; sign out; then complete the stale response.",
+      "expected": "Old account state cannot be restored and no authenticated retry occurs after logout.",
+      "actual": "Recorded logout/login/profile/refresh race checks passed.",
+      "status": "PASS",
+      "evidence": "WEB-017",
+      "source": "web/tests/auth-session.test.mjs:241"
+    },
+    {
+      "group": "Web client session, tracking and display behavior",
+      "id": "WEB-03",
+      "title": "OAuth callback cannot grant a role from URL data",
+      "data": "Mock provider session; forged URL role/redirect data; cancelled callback.",
+      "steps": "Complete the callback and load the backend-verified profile; exercise cancellation.",
+      "expected": "Application trusts verified identity only; cancelled flow never restores a session.",
+      "actual": "Callback trust and cancellation checks passed. This was not a live Google login.",
+      "status": "PASS",
+      "evidence": "WEB-020",
+      "source": "web/tests/auth-session.test.mjs:280"
+    },
+    {
+      "group": "Web client session, tracking and display behavior",
+      "id": "WEB-04",
+      "title": "Role-aware workspace routing",
+      "data": "Verified profiles for all roles; pending/rejected applications.",
+      "steps": "Resolve the dashboard route for each profile.",
+      "expected": "Roles reach their own workspace; unapproved applicants remain on approval.",
+      "actual": "Dashboard routing assertions passed.",
+      "status": "PASS",
+      "evidence": "WEB-023",
+      "source": "web/tests/auth-session.test.mjs:302"
+    },
+    {
+      "group": "Web client session, tracking and display behavior",
+      "id": "WEB-05",
+      "title": "Public tracking request and route input safety",
+      "data": "Mixed-case tracking number; malformed percent-escaped route parameter.",
+      "steps": "Normalize input; issue public lookup; decode malformed route data.",
+      "expected": "Tracking format is validated; public lookup sends no credentials; malformed escapes do not throw.",
+      "actual": "Tracking normalization, public request and route-decoding checks passed.",
+      "status": "PASS",
+      "evidence": "WEB-037",
+      "source": "web/tests/tracking.test.mjs:44"
+    },
+    {
+      "group": "Web client session, tracking and display behavior",
+      "id": "WEB-06",
+      "title": "Notification list merging and query encoding",
+      "data": "Overlapping notification pages and opaque cursor values.",
+      "steps": "Build the list query and merge pages containing repeated IDs.",
+      "expected": "Unset filters are omitted; cursor is encoded; duplicate IDs are not appended.",
+      "actual": "Query-helper and merge checks passed.",
+      "status": "PASS",
+      "evidence": "WEB-033",
+      "source": "web/tests/notification-helpers.test.mjs:90"
+    },
+    {
+      "group": "Mobile client storage, auth and booking behavior",
+      "id": "MOB-01",
+      "title": "Atomic secure storage of large sessions",
+      "data": "Large Unicode session; failed and successful token rotations.",
+      "steps": "Store chunked credentials; simulate a rotation write failure; read session; repeat successful rotation and logout.",
+      "expected": "Old committed session survives incomplete rotation; successful rotation/logout remove superseded chunks.",
+      "actual": "Secure-storage round-trip, rotation and cleanup checks passed. Real-device secure storage was simulated.",
+      "status": "PASS",
+      "evidence": "MOB-002",
+      "source": "mobile/tests/auth-session.test.mjs:46"
+    },
+    {
+      "group": "Mobile client storage, auth and booking behavior",
+      "id": "MOB-02",
+      "title": "Expiry and account-switch race protection",
+      "data": "Expired session; delayed old login; newer courier login; logout.",
+      "steps": "Advance expiry and complete stale responses after logout/account switching.",
+      "expected": "Expired credentials clear; an older operation cannot overwrite the new identity or restore a signed-out account.",
+      "actual": "Mobile expiry, logout and account-switch checks passed.",
+      "status": "PASS",
+      "evidence": "MOB-007",
+      "source": "mobile/tests/auth-session.test.mjs:138"
+    },
+    {
+      "group": "Mobile client storage, auth and booking behavior",
+      "id": "MOB-03",
+      "title": "Restrict the native app to permitted roles",
+      "data": "Customer/courier profiles and merchant/dispatcher profiles.",
+      "steps": "Attempt to establish a mobile application session for each role.",
+      "expected": "Merchant/dispatcher roles cannot enter the customer/courier shell.",
+      "actual": "Mobile role-restriction assertion passed.",
+      "status": "PASS",
+      "evidence": "MOB-012",
+      "source": "mobile/tests/auth-session.test.mjs:196"
+    },
+    {
+      "group": "Mobile client storage, auth and booking behavior",
+      "id": "MOB-04",
+      "title": "Foreground/background refresh lifecycle",
+      "data": "Mock application foreground/background transitions and API profile verification.",
+      "steps": "Move to foreground, then background; inspect refresh and revalidation calls.",
+      "expected": "Foreground starts refresh/revalidates; background stops automatic refresh.",
+      "actual": "Lifecycle assertions passed.",
+      "status": "PASS",
+      "evidence": "MOB-013",
+      "source": "mobile/tests/auth-session.test.mjs:204"
+    },
+    {
+      "group": "Mobile client storage, auth and booking behavior",
+      "id": "MOB-05",
+      "title": "Use server quote and real booking confirmation",
+      "data": "2 kg with parcel dimensions; server quote LKR 650; failed or incomplete booking responses.",
+      "steps": "Call booking client; inspect forwarded payload; return server failure/incomplete success; then valid real tracking number.",
+      "expected": "Client uses server currency/price and never invents a quote or tracking number.",
+      "actual": "All four recorded booking-client tests passed.",
+      "status": "PASS",
+      "evidence": "MOB-021",
+      "source": "mobile/tests/booking-flow.test.mjs:7"
+    },
+    {
+      "group": "Mobile client storage, auth and booking behavior",
+      "id": "MOB-06",
+      "title": "Verify PKCE identity before persisting OAuth session",
+      "data": "Mock valid, cancelled, unregistered and expired-code callbacks.",
+      "steps": "Run callback exchange and role-verification branches.",
+      "expected": "Only permitted backend-verified identity is persisted; cancelled/invalid callbacks do not save a session.",
+      "actual": "Google callback/exchange and persistence checks passed. Provider interaction was mocked.",
+      "status": "PASS",
+      "evidence": "MOB-028",
+      "source": "mobile/tests/google-auth.test.mjs:56"
+    },
+    {
+      "group": "Webhook transport and generative assistant",
+      "id": "INT-01",
+      "title": "Durable signed webhook retry and event deduplication",
+      "data": "Mock receiver returns 503 then 204; stable event ID; configured test endpoint/secret.",
+      "steps": "Dispatch once; resend identical event; recreate service; make retry due; retry; attempt access as another merchant.",
+      "expected": "Initial attempt persists; duplicate does not resend; restart reloads retry; signature verifies; retry succeeds with same payload; foreign merchant is denied.",
+      "actual": "Attempt counts, HMAC signature, payload stability, 204 success and merchant isolation assertions passed.",
+      "status": "PASS",
+      "evidence": "BE-108",
+      "source": "server/src/modules/operations/operations.integration.test.ts:123"
+    },
+    {
+      "group": "Webhook transport and generative assistant",
+      "id": "INT-02",
+      "title": "Reject private webhook targets",
+      "data": "Loopback/private IPv4 and IPv6; URL credentials; fake DNS resolving to 10.0.0.1, then public address.",
+      "steps": "Validate each URL/address and mocked resolver response.",
+      "expected": "Local/private/credential-bearing targets are rejected; public target passes validation.",
+      "actual": "Address and mocked-DNS assertions passed. Live egress/DNS-rebinding behavior was not exercised.",
+      "status": "PASS",
+      "evidence": "BE-113",
+      "source": "server/src/modules/webhooks/webhook-target.test.ts:4"
+    },
+    {
+      "group": "Webhook transport and generative assistant",
+      "id": "AI-01",
+      "title": "Assistant calls tracking tool before answering",
+      "data": "Mock model requests trackParcel for SWIFT-AB12CD34; tool returns IN_TRANSIT.",
+      "steps": "Run the AI SDK agent; inspect executed tool arguments and the model’s next prompt.",
+      "expected": "Exactly the requested backend tracking tool executes; tool result is provided to the next model step.",
+      "actual": "Two-step mocked-model loop and backend tool invocation assertions passed.",
+      "status": "PASS",
+      "evidence": "BE-002",
+      "source": "server/src/modules/ai/assistant.test.ts:6"
+    },
+    {
+      "group": "Webhook transport and generative assistant",
+      "id": "AI-02",
+      "title": "Assistant does not invent a destination zone",
+      "data": "Question: 2 kg to Kandy; only Colombo zone configured.",
+      "steps": "Mock the model requesting a quote for Kandy; inspect tool result and pricing invocation.",
+      "expected": "Tool returns destination-unavailable plus available zones; pricing is not invoked against a manufactured zone.",
+      "actual": "Destination guard assertions passed. No live model answer was tested.",
+      "status": "PASS",
+      "evidence": "BE-003",
+      "source": "server/src/modules/ai/assistant.test.ts:17"
+    }
+  ],
+  "manual": [
+    {
+      "id": "LIVE-01",
+      "title": "Real Google login",
+      "preconditions": "Configured Google OAuth credentials and callback allowlist; user-controlled browser.",
+      "data": "Confirmed existing customer account.",
+      "steps": "Choose Google login; complete consent/callback; reload and log out.",
+      "expected": "Only verified account enters the correct workspace; logout revokes its session.",
+      "actual": "No live provider/browser execution is recorded.",
+      "status": "NOT RUN"
+    },
+    {
+      "id": "LIVE-02",
+      "title": "Complete customer booking browser journey",
+      "preconditions": "Feature migration applied to dedicated test database; web/API/worker running.",
+      "data": "Disposable customer; valid sender/recipient and parcel data.",
+      "steps": "Sign in; obtain fee; confirm booking; open history, receipt and tracking.",
+      "expected": "Same real parcel is visible across all screens; receipt is owner-scoped and download works.",
+      "actual": "Database services were tested; full browser journey was not recorded.",
+      "status": "NOT RUN"
+    },
+    {
+      "id": "LIVE-03",
+      "title": "Merchant partner API and delivered webhook",
+      "preconditions": "Approved disposable merchant; API key; reachable receiver; broker/worker.",
+      "data": "Merchant order and receiver capable of verifying the signature.",
+      "steps": "Create order using X-API-Key; assign/update status; receive webhook; verify HMAC/event ID.",
+      "expected": "Order belongs to merchant and receiver obtains the matching authenticated update.",
+      "actual": "Full live partner API-to-broker-to-receiver execution is not recorded.",
+      "status": "NOT RUN"
+    },
+    {
+      "id": "LIVE-04",
+      "title": "Native camera proof and failed delivery",
+      "preconditions": "Physical device/development build with camera permissions and reachable API.",
+      "data": "Assigned disposable parcel; real photo; failure reason.",
+      "steps": "Capture/upload photo and complete delivery; separately record a failure; check server state.",
+      "expected": "Actual uploaded image and state persist; denied permissions or network errors cannot show false success.",
+      "actual": "Camera and device behavior were not executed on real hardware.",
+      "status": "NOT RUN"
+    },
+    {
+      "id": "LIVE-05",
+      "title": "RabbitMQ outage/recovery and worker restart",
+      "preconditions": "Dedicated RabbitMQ vhost and database; broker management access.",
+      "data": "Several status events while broker is offline.",
+      "steps": "Stop broker; change statuses; inspect pending outbox; restart broker/worker; replay event.",
+      "expected": "No event is lost after confirmations; consumers deduplicate and process pending events.",
+      "actual": "Recorded tests mock broker confirmations and lifecycle.",
+      "status": "NOT RUN"
+    },
+    {
+      "id": "LIVE-06",
+      "title": "Hosted Supabase auth/profile integration",
+      "preconditions": "New migration applied only to intended dedicated test project.",
+      "data": "Anonymous, customer, courier, merchant and admin sessions.",
+      "steps": "Test actual REST table access, profile loading, role boundaries and deactivation.",
+      "expected": "Operational Data API access is denied while permitted own-profile reads and app routes work.",
+      "actual": "PGlite assertions do not replace live Supabase policy/provider verification.",
+      "status": "NOT RUN"
+    },
+    {
+      "id": "LIVE-07",
+      "title": "Receipt and image access in browser",
+      "preconditions": "Dedicated data with two customer/courier identities and an uploaded image.",
+      "data": "Own and foreign receipt/proof paths.",
+      "steps": "Download own receipt/proof; attempt direct unauthenticated and cross-user access.",
+      "expected": "Owned/staff access works; foreign/direct public access is denied with no personal data leakage.",
+      "actual": "No complete browser file-download/access test is recorded.",
+      "status": "NOT RUN"
+    },
+    {
+      "id": "LIVE-08",
+      "title": "Admin settings and account management UI",
+      "preconditions": "Dedicated admin and disposable second user; configured zones.",
+      "data": "Updated global/zone rates; user activation toggle.",
+      "steps": "Save pricing; reload; quote from customer/merchant; deactivate/reactivate disposable user.",
+      "expected": "Changes persist and affect quotes; deactivated identity loses access; self-deactivation is blocked.",
+      "actual": "Backend functions were tested; browser activation and price-management interaction are unverified.",
+      "status": "NOT RUN"
+    },
+    {
+      "id": "LIVE-09",
+      "title": "Configured generative AI provider",
+      "preconditions": "Provider key and supported AI_MODEL_NAME; dedicated app data.",
+      "data": "Known tracking number and configured/unconfigured destination quote questions.",
+      "steps": "Ask in /assistant; inspect server/tool requests and answer accuracy; simulate provider failure.",
+      "expected": "Live answers use real tool results; unavailable provider yields an explicit error.",
+      "actual": "Only mocked-model agent tests are recorded.",
+      "status": "NOT RUN"
+    },
+    {
+      "id": "LIVE-10",
+      "title": "Fresh Docker/Supabase container setup",
+      "preconditions": "Docker available; ports/resources free; separate test environment.",
+      "data": "Generated local schema and valid local Supabase settings.",
+      "steps": "Sync schema; start local Supabase and Compose; verify service health and one complete delivery flow.",
+      "expected": "Database/auth/frontend/API/broker/worker work together from a fresh installation.",
+      "actual": "Compose configuration was validated; images and the full stack were not started.",
+      "status": "NOT RUN"
+    },
+    {
+      "id": "LIVE-11",
+      "title": "Full Kubernetes deployment",
+      "preconditions": "Configured cluster, images, secrets, storage, Auth/database and ingress.",
+      "data": "Dedicated namespace and disposable delivery data.",
+      "steps": "Deploy; verify rollout/health; execute customer/merchant/courier and recovery flows.",
+      "expected": "Full cluster workflow works and survives relevant pod restarts.",
+      "actual": "No cluster deployment or live Kubernetes evidence is recorded.",
+      "status": "NOT RUN"
+    },
+    {
+      "id": "LIVE-12",
+      "title": "Concurrent assignment and last-admin contention",
+      "preconditions": "Dedicated PostgreSQL with multiple independent connections.",
+      "data": "Two dispatchers competing for a capacity-limited courier; two admin updates.",
+      "steps": "Race assignment operations; race changes involving the final active administrator.",
+      "expected": "Capacity is never exceeded; one active assignment per parcel; final active admin remains protected.",
+      "actual": "Existing integration checks are sequential in a single isolated PGlite instance.",
+      "status": "NOT RUN"
+    }
+  ],
+  "inventory": [
+    {
+      "id": "BE-001",
+      "run": "Backend",
+      "title": "admin guard rejects missing/forged tokens and every non-admin role",
+      "status": "PASS",
+      "source": "server/src/modules/admin/admin.test.ts:10",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-002",
+      "run": "Backend",
+      "title": "assistant executes the tracking backend tool before returning a model answer",
+      "status": "PASS",
+      "source": "server/src/modules/ai/assistant.test.ts:6",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-003",
+      "run": "Backend",
+      "title": "assistant executes configured pricing and does not manufacture a destination zone",
+      "status": "PASS",
+      "source": "server/src/modules/ai/assistant.test.ts:17",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-004",
+      "run": "Backend",
+      "title": "signup validates and forwards normalized credentials to Supabase, without returning credentials or fake sessions",
+      "status": "PASS",
+      "source": "server/src/modules/auth/auth.test.ts:92",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-005",
+      "run": "Backend",
+      "title": "handles projects without email confirmation",
+      "status": "PASS",
+      "source": "server/src/modules/auth/auth.test.ts:101",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-006",
+      "run": "Backend",
+      "title": "invalid input and privileged roles are rejected before calling Supabase",
+      "status": "PASS",
+      "source": "server/src/modules/auth/auth.test.ts:105",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-007",
+      "run": "Backend",
+      "title": "login succeeds only for valid credentials; selected role cannot be submitted",
+      "status": "PASS",
+      "source": "server/src/modules/auth/auth.test.ts:115",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-008",
+      "run": "Backend",
+      "title": "token verification, current profile, refresh and role checks are enforced",
+      "status": "PASS",
+      "source": "server/src/modules/auth/auth.test.ts:121",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-009",
+      "run": "Backend",
+      "title": "logout calls Supabase with a verified access token",
+      "status": "PASS",
+      "source": "server/src/modules/auth/auth.test.ts:131",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-010",
+      "run": "Backend",
+      "title": "provider errors never leak submitted passwords or internal error details",
+      "status": "PASS",
+      "source": "server/src/modules/auth/auth.test.ts:137",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-011",
+      "run": "Backend",
+      "title": "malformed bodies, large bodies, and signup abuse are handled",
+      "status": "PASS",
+      "source": "server/src/modules/auth/auth.test.ts:143",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-012",
+      "run": "Backend",
+      "title": "Auth migration creates customer profiles, ignores user-editable roles, and does not copy passwords",
+      "status": "PASS",
+      "source": "server/src/modules/auth/auth.test.ts:153",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-013",
+      "run": "Backend",
+      "title": "legacy profile IDs and roles remain intact; matching emails cannot claim a legacy courier",
+      "status": "PASS",
+      "source": "server/src/modules/auth/auth.test.ts:163",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-014",
+      "run": "Backend",
+      "title": "RLS allows only own profile reads and safe updates; role escalation and password reads fail",
+      "status": "PASS",
+      "source": "server/src/modules/auth/auth.test.ts:169",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-015",
+      "run": "Backend",
+      "title": "session check rejects missing, expired, revoked and another user session without exposing session records",
+      "status": "PASS",
+      "source": "server/src/modules/auth/auth.test.ts:182",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-016",
+      "run": "Backend",
+      "title": "courier and business signup requests preserve details without granting an operational role",
+      "status": "PASS",
+      "source": "server/src/modules/auth/auth.test.ts:213",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-017",
+      "run": "Backend",
+      "title": "applications reject missing role details and privileged role requests before signup",
+      "status": "PASS",
+      "source": "server/src/modules/auth/auth.test.ts:231",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-018",
+      "run": "Backend",
+      "title": "password reset normalizes email, returns a generic response, and rejects redirect injection",
+      "status": "PASS",
+      "source": "server/src/modules/auth/auth.test.ts:242",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-019",
+      "run": "Backend",
+      "title": "signup alias follows the same validation and customer-only rules",
+      "status": "PASS",
+      "source": "server/src/modules/auth/auth.test.ts:252",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-020",
+      "run": "Backend",
+      "title": "demo login is explicitly gated and authenticates the actual provisioned role",
+      "status": "PASS",
+      "source": "server/src/modules/auth/auth.test.ts:258",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-021",
+      "run": "Backend",
+      "title": "application review APIs reject missing tokens and non-staff roles before data access",
+      "status": "PASS",
+      "source": "server/src/modules/auth/auth.test.ts:275",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-022",
+      "run": "Backend",
+      "title": "all five verified roles respect the staff API boundary",
+      "status": "PASS",
+      "source": "server/src/modules/auth/auth.test.ts:281",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-023",
+      "run": "Backend",
+      "title": "application snapshots ignore editable metadata changes and never auto-grant roles",
+      "status": "PASS",
+      "source": "server/src/modules/auth/auth.test.ts:298",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-024",
+      "run": "Backend",
+      "title": "applicant RLS hides other applications and blocks direct status changes and self-approval",
+      "status": "PASS",
+      "source": "server/src/modules/auth/auth.test.ts:313",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-025",
+      "run": "Backend",
+      "title": "staff approval atomically grants courier/merchant roles, creates the merchant and records the reviewer",
+      "status": "PASS",
+      "source": "server/src/modules/auth/auth.test.ts:321",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-026",
+      "run": "Backend",
+      "title": "rejection preserves customer role and revoked staff sessions cannot approve",
+      "status": "PASS",
+      "source": "server/src/modules/auth/auth.test.ts:337",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-027",
+      "run": "Backend",
+      "title": "admin directory denies other roles and revoked sessions, bounds results and never exposes credentials",
+      "status": "PASS",
+      "source": "server/src/modules/auth/auth.test.ts:348",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-028",
+      "run": "Backend",
+      "title": "booking validates contact fields, bounds and positive parcel dimensions",
+      "status": "PASS",
+      "source": "server/src/modules/booking/booking.test.ts:8",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-029",
+      "run": "Backend",
+      "title": "booking routes reject anonymous/non-customer access and pass the server identity to persistence",
+      "status": "PASS",
+      "source": "server/src/modules/booking/booking.test.ts:13",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-030",
+      "run": "Backend",
+      "title": "failed booking storage returns an error instead of success or a synthetic tracking number",
+      "status": "PASS",
+      "source": "server/src/modules/booking/booking.test.ts:29",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-031",
+      "run": "Backend",
+      "title": "migration is repeatable and preserves existing notifications and preferences",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.database.test.ts:136",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-032",
+      "run": "Backend",
+      "title": "migration creates the per-recipient unique index and inbox indexes",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.database.test.ts:175",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-033",
+      "run": "Backend",
+      "title": "one event can be stored for two different recipients",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.database.test.ts:187",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-034",
+      "run": "Backend",
+      "title": "a duplicate (user_id, event_id) pair is rejected by the database",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.database.test.ts:205",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-035",
+      "run": "Backend",
+      "title": "COURIER_ASSIGNED creates one notification per recipient and applies preferences",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.database.test.ts:220",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-036",
+      "run": "Backend",
+      "title": "redelivering the same event creates no duplicates",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.database.test.ts:255",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-037",
+      "run": "Backend",
+      "title": "a different event creates separate notifications",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.database.test.ts:274",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-038",
+      "run": "Backend",
+      "title": "non-courier events notify the customer only",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.database.test.ts:294",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-039",
+      "run": "Backend",
+      "title": "concurrent processing of the same event cannot create duplicates",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.database.test.ts:308",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-040",
+      "run": "Backend",
+      "title": "a missing parcel is reported as transient instead of creating rows",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.database.test.ts:332",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-041",
+      "run": "Backend",
+      "title": "a parcel with no eligible recipients is reported without creating rows",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.database.test.ts:343",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-042",
+      "run": "Backend",
+      "title": "a payload courierId cannot choose a recipient without an active assignment",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.database.test.ts:354",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-043",
+      "run": "Backend",
+      "title": "a parcel whose customer_id is not a CUSTOMER produces no customer notification",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.database.test.ts:374",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-044",
+      "run": "Backend",
+      "title": "migration refuses to run when duplicate recipient/event pairs already exist",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.database.test.ts:385",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-045",
+      "run": "Backend",
+      "title": "accepts Member 04's current payload without eventId",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.events.test.ts:39",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-046",
+      "run": "Backend",
+      "title": "derives the same event id from a redelivered payload",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.events.test.ts:51",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-047",
+      "run": "Backend",
+      "title": "derives a different event id for a genuinely different event",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.events.test.ts:57",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-048",
+      "run": "Backend",
+      "title": "preserves an explicit eventId verbatim",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.events.test.ts:66",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-049",
+      "run": "Backend",
+      "title": "accepts eventType as an alias of event",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.events.test.ts:71",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-050",
+      "run": "Backend",
+      "title": "maps PARCEL_STATUS_UPDATED through the status field",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.events.test.ts:82",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-051",
+      "run": "Backend",
+      "title": "maps both failure event names to PARCEL_DELIVERY_FAILED",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.events.test.ts:99",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-052",
+      "run": "Backend",
+      "title": "rejects schema-invalid payloads",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.events.test.ts:110",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-053",
+      "run": "Backend",
+      "title": "returns null for a schema-valid but unsupported event",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.events.test.ts:129",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-054",
+      "run": "Backend",
+      "title": "fallbackEventId is canonical and independent of JSON key order",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.events.test.ts:145",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-055",
+      "run": "Backend",
+      "title": "recipient policy notifies the courier for assignments and failures only",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.events.test.ts:158",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-056",
+      "run": "Backend",
+      "title": "renders role-appropriate content with the tracking number",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.events.test.ts:165",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-057",
+      "run": "Backend",
+      "title": "falls back to a parcel reference when no tracking number is supplied",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.events.test.ts:181",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-058",
+      "run": "Backend",
+      "title": "publisher initializes lazily, reuses one channel, and preserves queue and payload",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.publisher.test.ts:84",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-059",
+      "run": "Backend",
+      "title": "concurrent publishes share one initialization attempt",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.publisher.test.ts:122",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-060",
+      "run": "Backend",
+      "title": "a nack fails the publish, closes the channel, and the next publish reconnects",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.publisher.test.ts:150",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-061",
+      "run": "Backend",
+      "title": "a confirmation timeout returns false without retrying within the same call",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.publisher.test.ts:170",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-062",
+      "run": "Backend",
+      "title": "channel close and error events invalidate the cached channel",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.publisher.test.ts:190",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-063",
+      "run": "Backend",
+      "title": "a close event invalidates without attempting to close the channel",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.publisher.test.ts:223",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-064",
+      "run": "Backend",
+      "title": "repeated error events close the failed channel at most once",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.publisher.test.ts:244",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-065",
+      "run": "Backend",
+      "title": "a close event followed by an error never calls close on the channel",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.publisher.test.ts:271",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-066",
+      "run": "Backend",
+      "title": "explicit publisher close after error cleanup does not close twice",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.publisher.test.ts:292",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-067",
+      "run": "Backend",
+      "title": "broker unavailability returns false and the cooldown limits reconnect attempts",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.publisher.test.ts:312",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-068",
+      "run": "Backend",
+      "title": "a connection failure is retried on the next publish by default",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.publisher.test.ts:338",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-069",
+      "run": "Backend",
+      "title": "a rejected channel initialization returns false without throwing",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.publisher.test.ts:359",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-070",
+      "run": "Backend",
+      "title": "a failed queue declaration closes the channel and returns false",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.publisher.test.ts:373",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-071",
+      "run": "Backend",
+      "title": "a channel closed during initialization is not cached",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.publisher.test.ts:394",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-072",
+      "run": "Backend",
+      "title": "a late channel after the connection timeout is closed instead of leaked",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.publisher.test.ts:420",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-073",
+      "run": "Backend",
+      "title": "close during initialization closes the late channel and prevents publishing",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.publisher.test.ts:441",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-074",
+      "run": "Backend",
+      "title": "close is idempotent and prevents further publishing",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.publisher.test.ts:465",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-075",
+      "run": "Backend",
+      "title": "serialization failure returns false before opening a channel",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.publisher.test.ts:491",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-076",
+      "run": "Backend",
+      "title": "notificationQueueName resolves the environment at runtime",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.publisher.test.ts:511",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-077",
+      "run": "Backend",
+      "title": "rejects unauthenticated requests to every endpoint",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.test.ts:277",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-078",
+      "run": "Backend",
+      "title": "rejects roles outside the customer/courier inbox scope",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.test.ts:296",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-079",
+      "run": "Backend",
+      "title": "customer retrieves only their own notifications in stable order",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.test.ts:306",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-080",
+      "run": "Backend",
+      "title": "courier retrieves only their own notifications",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.test.ts:337",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-081",
+      "run": "Backend",
+      "title": "a user cannot read or modify another user's notifications",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.test.ts:347",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-082",
+      "run": "Backend",
+      "title": "paginates with a stable keyset cursor and no duplicates",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.test.ts:373",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-083",
+      "run": "Backend",
+      "title": "keyset pagination handles equal created_at timestamps without skipping rows",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.test.ts:417",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-084",
+      "run": "Backend",
+      "title": "validates pagination query parameters",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.test.ts:443",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-085",
+      "run": "Backend",
+      "title": "filters by read/unread status and notification type",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.test.ts:462",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-086",
+      "run": "Backend",
+      "title": "returns accurate per-user unread counts",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.test.ts:489",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-087",
+      "run": "Backend",
+      "title": "marks one notification as read and is idempotent",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.test.ts:508",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-088",
+      "run": "Backend",
+      "title": "rejects invalid ids and hides nonexistent or foreign notifications",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.test.ts:530",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-089",
+      "run": "Backend",
+      "title": "marks all remaining notifications as read and is idempotent",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.test.ts:546",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-090",
+      "run": "Backend",
+      "title": "getPreferences uses a conflict-update statement that always returns a row",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.test.ts:568",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-091",
+      "run": "Backend",
+      "title": "simultaneous first-time preference reads both return a record",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.test.ts:597",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-092",
+      "run": "Backend",
+      "title": "retrieves persisted preferences and creates defaults for a new user",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.test.ts:617",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-093",
+      "run": "Backend",
+      "title": "updates preferences partially and persists them per user",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.test.ts:650",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-094",
+      "run": "Backend",
+      "title": "creates defaults when a partial update is the first preference write",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.test.ts:689",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-095",
+      "run": "Backend",
+      "title": "rejects invalid preference payloads without changing saved values",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.test.ts:706",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-096",
+      "run": "Backend",
+      "title": "keeps the deprecated /inbox alias scoped to the caller",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.test.ts:739",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-097",
+      "run": "Backend",
+      "title": "marks notification responses as non-cacheable",
+      "status": "PASS",
+      "source": "server/src/modules/notifications/notification.test.ts:748",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-098",
+      "run": "Backend",
+      "title": "customer booking survives a new service instance and is isolated by customer",
+      "status": "PASS",
+      "source": "server/src/modules/operations/operations.integration.test.ts:34",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-099",
+      "run": "Backend",
+      "title": "pricing changes persist and affect the next quote and booking",
+      "status": "PASS",
+      "source": "server/src/modules/operations/operations.integration.test.ts:45",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-100",
+      "run": "Backend",
+      "title": "zone edits and disabled zones persist",
+      "status": "PASS",
+      "source": "server/src/modules/operations/operations.integration.test.ts:52",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-101",
+      "run": "Backend",
+      "title": "assignment and courier updates operate on real database parcels",
+      "status": "PASS",
+      "source": "server/src/modules/operations/operations.integration.test.ts:60",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-102",
+      "run": "Backend",
+      "title": "daily courier list excludes old assignments",
+      "status": "PASS",
+      "source": "server/src/modules/operations/operations.integration.test.ts:74",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-103",
+      "run": "Backend",
+      "title": "capacity enforcement and duplicate assignment are atomic",
+      "status": "PASS",
+      "source": "server/src/modules/operations/operations.integration.test.ts:79",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-104",
+      "run": "Backend",
+      "title": "failed delivery requires a reason and persists history",
+      "status": "PASS",
+      "source": "server/src/modules/operations/operations.integration.test.ts:88",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-105",
+      "run": "Backend",
+      "title": "mock SMS delivery is durable, preference-aware and idempotent",
+      "status": "PASS",
+      "source": "server/src/modules/operations/operations.integration.test.ts:95",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-106",
+      "run": "Backend",
+      "title": "merchant identity and parcel data are captured by the database trigger",
+      "status": "PASS",
+      "source": "server/src/modules/operations/operations.integration.test.ts:109",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-107",
+      "run": "Backend",
+      "title": "outbox retains unconfirmed events and clears only after both broker confirms",
+      "status": "PASS",
+      "source": "server/src/modules/operations/operations.integration.test.ts:115",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-108",
+      "run": "Backend",
+      "title": "webhook delivery retries survive a new service instance and deduplicate event IDs",
+      "status": "PASS",
+      "source": "server/src/modules/operations/operations.integration.test.ts:123",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-109",
+      "run": "Backend",
+      "title": "user administration blocks self-deactivation and non-admin actors",
+      "status": "PASS",
+      "source": "server/src/modules/operations/operations.integration.test.ts:136",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-110",
+      "run": "Backend",
+      "title": "migration is safe to apply again without dropping operational data",
+      "status": "PASS",
+      "source": "server/src/modules/operations/operations.integration.test.ts:142",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-111",
+      "run": "Backend",
+      "title": "Supabase public roles cannot bypass the API to read private operational data",
+      "status": "PASS",
+      "source": "server/src/modules/operations/operations.integration.test.ts:146",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-112",
+      "run": "Backend",
+      "title": "src\\\\modules\\\\tracking\\\\tracking.socket.test.ts",
+      "status": "PASS",
+      "source": "src\\\\modules\\\\tracking\\\\tracking.socket.test.ts",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-113",
+      "run": "Backend",
+      "title": "webhook targets reject local/private IPs, private DNS answers and URL credentials",
+      "status": "PASS",
+      "source": "server/src/modules/webhooks/webhook-target.test.ts:4",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-114",
+      "run": "Backend",
+      "title": "starts exactly one consumer and ignores duplicate starts",
+      "status": "PASS",
+      "source": "server/src/workers/notification-consumer.lifecycle.test.ts:152",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-115",
+      "run": "Backend",
+      "title": "unexpected channel close reconnects after one second",
+      "status": "PASS",
+      "source": "server/src/workers/notification-consumer.lifecycle.test.ts:171",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-116",
+      "run": "Backend",
+      "title": "channel errors reconnect with backoff",
+      "status": "PASS",
+      "source": "server/src/workers/notification-consumer.lifecycle.test.ts:199",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-117",
+      "run": "Backend",
+      "title": "reconnect backoff grows exponentially and is capped at 30 seconds",
+      "status": "PASS",
+      "source": "server/src/workers/notification-consumer.lifecycle.test.ts:225",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-118",
+      "run": "Backend",
+      "title": "backoff resets to one second after a successful reconnect",
+      "status": "PASS",
+      "source": "server/src/workers/notification-consumer.lifecycle.test.ts:260",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-119",
+      "run": "Backend",
+      "title": "duplicate disconnect events schedule only one reconnect loop",
+      "status": "PASS",
+      "source": "server/src/workers/notification-consumer.lifecycle.test.ts:293",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-120",
+      "run": "Backend",
+      "title": "broker consumer cancellation schedules a reconnect",
+      "status": "PASS",
+      "source": "server/src/workers/notification-consumer.lifecycle.test.ts:322",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-121",
+      "run": "Backend",
+      "title": "stop cancels and closes the active consumer exactly once",
+      "status": "PASS",
+      "source": "server/src/workers/notification-consumer.lifecycle.test.ts:347",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-122",
+      "run": "Backend",
+      "title": "stop while waiting clears the timer and prevents a new consumer",
+      "status": "PASS",
+      "source": "server/src/workers/notification-consumer.lifecycle.test.ts:369",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-123",
+      "run": "Backend",
+      "title": "stop during an in-flight connection closes the late channel without consuming",
+      "status": "PASS",
+      "source": "server/src/workers/notification-consumer.lifecycle.test.ts:393",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-124",
+      "run": "Backend",
+      "title": "can start again after a clean stop",
+      "status": "PASS",
+      "source": "server/src/workers/notification-consumer.lifecycle.test.ts:413",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-125",
+      "run": "Backend",
+      "title": "a valid event is acknowledged only after successful processing",
+      "status": "PASS",
+      "source": "server/src/workers/notification-consumer.test.ts:112",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-126",
+      "run": "Backend",
+      "title": "a duplicate event is acknowledged without a second database effect",
+      "status": "PASS",
+      "source": "server/src/workers/notification-consumer.test.ts:127",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-127",
+      "run": "Backend",
+      "title": "malformed JSON goes to the DLQ and is then acknowledged",
+      "status": "PASS",
+      "source": "server/src/workers/notification-consumer.test.ts:141",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-128",
+      "run": "Backend",
+      "title": "a schema-invalid event goes to the DLQ and is then acknowledged",
+      "status": "PASS",
+      "source": "server/src/workers/notification-consumer.test.ts:157",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-129",
+      "run": "Backend",
+      "title": "an unsupported event is acknowledged and ignored",
+      "status": "PASS",
+      "source": "server/src/workers/notification-consumer.test.ts:173",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-130",
+      "run": "Backend",
+      "title": "a temporary database failure is republished before the original is acknowledged",
+      "status": "PASS",
+      "source": "server/src/workers/notification-consumer.test.ts:187",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-131",
+      "run": "Backend",
+      "title": "a pending publisher confirm blocks the acknowledgement",
+      "status": "PASS",
+      "source": "server/src/workers/notification-consumer.test.ts:206",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-132",
+      "run": "Backend",
+      "title": "retries are bounded and then moved to the DLQ",
+      "status": "PASS",
+      "source": "server/src/workers/notification-consumer.test.ts:225",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-133",
+      "run": "Backend",
+      "title": "a missing parcel is treated as transient and retried",
+      "status": "PASS",
+      "source": "server/src/workers/notification-consumer.test.ts:242",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-134",
+      "run": "Backend",
+      "title": "an assignment with no visible courier is retried without trusting the payload",
+      "status": "PASS",
+      "source": "server/src/workers/notification-consumer.test.ts:256",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-135",
+      "run": "Backend",
+      "title": "a parcel with no recipients is acknowledged as ignored",
+      "status": "PASS",
+      "source": "server/src/workers/notification-consumer.test.ts:275",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-136",
+      "run": "Backend",
+      "title": "if the DLQ copy cannot be confirmed the message is not acknowledged",
+      "status": "PASS",
+      "source": "server/src/workers/notification-consumer.test.ts:288",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "BE-137",
+      "run": "Backend",
+      "title": "if the retry copy cannot be confirmed the message is not acknowledged",
+      "status": "PASS",
+      "source": "server/src/workers/notification-consumer.test.ts:301",
+      "log": "docs/test-reports/backend-audit.txt"
+    },
+    {
+      "id": "WEB-001",
+      "run": "Web",
+      "title": "absolute session expiry automatically clears the account even offline, and blocks token refresh",
+      "status": "PASS",
+      "source": "web/tests/auth-session.test.mjs:50",
+      "log": "docs/test-reports/web-tests.txt"
+    },
+    {
+      "id": "WEB-002",
+      "run": "Web",
+      "title": "expired sessions cannot issue access tokens and an old timer cannot log out a newer session",
+      "status": "PASS",
+      "source": "web/tests/auth-session.test.mjs:62",
+      "log": "docs/test-reports/web-tests.txt"
+    },
+    {
+      "id": "WEB-003",
+      "run": "Web",
+      "title": "late email and demo login responses cannot restore a session after logout",
+      "status": "PASS",
+      "source": "web/tests/auth-session.test.mjs:72",
+      "log": "docs/test-reports/web-tests.txt"
+    },
+    {
+      "id": "WEB-004",
+      "run": "Web",
+      "title": "logout waits for an in-progress session write and clears the persisted session",
+      "status": "PASS",
+      "source": "web/tests/auth-session.test.mjs:85",
+      "log": "docs/test-reports/web-tests.txt"
+    },
+    {
+      "id": "WEB-005",
+      "run": "Web",
+      "title": "a slow previous account login cannot overwrite the newer account",
+      "status": "PASS",
+      "source": "web/tests/auth-session.test.mjs:98",
+      "log": "docs/test-reports/web-tests.txt"
+    },
+    {
+      "id": "WEB-006",
+      "run": "Web",
+      "title": "profile edits send only safe fields with the active token and update the displayed identity",
+      "status": "PASS",
+      "source": "web/tests/auth-session.test.mjs:108",
+      "log": "docs/test-reports/web-tests.txt"
+    },
+    {
+      "id": "WEB-007",
+      "run": "Web",
+      "title": "a profile save response arriving after logout cannot restore the old identity",
+      "status": "PASS",
+      "source": "web/tests/auth-session.test.mjs:120",
+      "log": "docs/test-reports/web-tests.txt"
+    },
+    {
+      "id": "WEB-008",
+      "run": "Web",
+      "title": "profile request uses the authenticated token and stores the returned customer",
+      "status": "PASS",
+      "source": "web/tests/auth-session.test.mjs:130",
+      "log": "docs/test-reports/web-tests.txt"
+    },
+    {
+      "id": "WEB-009",
+      "run": "Web",
+      "title": "successful logout calls Supabase local signout and clears customer details",
+      "status": "PASS",
+      "source": "web/tests/auth-session.test.mjs:143",
+      "log": "docs/test-reports/web-tests.txt"
+    },
+    {
+      "id": "WEB-010",
+      "run": "Web",
+      "title": "a late profile response cannot restore the customer after logout",
+      "status": "PASS",
+      "source": "web/tests/auth-session.test.mjs:152",
+      "log": "docs/test-reports/web-tests.txt"
+    },
+    {
+      "id": "WEB-011",
+      "run": "Web",
+      "title": "concurrent logout clicks share one request; failure preserves the account and allows retry",
+      "status": "PASS",
+      "source": "web/tests/auth-session.test.mjs:165",
+      "log": "docs/test-reports/web-tests.txt"
+    },
+    {
+      "id": "WEB-012",
+      "run": "Web",
+      "title": "queued sign-in callbacks cannot load an old profile after SIGNED_OUT",
+      "status": "PASS",
+      "source": "web/tests/auth-session.test.mjs:184",
+      "log": "docs/test-reports/web-tests.txt"
+    },
+    {
+      "id": "WEB-013",
+      "run": "Web",
+      "title": "concurrent expired-token requests share one refresh and retry once with the new token",
+      "status": "PASS",
+      "source": "web/tests/auth-session.test.mjs:199",
+      "log": "docs/test-reports/web-tests.txt"
+    },
+    {
+      "id": "WEB-014",
+      "run": "Web",
+      "title": "profile restoration retries an expired token through the same refresh flow",
+      "status": "PASS",
+      "source": "web/tests/auth-session.test.mjs:216",
+      "log": "docs/test-reports/web-tests.txt"
+    },
+    {
+      "id": "WEB-015",
+      "run": "Web",
+      "title": "network errors during refresh retain the session so the user can retry",
+      "status": "PASS",
+      "source": "web/tests/auth-session.test.mjs:227",
+      "log": "docs/test-reports/web-tests.txt"
+    },
+    {
+      "id": "WEB-016",
+      "run": "Web",
+      "title": "a rejected refresh token ends the local session",
+      "status": "PASS",
+      "source": "web/tests/auth-session.test.mjs:234",
+      "log": "docs/test-reports/web-tests.txt"
+    },
+    {
+      "id": "WEB-017",
+      "run": "Web",
+      "title": "logout during refresh prevents an authenticated retry or profile restoration",
+      "status": "PASS",
+      "source": "web/tests/auth-session.test.mjs:241",
+      "log": "docs/test-reports/web-tests.txt"
+    },
+    {
+      "id": "WEB-018",
+      "run": "Web",
+      "title": "Google OAuth uses Supabase and the current origin callback without granting a role",
+      "status": "PASS",
+      "source": "web/tests/auth-session.test.mjs:261",
+      "log": "docs/test-reports/web-tests.txt"
+    },
+    {
+      "id": "WEB-019",
+      "run": "Web",
+      "title": "failed Google OAuth does not establish an application session",
+      "status": "PASS",
+      "source": "web/tests/auth-session.test.mjs:274",
+      "log": "docs/test-reports/web-tests.txt"
+    },
+    {
+      "id": "WEB-020",
+      "run": "Web",
+      "title": "OAuth callback loads the verified customer rather than trusting URL role or redirect parameters",
+      "status": "PASS",
+      "source": "web/tests/auth-session.test.mjs:280",
+      "log": "docs/test-reports/web-tests.txt"
+    },
+    {
+      "id": "WEB-021",
+      "run": "Web",
+      "title": "cancelled Google callback never reads or restores an existing session",
+      "status": "PASS",
+      "source": "web/tests/auth-session.test.mjs:288",
+      "log": "docs/test-reports/web-tests.txt"
+    },
+    {
+      "id": "WEB-022",
+      "run": "Web",
+      "title": "callback with no restored session reports a retry instead of pretending sign-in succeeded",
+      "status": "PASS",
+      "source": "web/tests/auth-session.test.mjs:296",
+      "log": "docs/test-reports/web-tests.txt"
+    },
+    {
+      "id": "WEB-023",
+      "run": "Web",
+      "title": "dashboard routing covers all roles and keeps pending/rejected applicants on approval",
+      "status": "PASS",
+      "source": "web/tests/auth-session.test.mjs:302",
+      "log": "docs/test-reports/web-tests.txt"
+    },
+    {
+      "id": "WEB-024",
+      "run": "Web",
+      "title": "password reset requests use the backend and display its generic response",
+      "status": "PASS",
+      "source": "web/tests/auth-session.test.mjs:311",
+      "log": "docs/test-reports/web-tests.txt"
+    },
+    {
+      "id": "WEB-025",
+      "run": "Web",
+      "title": "reset page rejects missing/expired sessions and provider errors before accepting a password",
+      "status": "PASS",
+      "source": "web/tests/auth-session.test.mjs:321",
+      "log": "docs/test-reports/web-tests.txt"
+    },
+    {
+      "id": "WEB-026",
+      "run": "Web",
+      "title": "password update enforces matching/UTF-8 limits and globally signs out only after a successful update",
+      "status": "PASS",
+      "source": "web/tests/auth-session.test.mjs:328",
+      "log": "docs/test-reports/web-tests.txt"
+    },
+    {
+      "id": "WEB-027",
+      "run": "Web",
+      "title": "demo login persists only server-issued tokens and verified identity",
+      "status": "PASS",
+      "source": "web/tests/auth-session.test.mjs:345",
+      "log": "docs/test-reports/web-tests.txt"
+    },
+    {
+      "id": "WEB-028",
+      "run": "Web",
+      "title": "buildNotificationQuery omits unset values and encodes the cursor",
+      "status": "PASS",
+      "source": "web/tests/notification-helpers.test.mjs:29",
+      "log": "docs/test-reports/web-tests.txt"
+    },
+    {
+      "id": "WEB-029",
+      "run": "Web",
+      "title": "filterToIsRead maps the UI filters to the API value",
+      "status": "PASS",
+      "source": "web/tests/notification-helpers.test.mjs:42",
+      "log": "docs/test-reports/web-tests.txt"
+    },
+    {
+      "id": "WEB-030",
+      "run": "Web",
+      "title": "formatRelativeTime renders stable relative labels",
+      "status": "PASS",
+      "source": "web/tests/notification-helpers.test.mjs:48",
+      "log": "docs/test-reports/web-tests.txt"
+    },
+    {
+      "id": "WEB-031",
+      "run": "Web",
+      "title": "formatAbsoluteDate returns a readable date and tolerates bad input",
+      "status": "PASS",
+      "source": "web/tests/notification-helpers.test.mjs:58",
+      "log": "docs/test-reports/web-tests.txt"
+    },
+    {
+      "id": "WEB-032",
+      "run": "Web",
+      "title": "notificationTypeMeta covers every backend type and a safe fallback",
+      "status": "PASS",
+      "source": "web/tests/notification-helpers.test.mjs:65",
+      "log": "docs/test-reports/web-tests.txt"
+    },
+    {
+      "id": "WEB-033",
+      "run": "Web",
+      "title": "mergeNotificationPages appends without duplicating ids",
+      "status": "PASS",
+      "source": "web/tests/notification-helpers.test.mjs:90",
+      "log": "docs/test-reports/web-tests.txt"
+    },
+    {
+      "id": "WEB-034",
+      "run": "Web",
+      "title": "notificationEmptyCopy varies by role and filter",
+      "status": "PASS",
+      "source": "web/tests/notification-helpers.test.mjs:99",
+      "log": "docs/test-reports/web-tests.txt"
+    },
+    {
+      "id": "WEB-035",
+      "run": "Web",
+      "title": "tracking numbers are normalised and validated like the server does",
+      "status": "PASS",
+      "source": "web/tests/tracking.test.mjs:27",
+      "log": "docs/test-reports/web-tests.txt"
+    },
+    {
+      "id": "WEB-036",
+      "run": "Web",
+      "title": "malformed URL escapes in route params do not throw",
+      "status": "PASS",
+      "source": "web/tests/tracking.test.mjs:36",
+      "log": "docs/test-reports/web-tests.txt"
+    },
+    {
+      "id": "WEB-037",
+      "run": "Web",
+      "title": "public lookup sends no credentials and normalises the tracking number",
+      "status": "PASS",
+      "source": "web/tests/tracking.test.mjs:44",
+      "log": "docs/test-reports/web-tests.txt"
+    },
+    {
+      "id": "WEB-038",
+      "run": "Web",
+      "title": "public lookup errors keep the HTTP status for the page to explain",
+      "status": "PASS",
+      "source": "web/tests/tracking.test.mjs:54",
+      "log": "docs/test-reports/web-tests.txt"
+    },
+    {
+      "id": "WEB-039",
+      "run": "Web",
+      "title": "live-tracking config is cached after success but retried after a failure",
+      "status": "PASS",
+      "source": "web/tests/tracking.test.mjs:66",
+      "log": "docs/test-reports/web-tests.txt"
+    },
+    {
+      "id": "WEB-040",
+      "run": "Web",
+      "title": "history requests pass only the filters that are set",
+      "status": "PASS",
+      "source": "web/tests/tracking.test.mjs:81",
+      "log": "docs/test-reports/web-tests.txt"
+    },
+    {
+      "id": "WEB-041",
+      "run": "Web",
+      "title": "money and dates render a dash for missing values",
+      "status": "PASS",
+      "source": "web/tests/tracking.test.mjs:89",
+      "log": "docs/test-reports/web-tests.txt"
+    },
+    {
+      "id": "MOB-001",
+      "run": "Mobile",
+      "title": "large Unicode sessions round-trip through small secure chunks and logout removes every current chunk",
+      "status": "PASS",
+      "source": "mobile/tests/auth-session.test.mjs:35",
+      "log": "docs/test-reports/mobile-tests.txt"
+    },
+    {
+      "id": "MOB-002",
+      "run": "Mobile",
+      "title": "failed token rotation preserves the old committed session and removes incomplete chunks",
+      "status": "PASS",
+      "source": "mobile/tests/auth-session.test.mjs:46",
+      "log": "docs/test-reports/mobile-tests.txt"
+    },
+    {
+      "id": "MOB-003",
+      "run": "Mobile",
+      "title": "successful token rotation deletes old chunks; incomplete saved sessions are never returned",
+      "status": "PASS",
+      "source": "mobile/tests/auth-session.test.mjs:56",
+      "log": "docs/test-reports/mobile-tests.txt"
+    },
+    {
+      "id": "MOB-004",
+      "run": "Mobile",
+      "title": "mobile session expiry clears secure credentials and blocks token refresh",
+      "status": "PASS",
+      "source": "mobile/tests/auth-session.test.mjs:105",
+      "log": "docs/test-reports/mobile-tests.txt"
+    },
+    {
+      "id": "MOB-005",
+      "run": "Mobile",
+      "title": "late mobile email and demo responses cannot restore a session after logout",
+      "status": "PASS",
+      "source": "mobile/tests/auth-session.test.mjs:116",
+      "log": "docs/test-reports/mobile-tests.txt"
+    },
+    {
+      "id": "MOB-006",
+      "run": "Mobile",
+      "title": "mobile logout clears a session write that was already in progress",
+      "status": "PASS",
+      "source": "mobile/tests/auth-session.test.mjs:128",
+      "log": "docs/test-reports/mobile-tests.txt"
+    },
+    {
+      "id": "MOB-007",
+      "run": "Mobile",
+      "title": "mobile account switching prevents an older login from overwriting the courier",
+      "status": "PASS",
+      "source": "mobile/tests/auth-session.test.mjs:138",
+      "log": "docs/test-reports/mobile-tests.txt"
+    },
+    {
+      "id": "MOB-008",
+      "run": "Mobile",
+      "title": "mobile hung requests abort with a retryable timeout message",
+      "status": "PASS",
+      "source": "mobile/tests/auth-session.test.mjs:149",
+      "log": "docs/test-reports/mobile-tests.txt"
+    },
+    {
+      "id": "MOB-009",
+      "run": "Mobile",
+      "title": "mobile profile edits submit safe fields and refresh the displayed user",
+      "status": "PASS",
+      "source": "mobile/tests/auth-session.test.mjs:158",
+      "log": "docs/test-reports/mobile-tests.txt"
+    },
+    {
+      "id": "MOB-010",
+      "run": "Mobile",
+      "title": "mobile profile save cannot restore an account after logout",
+      "status": "PASS",
+      "source": "mobile/tests/auth-session.test.mjs:170",
+      "log": "docs/test-reports/mobile-tests.txt"
+    },
+    {
+      "id": "MOB-011",
+      "run": "Mobile",
+      "title": "mobile login uses backend identity, persists SDK tokens, restores profile and securely signs out",
+      "status": "PASS",
+      "source": "mobile/tests/auth-session.test.mjs:181",
+      "log": "docs/test-reports/mobile-tests.txt"
+    },
+    {
+      "id": "MOB-012",
+      "run": "Mobile",
+      "title": "merchant/dispatcher identities cannot enter the customer/courier mobile shell",
+      "status": "PASS",
+      "source": "mobile/tests/auth-session.test.mjs:196",
+      "log": "docs/test-reports/mobile-tests.txt"
+    },
+    {
+      "id": "MOB-013",
+      "run": "Mobile",
+      "title": "foreground starts automatic refresh and revalidates the account; background stops it",
+      "status": "PASS",
+      "source": "mobile/tests/auth-session.test.mjs:204",
+      "log": "docs/test-reports/mobile-tests.txt"
+    },
+    {
+      "id": "MOB-014",
+      "run": "Mobile",
+      "title": "mobile concurrent refresh requests rotate once and a logout invalidates their result",
+      "status": "PASS",
+      "source": "mobile/tests/auth-session.test.mjs:214",
+      "log": "docs/test-reports/mobile-tests.txt"
+    },
+    {
+      "id": "MOB-015",
+      "run": "Mobile",
+      "title": "mobile profile restoration retries a 401 once with a rotated token",
+      "status": "PASS",
+      "source": "mobile/tests/auth-session.test.mjs:231",
+      "log": "docs/test-reports/mobile-tests.txt"
+    },
+    {
+      "id": "MOB-016",
+      "run": "Mobile",
+      "title": "Google customer session is persisted only after the backend verifies its role",
+      "status": "PASS",
+      "source": "mobile/tests/auth-session.test.mjs:244",
+      "log": "docs/test-reports/mobile-tests.txt"
+    },
+    {
+      "id": "MOB-017",
+      "run": "Mobile",
+      "title": "Google sign-in cannot promote a courier or merchant into the customer dashboard",
+      "status": "PASS",
+      "source": "mobile/tests/auth-session.test.mjs:252",
+      "log": "docs/test-reports/mobile-tests.txt"
+    },
+    {
+      "id": "MOB-018",
+      "run": "Mobile",
+      "title": "mobile demo login persists a real backend session without submitting client credentials",
+      "status": "PASS",
+      "source": "mobile/tests/auth-session.test.mjs:261",
+      "log": "docs/test-reports/mobile-tests.txt"
+    },
+    {
+      "id": "MOB-019",
+      "run": "Mobile",
+      "title": "mobile password reset normalizes the email and reports backend failures",
+      "status": "PASS",
+      "source": "mobile/tests/auth-session.test.mjs:271",
+      "log": "docs/test-reports/mobile-tests.txt"
+    },
+    {
+      "id": "MOB-020",
+      "run": "Mobile",
+      "title": "phone browser API follows the preview hostname while explicit deployments and emulator defaults are preserved",
+      "status": "PASS",
+      "source": "mobile/tests/auth-session.test.mjs:281",
+      "log": "docs/test-reports/mobile-tests.txt"
+    },
+    {
+      "id": "MOB-021",
+      "run": "Mobile",
+      "title": "mobile quote forwards parcel dimensions and uses the server currency and price",
+      "status": "PASS",
+      "source": "mobile/tests/booking-flow.test.mjs:7",
+      "log": "docs/test-reports/mobile-tests.txt"
+    },
+    {
+      "id": "MOB-022",
+      "run": "Mobile",
+      "title": "mobile booking never manufactures confirmation or a quote after server failure",
+      "status": "PASS",
+      "source": "mobile/tests/booking-flow.test.mjs:8",
+      "log": "docs/test-reports/mobile-tests.txt"
+    },
+    {
+      "id": "MOB-023",
+      "run": "Mobile",
+      "title": "mobile booking requires an explicit successful server result",
+      "status": "PASS",
+      "source": "mobile/tests/booking-flow.test.mjs:9",
+      "log": "docs/test-reports/mobile-tests.txt"
+    },
+    {
+      "id": "MOB-024",
+      "run": "Mobile",
+      "title": "mobile returns the real tracking number",
+      "status": "PASS",
+      "source": "mobile/tests/booking-flow.test.mjs:10",
+      "log": "docs/test-reports/mobile-tests.txt"
+    },
+    {
+      "id": "MOB-025",
+      "run": "Mobile",
+      "title": "Google login stays blocked until existing-account hook setup is confirmed",
+      "status": "PASS",
+      "source": "mobile/tests/google-auth.test.mjs:40",
+      "log": "docs/test-reports/mobile-tests.txt"
+    },
+    {
+      "id": "MOB-026",
+      "run": "Mobile",
+      "title": "unregistered callback notifies registration without exchanging or saving a session",
+      "status": "PASS",
+      "source": "mobile/tests/google-auth.test.mjs:45",
+      "log": "docs/test-reports/mobile-tests.txt"
+    },
+    {
+      "id": "MOB-027",
+      "run": "Mobile",
+      "title": "cancelled Google authentication preserves the signed-out state",
+      "status": "PASS",
+      "source": "mobile/tests/google-auth.test.mjs:51",
+      "log": "docs/test-reports/mobile-tests.txt"
+    },
+    {
+      "id": "MOB-028",
+      "run": "Mobile",
+      "title": "successful native OAuth exchanges PKCE then promotes a verified customer",
+      "status": "PASS",
+      "source": "mobile/tests/google-auth.test.mjs:56",
+      "log": "docs/test-reports/mobile-tests.txt"
+    },
+    {
+      "id": "MOB-029",
+      "run": "Mobile",
+      "title": "a non-customer Google session is revoked without granting customer access",
+      "status": "PASS",
+      "source": "mobile/tests/google-auth.test.mjs:63",
+      "log": "docs/test-reports/mobile-tests.txt"
+    },
+    {
+      "id": "MOB-030",
+      "run": "Mobile",
+      "title": "invalid or expired OAuth codes never reach application session persistence",
+      "status": "PASS",
+      "source": "mobile/tests/google-auth.test.mjs:68",
+      "log": "docs/test-reports/mobile-tests.txt"
+    }
+  ],
+  "groupPreconditions": {
+    "Authentication, approvals and account security": "In-process Express auth/admin routers, injected auth gateway and/or isolated PGlite auth-schema fixtures. Tokens, credentials and role claims are test doubles; no real Google/Supabase login is performed.",
+    "Customer booking, persisted pricing and migration": "Fresh isolated PGlite database with base, notification-hardening and operational migrations; random fixture IDs and example.invalid email addresses. HTTP-boundary cases inject authentication/storage. No hosted database is changed.",
+    "Courier execution, dispatch and user administration": "Same isolated operational database with customer/courier/admin/merchant fixtures. Database services are real; network and browser/device interaction are not part of these cases.",
+    "Notifications and preference enforcement": "Isolated notification fixtures with multiple users, notification records and preference rows. Inbox API identity is injected. Mock SMS is a durable simulated mailbox, not a phone provider.",
+    "Asynchronous events, publisher and consumer recovery": "Controlled fake broker channels, confirm responses, clocks and schedulers, or an isolated database outbox. These are deterministic integration/unit checks, not live RabbitMQ execution.",
+    "Web client session, tracking and display behavior": "Actual transpiled web auth/tracking/notification client modules run in Node VM harnesses with mocked storage/fetch/provider boundaries. No browser rendering or visual accessibility audit is implied.",
+    "Mobile client storage, auth and booking behavior": "Actual transpiled mobile service modules run with mocked secure-storage, provider and network boundaries. Camera/device hardware and native UI rendering are outside the recorded run.",
+    "Webhook transport and generative assistant": "Webhook HTTP transport and DNS resolver are mocked in an isolated database test. The assistant uses AI SDK MockLanguageModelV4 plus controlled backend tool seams; no paid/live model call is performed."
+  },
+  "coverage": [
+    {
+      "file": "assistant.ts",
+      "lines": "69.23",
+      "branches": "80.00",
+      "functions": "87.50",
+      "uncovered": "16-18 22-26"
+    },
+    {
+      "file": "booking.persistence.ts",
+      "lines": "100.00",
+      "branches": "100.00",
+      "functions": "100.00",
+      "uncovered": "None"
+    },
+    {
+      "file": "booking.routes.ts",
+      "lines": "93.88",
+      "branches": "63.64",
+      "functions": "100.00",
+      "uncovered": "27 41-42"
+    },
+    {
+      "file": "courier.database.ts",
+      "lines": "100.00",
+      "branches": "77.78",
+      "functions": "100.00",
+      "uncovered": "None"
+    },
+    {
+      "file": "dispatch.database.ts",
+      "lines": "73.91",
+      "branches": "72.73",
+      "functions": "50.00",
+      "uncovered": "17-25 30-32"
+    },
+    {
+      "file": "pricing.ts",
+      "lines": "100.00",
+      "branches": "73.33",
+      "functions": "100.00",
+      "uncovered": "None"
+    },
+    {
+      "file": "webhook-target.ts",
+      "lines": "86.67",
+      "branches": "86.21",
+      "functions": "100.00",
+      "uncovered": "7-8"
+    },
+    {
+      "file": "webhook.database.ts",
+      "lines": "91.67",
+      "branches": "74.07",
+      "functions": "81.82",
+      "uncovered": "22-23 25-28"
+    },
+    {
+      "file": "event-outbox.ts",
+      "lines": "75.68",
+      "branches": "88.89",
+      "functions": "37.50",
+      "uncovered": "9-10 21-25 28-29"
+    }
+  ],
+  "scope": [
+    "src/modules/operations/**",
+    "src/modules/booking/**",
+    "src/modules/courier/courier.database.ts",
+    "src/modules/dispatch/dispatch.database.ts",
+    "src/modules/webhooks/webhook.database.ts",
+    "src/modules/webhooks/webhook-target.ts",
+    "src/workers/event-outbox.ts",
+    "src/modules/ai/assistant.ts"
+  ],
+  "backendCommand": "npm --prefix server run test:audit"
+}

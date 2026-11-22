@@ -8,6 +8,7 @@ import {
   stopNotificationConsumer,
 } from './notification-consumer.js';
 import { startWebhookWorker, stopWebhookWorker } from './webhook-worker.js';
+import { startEventOutbox, stopEventOutbox } from './event-outbox.js';
 
 console.log('⚡ SwiftDrop Background Workers starting...');
 
@@ -15,7 +16,7 @@ let shuttingDown = false;
 
 const shutdown = createWorkerShutdown({
   stopConsumer: stopNotificationConsumer,
-  stopWebhook: stopWebhookWorker,
+  stopWebhook: async () => { await stopWebhookWorker(); await stopEventOutbox(); },
   closeBroker: closeRabbitMQ,
   exit: code => process.exit(code),
 });
@@ -36,11 +37,12 @@ const init = async () => {
     if (shuttingDown) return;
 
     await startWebhookWorker();
+    if (!shuttingDown) startEventOutbox();
 
     if (shuttingDown) {
       // A signal arrived while the webhook worker was starting. The shutdown
       // controller already ran, so stop any retry engine this late start added.
-      stopWebhookWorker();
+      await stopWebhookWorker();
       return;
     }
 

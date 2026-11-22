@@ -26,7 +26,7 @@ import {
 
 function sendError(res: Response, error: unknown, fallback: string) {
   if (error instanceof TrackingError) return res.status(error.status).json({ error: error.message });
-  console.error(`[tracking] ${fallback}:`, error instanceof Error ? error.message : error);
+  console.error('tracking operation unavailable');
   return res.status(500).json({ error: fallback });
 }
 

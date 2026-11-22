@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { authenticateToken } from '../../middleware/auth.js';
 import { requireRoles } from '../../middleware/rbac.js';
-import { dispatchService } from './dispatch.service.js';
+import { databaseDispatchService as dispatchService } from './dispatch.database.js';
 
 const router = Router();
 
@@ -29,7 +29,7 @@ router.get('/unassigned', async (req: Request, res: Response) => {
       parcels
     });
   } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message || 'Failed to fetch unassigned parcels' });
+    res.status(500).json({ success: false, error: 'Failed to fetch unassigned parcels' });
   }
 });
 
@@ -45,7 +45,7 @@ router.get('/couriers', async (req: Request, res: Response) => {
       couriers
     });
   } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message || 'Failed to fetch courier workloads' });
+    res.status(500).json({ success: false, error: 'Failed to fetch courier workloads' });
   }
 });
 
@@ -59,7 +59,7 @@ router.get('/courier-workloads', async (req: Request, res: Response) => {
       workloads: couriers
     });
   } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message || 'Failed to fetch courier workloads' });
+    res.status(500).json({ success: false, error: 'Failed to fetch courier workloads' });
   }
 });
 
@@ -116,7 +116,7 @@ router.post('/assign', async (req: Request, res: Response) => {
       ? 400
       : (err.message?.includes('not found') ? 404 : 500);
 
-    return res.status(status).json({ success: false, error: err.message || 'Assignment failed' });
+    return res.status(status).json({ success: false, error: 'Assignment failed' });
   }
 });
 
@@ -124,6 +124,7 @@ router.post('/assign', async (req: Request, res: Response) => {
 // 4. Service Rates, Pricing & Delivery Zone Configuration
 // -----------------------------------------------------------------------------
 const configUpdateSchema = z.object({
+  maxCourierCapacity:z.number().int().min(1).max(100).optional(),
   baseBookingFee: z.number().nonnegative('Base booking fee cannot be negative').optional(),
   perKgRate: z.number().nonnegative('Per-kg rate cannot be negative').optional(),
   perKmRate: z.number().nonnegative('Per-km rate cannot be negative').optional(),
@@ -144,7 +145,7 @@ router.get('/config', async (req: Request, res: Response) => {
     const config = await dispatchService.getServiceConfig();
     res.json({ success: true, config });
   } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message || 'Failed to fetch config' });
+    res.status(500).json({ success: false, error: 'Failed to fetch config' });
   }
 });
 
@@ -166,7 +167,7 @@ router.put('/config', async (req: Request, res: Response) => {
       config: updated
     });
   } catch (err: any) {
-    res.status(400).json({ success: false, error: err.message || 'Failed to update config' });
+    res.status(400).json({ success: false, error: 'Failed to update config' });
   }
 });
 
@@ -189,7 +190,7 @@ router.put('/config/pricing-zones', async (req: Request, res: Response) => {
       config: updated
     });
   } catch (err: any) {
-    res.status(400).json({ success: false, error: err.message || 'Failed to update config' });
+    res.status(400).json({ success: false, error: 'Failed to update config' });
   }
 });
 
@@ -206,7 +207,7 @@ router.get('/merchants', async (req: Request, res: Response) => {
     const merchants = await dispatchService.listMerchants(status);
     res.json({ success: true, count: merchants.length, merchants });
   } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message || 'Failed to list merchants' });
+    res.status(500).json({ success: false, error: 'Failed to list merchants' });
   }
 });
 
@@ -220,7 +221,7 @@ router.post('/merchants/:merchantId/approve', async (req: Request, res: Response
       merchant
     });
   } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message || 'Failed to approve merchant' });
+    res.status(500).json({ success: false, error: 'Failed to approve merchant' });
   }
 });
 
@@ -239,7 +240,7 @@ router.patch('/merchants/:merchantId/approval', async (req: Request, res: Respon
       merchant
     });
   } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message || 'Failed to update merchant status' });
+    res.status(500).json({ success: false, error: 'Failed to update merchant status' });
   }
 });
 
@@ -259,7 +260,7 @@ router.post('/smart-match', async (req: Request, res: Response) => {
       recommendation
     });
   } catch (err: any) {
-    res.status(400).json({ success: false, error: err.message || 'Failed to generate dispatch recommendation' });
+    res.status(400).json({ success: false, error: 'Failed to generate dispatch recommendation' });
   }
 });
 

@@ -17,7 +17,7 @@ const pool = new Pool({
 async function runMigrations() {
   console.log('🚀 Starting SwiftDrop Database Migrations...');
   const client = await pool.connect().catch((err) => {
-    console.warn('⚠️ Unable to connect to PostgreSQL directly:', err.message);
+    console.warn('Unable to connect to PostgreSQL. Check DATABASE_URL.');
     console.log('💡 Note: You can also run the SQL scripts directly in Supabase SQL Editor:');
     console.log('   - server/src/database/migrations/001_initial_schema.sql');
     console.log('   - server/src/database/migrations/002_seed_sample_users.sql');
@@ -25,12 +25,17 @@ async function runMigrations() {
   });
 
   if (!client) {
-    process.exit(0);
+    await pool.end();
+    process.exitCode=1;
+    return;
   }
 
   try {
     const migrationsDir = path.join(__dirname, 'migrations');
-    const files = fs.readdirSync(migrationsDir).sort();
+    const requested=process.argv.indexOf('--only');
+    const only=requested>=0?process.argv[requested+1]:undefined;
+    const files = fs.readdirSync(migrationsDir).filter(file=>!only||file===only).sort();
+    if(only&&!files.length)throw new Error('Requested migration not found');
 
     for (const file of files) {
       if (file.endsWith('.sql')) {
@@ -42,7 +47,8 @@ async function runMigrations() {
     }
     console.log('🎉 All migrations and seed credentials successfully applied!');
   } catch (error) {
-    console.error('❌ Migration failed:', error);
+    console.error('Migration failed. The database was not fully migrated.');
+    process.exitCode=1;
   } finally {
     client.release();
     await pool.end();

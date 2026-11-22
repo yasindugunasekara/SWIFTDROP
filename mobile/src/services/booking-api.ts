@@ -68,38 +68,9 @@ export interface BookingResponse {
  * Enforces business rules and server pricing calculation.
  */
 export async function getBookingQuote(params: FeeQuoteRequest): Promise<FeeQuoteResponse> {
-  try {
-    const res = await mobileApiFetch('/booking/quote', {
-      method: 'POST',
-      body: JSON.stringify(params),
-    });
-    if (res.quote) return res.quote;
-  } catch (err) {
-    console.warn('Backend quote unavailable, using client-side calculation fallback:', err);
-  }
-
-  // Graceful offline fallback calculation
-  const weight = Math.max(0.1, params.weightKg);
-  const base = params.category === 'documents' ? 4.50 : (params.category === 'electronics' ? 12.50 : 8.50);
-  const extraWeight = Math.max(0, weight - 1.0);
-  const weightFee = Number((extraWeight * 1.50).toFixed(2));
-  const subtotal = Number((base + weightFee).toFixed(2));
-  const discount = params.promoCode?.toUpperCase() === 'SWIFT20' ? Number((subtotal * 0.20).toFixed(2)) : 0;
-  const total = Number(Math.max(1.00, subtotal - discount).toFixed(2));
-
-  return {
-    baseFee: base,
-    weightFee,
-    dimensionFee: 0,
-    subtotal,
-    discount,
-    totalFee: total,
-    currency: 'USD',
-    category: params.category || 'Parcels',
-    weightKg: weight,
-    appliedPromo: discount > 0 ? 'SWIFT20' : undefined,
-    estimatedDelivery: 'Within 2 hours',
-  };
+  const result=await mobileApiFetch('/booking/quote',{method:'POST',body:JSON.stringify(params)});
+  if(!result.quote)throw new Error('A server quote is required before booking.');
+  return result.quote;
 }
 
 /**

@@ -1,0 +1,924 @@
+TAP version 13
+# Subtest: admin guard rejects missing/forged tokens and every non-admin role
+ok 1 - admin guard rejects missing/forged tokens and every non-admin role
+  ---
+  duration_ms: 120.3745
+  type: 'test'
+  ...
+# Subtest: assistant executes the tracking backend tool before returning a model answer
+ok 2 - assistant executes the tracking backend tool before returning a model answer
+  ---
+  duration_ms: 38.2695
+  type: 'test'
+  ...
+# Subtest: assistant executes configured pricing and does not manufacture a destination zone
+ok 3 - assistant executes configured pricing and does not manufacture a destination zone
+  ---
+  duration_ms: 2.4653
+  type: 'test'
+  ...
+# Subtest: signup validates and forwards normalized credentials to Supabase, without returning credentials or fake sessions
+ok 4 - signup validates and forwards normalized credentials to Supabase, without returning credentials or fake sessions
+  ---
+  duration_ms: 2323.225
+  type: 'test'
+  ...
+# Subtest: handles projects without email confirmation
+ok 5 - handles projects without email confirmation
+  ---
+  duration_ms: 17.1384
+  type: 'test'
+  ...
+# Subtest: invalid input and privileged roles are rejected before calling Supabase
+ok 6 - invalid input and privileged roles are rejected before calling Supabase
+  ---
+  duration_ms: 47.0765
+  type: 'test'
+  ...
+# Subtest: login succeeds only for valid credentials; selected role cannot be submitted
+ok 7 - login succeeds only for valid credentials; selected role cannot be submitted
+  ---
+  duration_ms: 18.6316
+  type: 'test'
+  ...
+# Subtest: token verification, current profile, refresh and role checks are enforced
+ok 8 - token verification, current profile, refresh and role checks are enforced
+  ---
+  duration_ms: 26.3825
+  type: 'test'
+  ...
+# Subtest: logout calls Supabase with a verified access token
+ok 9 - logout calls Supabase with a verified access token
+  ---
+  duration_ms: 5.3889
+  type: 'test'
+  ...
+# Subtest: provider errors never leak submitted passwords or internal error details
+ok 10 - provider errors never leak submitted passwords or internal error details
+  ---
+  duration_ms: 8.5344
+  type: 'test'
+  ...
+# Subtest: malformed bodies, large bodies, and signup abuse are handled
+ok 11 - malformed bodies, large bodies, and signup abuse are handled
+  ---
+  duration_ms: 38.0528
+  type: 'test'
+  ...
+# Subtest: Auth migration creates customer profiles, ignores user-editable roles, and does not copy passwords
+ok 12 - Auth migration creates customer profiles, ignores user-editable roles, and does not copy passwords
+  ---
+  duration_ms: 12.5932
+  type: 'test'
+  ...
+# Subtest: legacy profile IDs and roles remain intact; matching emails cannot claim a legacy courier
+ok 13 - legacy profile IDs and roles remain intact; matching emails cannot claim a legacy courier
+  ---
+  duration_ms: 4.8969
+  type: 'test'
+  ...
+# Subtest: RLS allows only own profile reads and safe updates; role escalation and password reads fail
+ok 14 - RLS allows only own profile reads and safe updates; role escalation and password reads fail
+  ---
+  duration_ms: 10.314
+  type: 'test'
+  ...
+# Subtest: session check rejects missing, expired, revoked and another user session without exposing session records
+ok 15 - session check rejects missing, expired, revoked and another user session without exposing session records
+  ---
+  duration_ms: 24.4525
+  type: 'test'
+  ...
+# Subtest: courier and business signup requests preserve details without granting an operational role
+ok 16 - courier and business signup requests preserve details without granting an operational role
+  ---
+  duration_ms: 15.7693
+  type: 'test'
+  ...
+# Subtest: applications reject missing role details and privileged role requests before signup
+ok 17 - applications reject missing role details and privileged role requests before signup
+  ---
+  duration_ms: 9.4713
+  type: 'test'
+  ...
+# Subtest: password reset normalizes email, returns a generic response, and rejects redirect injection
+ok 18 - password reset normalizes email, returns a generic response, and rejects redirect injection
+  ---
+  duration_ms: 10.496
+  type: 'test'
+  ...
+# Subtest: signup alias follows the same validation and customer-only rules
+ok 19 - signup alias follows the same validation and customer-only rules
+  ---
+  duration_ms: 7.2738
+  type: 'test'
+  ...
+# Subtest: demo login is explicitly gated and authenticates the actual provisioned role
+ok 20 - demo login is explicitly gated and authenticates the actual provisioned role
+  ---
+  duration_ms: 16.3169
+  type: 'test'
+  ...
+# Subtest: application review APIs reject missing tokens and non-staff roles before data access
+ok 21 - application review APIs reject missing tokens and non-staff roles before data access
+  ---
+  duration_ms: 8.9689
+  type: 'test'
+  ...
+# Subtest: all five verified roles respect the staff API boundary
+ok 22 - all five verified roles respect the staff API boundary
+  ---
+  duration_ms: 21.3358
+  type: 'test'
+  ...
+# Subtest: application snapshots ignore editable metadata changes and never auto-grant roles
+ok 23 - application snapshots ignore editable metadata changes and never auto-grant roles
+  ---
+  duration_ms: 7.9612
+  type: 'test'
+  ...
+# Subtest: applicant RLS hides other applications and blocks direct status changes and self-approval
+ok 24 - applicant RLS hides other applications and blocks direct status changes and self-approval
+  ---
+  duration_ms: 5.1811
+  type: 'test'
+  ...
+# Subtest: staff approval atomically grants courier/merchant roles, creates the merchant and records the reviewer
+ok 25 - staff approval atomically grants courier/merchant roles, creates the merchant and records the reviewer
+  ---
+  duration_ms: 12.5234
+  type: 'test'
+  ...
+# Subtest: rejection preserves customer role and revoked staff sessions cannot approve
+ok 26 - rejection preserves customer role and revoked staff sessions cannot approve
+  ---
+  duration_ms: 11.0289
+  type: 'test'
+  ...
+# Subtest: admin directory denies other roles and revoked sessions, bounds results and never exposes credentials
+ok 27 - admin directory denies other roles and revoked sessions, bounds results and never exposes credentials
+  ---
+  duration_ms: 14.8385
+  type: 'test'
+  ...
+# Subtest: booking validates contact fields, bounds and positive parcel dimensions
+ok 28 - booking validates contact fields, bounds and positive parcel dimensions
+  ---
+  duration_ms: 4.7911
+  type: 'test'
+  ...
+# Subtest: booking routes reject anonymous/non-customer access and pass the server identity to persistence
+ok 29 - booking routes reject anonymous/non-customer access and pass the server identity to persistence
+  ---
+  duration_ms: 137.0095
+  type: 'test'
+  ...
+# Subtest: failed booking storage returns an error instead of success or a synthetic tracking number
+ok 30 - failed booking storage returns an error instead of success or a synthetic tracking number
+  ---
+  duration_ms: 17.7085
+  type: 'test'
+  ...
+# Subtest: migration is repeatable and preserves existing notifications and preferences
+ok 31 - migration is repeatable and preserves existing notifications and preferences
+  ---
+  duration_ms: 2050.6087
+  type: 'test'
+  ...
+# Subtest: migration creates the per-recipient unique index and inbox indexes
+ok 32 - migration creates the per-recipient unique index and inbox indexes
+  ---
+  duration_ms: 5.0027
+  type: 'test'
+  ...
+# Subtest: one event can be stored for two different recipients
+ok 33 - one event can be stored for two different recipients
+  ---
+  duration_ms: 2.6804
+  type: 'test'
+  ...
+# Subtest: a duplicate (user_id, event_id) pair is rejected by the database
+ok 34 - a duplicate (user_id, event_id) pair is rejected by the database
+  ---
+  duration_ms: 4.9549
+  type: 'test'
+  ...
+# Subtest: COURIER_ASSIGNED creates one notification per recipient and applies preferences
+ok 35 - COURIER_ASSIGNED creates one notification per recipient and applies preferences
+  ---
+  duration_ms: 16.9492
+  type: 'test'
+  ...
+# Subtest: redelivering the same event creates no duplicates
+ok 36 - redelivering the same event creates no duplicates
+  ---
+  duration_ms: 4.2612
+  type: 'test'
+  ...
+# Subtest: a different event creates separate notifications
+ok 37 - a different event creates separate notifications
+  ---
+  duration_ms: 5.8374
+  type: 'test'
+  ...
+# Subtest: non-courier events notify the customer only
+ok 38 - non-courier events notify the customer only
+  ---
+  duration_ms: 5.4709
+  type: 'test'
+  ...
+# Subtest: concurrent processing of the same event cannot create duplicates
+ok 39 - concurrent processing of the same event cannot create duplicates
+  ---
+  duration_ms: 10.2217
+  type: 'test'
+  ...
+# Subtest: a missing parcel is reported as transient instead of creating rows
+ok 40 - a missing parcel is reported as transient instead of creating rows
+  ---
+  duration_ms: 2.0386
+  type: 'test'
+  ...
+# Subtest: a parcel with no eligible recipients is reported without creating rows
+ok 41 - a parcel with no eligible recipients is reported without creating rows
+  ---
+  duration_ms: 2.8876
+  type: 'test'
+  ...
+# Subtest: a payload courierId cannot choose a recipient without an active assignment
+ok 42 - a payload courierId cannot choose a recipient without an active assignment
+  ---
+  duration_ms: 3.6494
+  type: 'test'
+  ...
+# Subtest: a parcel whose customer_id is not a CUSTOMER produces no customer notification
+ok 43 - a parcel whose customer_id is not a CUSTOMER produces no customer notification
+  ---
+  duration_ms: 2.2136
+  type: 'test'
+  ...
+# Subtest: migration refuses to run when duplicate recipient/event pairs already exist
+ok 44 - migration refuses to run when duplicate recipient/event pairs already exist
+  ---
+  duration_ms: 1362.7879
+  type: 'test'
+  ...
+# Subtest: accepts Member 04's current payload without eventId
+ok 45 - accepts Member 04's current payload without eventId
+  ---
+  duration_ms: 5.2224
+  type: 'test'
+  ...
+# Subtest: derives the same event id from a redelivered payload
+ok 46 - derives the same event id from a redelivered payload
+  ---
+  duration_ms: 0.5604
+  type: 'test'
+  ...
+# Subtest: derives a different event id for a genuinely different event
+ok 47 - derives a different event id for a genuinely different event
+  ---
+  duration_ms: 0.4411
+  type: 'test'
+  ...
+# Subtest: preserves an explicit eventId verbatim
+ok 48 - preserves an explicit eventId verbatim
+  ---
+  duration_ms: 0.2719
+  type: 'test'
+  ...
+# Subtest: accepts eventType as an alias of event
+ok 49 - accepts eventType as an alias of event
+  ---
+  duration_ms: 0.2643
+  type: 'test'
+  ...
+# Subtest: maps PARCEL_STATUS_UPDATED through the status field
+ok 50 - maps PARCEL_STATUS_UPDATED through the status field
+  ---
+  duration_ms: 0.6162
+  type: 'test'
+  ...
+# Subtest: maps both failure event names to PARCEL_DELIVERY_FAILED
+ok 51 - maps both failure event names to PARCEL_DELIVERY_FAILED
+  ---
+  duration_ms: 0.3841
+  type: 'test'
+  ...
+# Subtest: rejects schema-invalid payloads
+ok 52 - rejects schema-invalid payloads
+  ---
+  duration_ms: 1.1244
+  type: 'test'
+  ...
+# Subtest: returns null for a schema-valid but unsupported event
+ok 53 - returns null for a schema-valid but unsupported event
+  ---
+  duration_ms: 0.3112
+  type: 'test'
+  ...
+# Subtest: fallbackEventId is canonical and independent of JSON key order
+ok 54 - fallbackEventId is canonical and independent of JSON key order
+  ---
+  duration_ms: 0.3022
+  type: 'test'
+  ...
+# Subtest: recipient policy notifies the courier for assignments and failures only
+ok 55 - recipient policy notifies the courier for assignments and failures only
+  ---
+  duration_ms: 1.1808
+  type: 'test'
+  ...
+# Subtest: renders role-appropriate content with the tracking number
+ok 56 - renders role-appropriate content with the tracking number
+  ---
+  duration_ms: 0.2519
+  type: 'test'
+  ...
+# Subtest: falls back to a parcel reference when no tracking number is supplied
+ok 57 - falls back to a parcel reference when no tracking number is supplied
+  ---
+  duration_ms: 0.2028
+  type: 'test'
+  ...
+# Subtest: publisher initializes lazily, reuses one channel, and preserves queue and payload
+ok 58 - publisher initializes lazily, reuses one channel, and preserves queue and payload
+  ---
+  duration_ms: 4.0301
+  type: 'test'
+  ...
+# Subtest: concurrent publishes share one initialization attempt
+ok 59 - concurrent publishes share one initialization attempt
+  ---
+  duration_ms: 1.1228
+  type: 'test'
+  ...
+# Subtest: a nack fails the publish, closes the channel, and the next publish reconnects
+ok 60 - a nack fails the publish, closes the channel, and the next publish reconnects
+  ---
+  duration_ms: 0.7126
+  type: 'test'
+  ...
+# Subtest: a confirmation timeout returns false without retrying within the same call
+ok 61 - a confirmation timeout returns false without retrying within the same call
+  ---
+  duration_ms: 30.2093
+  type: 'test'
+  ...
+# Subtest: channel close and error events invalidate the cached channel
+ok 62 - channel close and error events invalidate the cached channel
+  ---
+  duration_ms: 3.527
+  type: 'test'
+  ...
+# Subtest: a close event invalidates without attempting to close the channel
+ok 63 - a close event invalidates without attempting to close the channel
+  ---
+  duration_ms: 1.1184
+  type: 'test'
+  ...
+# Subtest: repeated error events close the failed channel at most once
+ok 64 - repeated error events close the failed channel at most once
+  ---
+  duration_ms: 1.0349
+  type: 'test'
+  ...
+# Subtest: a close event followed by an error never calls close on the channel
+ok 65 - a close event followed by an error never calls close on the channel
+  ---
+  duration_ms: 0.9863
+  type: 'test'
+  ...
+# Subtest: explicit publisher close after error cleanup does not close twice
+ok 66 - explicit publisher close after error cleanup does not close twice
+  ---
+  duration_ms: 0.9046
+  type: 'test'
+  ...
+# Subtest: broker unavailability returns false and the cooldown limits reconnect attempts
+ok 67 - broker unavailability returns false and the cooldown limits reconnect attempts
+  ---
+  duration_ms: 0.5049
+  type: 'test'
+  ...
+# Subtest: a connection failure is retried on the next publish by default
+ok 68 - a connection failure is retried on the next publish by default
+  ---
+  duration_ms: 0.4458
+  type: 'test'
+  ...
+# Subtest: a rejected channel initialization returns false without throwing
+ok 69 - a rejected channel initialization returns false without throwing
+  ---
+  duration_ms: 0.3481
+  type: 'test'
+  ...
+# Subtest: a failed queue declaration closes the channel and returns false
+ok 70 - a failed queue declaration closes the channel and returns false
+  ---
+  duration_ms: 2.3069
+  type: 'test'
+  ...
+# Subtest: a channel closed during initialization is not cached
+ok 71 - a channel closed during initialization is not cached
+  ---
+  duration_ms: 0.7589
+  type: 'test'
+  ...
+# Subtest: a late channel after the connection timeout is closed instead of leaked
+ok 72 - a late channel after the connection timeout is closed instead of leaked
+  ---
+  duration_ms: 40.5791
+  type: 'test'
+  ...
+# Subtest: close during initialization closes the late channel and prevents publishing
+ok 73 - close during initialization closes the late channel and prevents publishing
+  ---
+  duration_ms: 0.6969
+  type: 'test'
+  ...
+# Subtest: close is idempotent and prevents further publishing
+ok 74 - close is idempotent and prevents further publishing
+  ---
+  duration_ms: 0.3975
+  type: 'test'
+  ...
+# Subtest: serialization failure returns false before opening a channel
+ok 75 - serialization failure returns false before opening a channel
+  ---
+  duration_ms: 0.3077
+  type: 'test'
+  ...
+# Subtest: notificationQueueName resolves the environment at runtime
+ok 76 - notificationQueueName resolves the environment at runtime
+  ---
+  duration_ms: 0.3664
+  type: 'test'
+  ...
+# Subtest: rejects unauthenticated requests to every endpoint
+ok 77 - rejects unauthenticated requests to every endpoint
+  ---
+  duration_ms: 2304.7331
+  type: 'test'
+  ...
+# Subtest: rejects roles outside the customer/courier inbox scope
+ok 78 - rejects roles outside the customer/courier inbox scope
+  ---
+  duration_ms: 4.7364
+  type: 'test'
+  ...
+# Subtest: customer retrieves only their own notifications in stable order
+ok 79 - customer retrieves only their own notifications in stable order
+  ---
+  duration_ms: 14.958
+  type: 'test'
+  ...
+# Subtest: courier retrieves only their own notifications
+ok 80 - courier retrieves only their own notifications
+  ---
+  duration_ms: 6.3516
+  type: 'test'
+  ...
+# Subtest: a user cannot read or modify another user's notifications
+ok 81 - a user cannot read or modify another user's notifications
+  ---
+  duration_ms: 20.0381
+  type: 'test'
+  ...
+# Subtest: paginates with a stable keyset cursor and no duplicates
+ok 82 - paginates with a stable keyset cursor and no duplicates
+  ---
+  duration_ms: 16.0755
+  type: 'test'
+  ...
+# Subtest: keyset pagination handles equal created_at timestamps without skipping rows
+ok 83 - keyset pagination handles equal created_at timestamps without skipping rows
+  ---
+  duration_ms: 9.5376
+  type: 'test'
+  ...
+# Subtest: validates pagination query parameters
+ok 84 - validates pagination query parameters
+  ---
+  duration_ms: 14.3263
+  type: 'test'
+  ...
+# Subtest: filters by read/unread status and notification type
+ok 85 - filters by read/unread status and notification type
+  ---
+  duration_ms: 15.5329
+  type: 'test'
+  ...
+# Subtest: returns accurate per-user unread counts
+ok 86 - returns accurate per-user unread counts
+  ---
+  duration_ms: 8.5018
+  type: 'test'
+  ...
+# Subtest: marks one notification as read and is idempotent
+ok 87 - marks one notification as read and is idempotent
+  ---
+  duration_ms: 12.7339
+  type: 'test'
+  ...
+# Subtest: rejects invalid ids and hides nonexistent or foreign notifications
+ok 88 - rejects invalid ids and hides nonexistent or foreign notifications
+  ---
+  duration_ms: 7.2867
+  type: 'test'
+  ...
+# Subtest: marks all remaining notifications as read and is idempotent
+ok 89 - marks all remaining notifications as read and is idempotent
+  ---
+  duration_ms: 10.9964
+  type: 'test'
+  ...
+# Subtest: getPreferences uses a conflict-update statement that always returns a row
+ok 90 - getPreferences uses a conflict-update statement that always returns a row
+  ---
+  duration_ms: 0.4007
+  type: 'test'
+  ...
+# Subtest: simultaneous first-time preference reads both return a record
+ok 91 - simultaneous first-time preference reads both return a record
+  ---
+  duration_ms: 3.6531
+  type: 'test'
+  ...
+# Subtest: retrieves persisted preferences and creates defaults for a new user
+ok 92 - retrieves persisted preferences and creates defaults for a new user
+  ---
+  duration_ms: 7.489
+  type: 'test'
+  ...
+# Subtest: updates preferences partially and persists them per user
+ok 93 - updates preferences partially and persists them per user
+  ---
+  duration_ms: 12.8473
+  type: 'test'
+  ...
+# Subtest: creates defaults when a partial update is the first preference write
+ok 94 - creates defaults when a partial update is the first preference write
+  ---
+  duration_ms: 3.1969
+  type: 'test'
+  ...
+# Subtest: rejects invalid preference payloads without changing saved values
+ok 95 - rejects invalid preference payloads without changing saved values
+  ---
+  duration_ms: 11.3088
+  type: 'test'
+  ...
+# Subtest: keeps the deprecated /inbox alias scoped to the caller
+ok 96 - keeps the deprecated /inbox alias scoped to the caller
+  ---
+  duration_ms: 2.9823
+  type: 'test'
+  ...
+# Subtest: marks notification responses as non-cacheable
+ok 97 - marks notification responses as non-cacheable
+  ---
+  duration_ms: 2.5529
+  type: 'test'
+  ...
+# (node:25160) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+# (Use `node --trace-deprecation ...` to show where the warning was created)
+# Subtest: customer booking survives a new service instance and is isolated by customer
+ok 98 - customer booking survives a new service instance and is isolated by customer
+  ---
+  duration_ms: 2276.3484
+  type: 'test'
+  ...
+# Subtest: pricing changes persist and affect the next quote and booking
+ok 99 - pricing changes persist and affect the next quote and booking
+  ---
+  duration_ms: 11.3704
+  type: 'test'
+  ...
+# Subtest: zone edits and disabled zones persist
+ok 100 - zone edits and disabled zones persist
+  ---
+  duration_ms: 8.586
+  type: 'test'
+  ...
+# Subtest: assignment and courier updates operate on real database parcels
+ok 101 - assignment and courier updates operate on real database parcels
+  ---
+  duration_ms: 33.6031
+  type: 'test'
+  ...
+# Subtest: daily courier list excludes old assignments
+ok 102 - daily courier list excludes old assignments
+  ---
+  duration_ms: 8.7737
+  type: 'test'
+  ...
+# Subtest: capacity enforcement and duplicate assignment are atomic
+ok 103 - capacity enforcement and duplicate assignment are atomic
+  ---
+  duration_ms: 16.0998
+  type: 'test'
+  ...
+# Subtest: failed delivery requires a reason and persists history
+ok 104 - failed delivery requires a reason and persists history
+  ---
+  duration_ms: 11.7767
+  type: 'test'
+  ...
+# Subtest: mock SMS delivery is durable, preference-aware and idempotent
+ok 105 - mock SMS delivery is durable, preference-aware and idempotent
+  ---
+  duration_ms: 22.7492
+  type: 'test'
+  ...
+# Subtest: merchant identity and parcel data are captured by the database trigger
+ok 106 - merchant identity and parcel data are captured by the database trigger
+  ---
+  duration_ms: 6.1251
+  type: 'test'
+  ...
+# Subtest: outbox retains unconfirmed events and clears only after both broker confirms
+ok 107 - outbox retains unconfirmed events and clears only after both broker confirms
+  ---
+  duration_ms: 10.4857
+  type: 'test'
+  ...
+# Subtest: webhook delivery retries survive a new service instance and deduplicate event IDs
+ok 108 - webhook delivery retries survive a new service instance and deduplicate event IDs
+  ---
+  duration_ms: 30.772
+  type: 'test'
+  ...
+# Subtest: user administration blocks self-deactivation and non-admin actors
+ok 109 - user administration blocks self-deactivation and non-admin actors
+  ---
+  duration_ms: 3.9689
+  type: 'test'
+  ...
+# Subtest: migration is safe to apply again without dropping operational data
+ok 110 - migration is safe to apply again without dropping operational data
+  ---
+  duration_ms: 12.1925
+  type: 'test'
+  ...
+# Subtest: Supabase public roles cannot bypass the API to read private operational data
+ok 111 - Supabase public roles cannot bypass the API to read private operational data
+  ---
+  duration_ms: 4.5898
+  type: 'test'
+  ...
+# ============================================================
+# 🧪 RUNNING MEMBER 3: LIVE TRACKING WEBSOCKET UNIT TESTS
+# ============================================================
+# --- 1. Subscribing ---
+#   ✅ PASS: Subscribing sends a snapshot (input normalised to upper case)
+#   ✅ PASS: The snapshot carries the full public timeline
+#   ✅ PASS: The parcel is now being watched
+#   ✅ PASS: Subscribing twice to the same parcel does not double-count
+#   ✅ PASS: A malformed tracking number is rejected with 400
+#   ✅ PASS: An unknown tracking number is rejected with 404
+#   ✅ PASS: Failed subscriptions are not recorded
+#   ✅ PASS: An internal failure returns a generic 500 without leaking the cause
+#   ✅ PASS: A subscription that failed with 500 is not registered
+# --- 2. Change detection and pushes ---
+#   ✅ PASS: No update is pushed while nothing has changed
+#   ✅ PASS: A status change is pushed as an update
+#   ✅ PASS: Every watcher of that parcel receives it
+#   ✅ PASS: Watchers of other parcels don't receive it
+#   ✅ PASS: The same change is pushed only once
+#   ✅ PASS: One poll checks all watched parcels with a single query
+#   ✅ PASS: A change that happens during subscription is delivered on the next poll
+#   ✅ PASS: An earlier watcher still gets a change that happened before someone else subscribed
+#   ✅ PASS: The later subscriber starts from the current state
+# --- 3. Unsubscribe and disconnect ---
+#   ✅ PASS: An unsubscribed client receives no more updates
+#   ✅ PASS: Other watchers of the parcel still do
+#   ✅ PASS: Disconnecting the last watcher removes every watched parcel
+#   ✅ PASS: With nobody watching, polling does not touch the database
+# --- 4. Abuse limits ---
+#   ✅ PASS: Invalid JSON is rejected with 400
+#   ✅ PASS: A JSON value that is not an object is rejected: null
+#   ✅ PASS: A JSON value that is not an object is rejected: []
+#   ✅ PASS: A JSON value that is not an object is rejected: "just a string"
+#   ✅ PASS: Unknown message types are rejected
+#   ✅ PASS: A valid subscribe padded past 1024 bytes is still rejected
+#   ✅ PASS: One connection can follow 20 parcels
+#   ✅ PASS: The 21st parcel is refused with 429
+#   ✅ PASS: Re-subscribing to a parcel already followed still works at the cap
+#   ✅ PASS: Concurrent subscribes cannot exceed the per-connection cap
+#   ✅ PASS: After disconnect, nothing from the burst is still watched
+#   ✅ PASS: An unsubscribe sent while the subscribe is loading cancels it
+#   ✅ PASS: Messages beyond a burst of 10 are refused with 429
+#   ✅ PASS: The budget refills over time
+# --- 5. Robustness ---
+#   ✅ PASS: Closed sockets are skipped; open ones still get the update
+#   ✅ PASS: A failing database poll is logged, not thrown
+#   ✅ PASS: Polling recovers after a failure
+#   ✅ PASS: A socket that closes while subscribing is not registered
+#   ✅ PASS: A hung poll times out and the next poll still delivers updates
+#   ✅ PASS: An invalid TRACKING_POLL_MS falls back to 3000 ms instead of hammering the DB
+#   ✅ PASS: A TRACKING_POLL_MS below 500 ms is ignored
+# --- 6. Upgrade path parsing ---
+#   ✅ PASS: The tracking path is recognised with a query string
+#   ✅ PASS: Other paths are passed through
+#   ✅ PASS: Unparseable request targets return null instead of throwing (no process crash)
+# --- 7. End to end through a real WebSocket server ---
+#   ✅ PASS: A real client receives the snapshot over the socket
+#   ✅ PASS: A status change reaches the real client without reconnecting
+#   ✅ PASS: Binary frames are rejected with a JSON error
+#   ✅ PASS: Closing the socket removes its subscriptions on the server
+#   ✅ PASS: Connections beyond the cap are refused with close code 1013
+# ============================================================
+# 🎉 TEST SUMMARY: 51/51 assertions passed
+# ============================================================
+# Subtest: src\\modules\\tracking\\tracking.socket.test.ts
+ok 10 - src\\modules\\tracking\\tracking.socket.test.ts
+  ---
+  duration_ms: 1138.7688
+  type: 'test'
+  ...
+# Subtest: webhook targets reject local/private IPs, private DNS answers and URL credentials
+ok 113 - webhook targets reject local/private IPs, private DNS answers and URL credentials
+  ---
+  duration_ms: 12.6177
+  type: 'test'
+  ...
+# Subtest: starts exactly one consumer and ignores duplicate starts
+ok 114 - starts exactly one consumer and ignores duplicate starts
+  ---
+  duration_ms: 1.7084
+  type: 'test'
+  ...
+# Subtest: unexpected channel close reconnects after one second
+ok 115 - unexpected channel close reconnects after one second
+  ---
+  duration_ms: 7.5108
+  type: 'test'
+  ...
+# Subtest: channel errors reconnect with backoff
+ok 116 - channel errors reconnect with backoff
+  ---
+  duration_ms: 0.8871
+  type: 'test'
+  ...
+# Subtest: reconnect backoff grows exponentially and is capped at 30 seconds
+ok 117 - reconnect backoff grows exponentially and is capped at 30 seconds
+  ---
+  duration_ms: 2.5149
+  type: 'test'
+  ...
+# Subtest: backoff resets to one second after a successful reconnect
+ok 118 - backoff resets to one second after a successful reconnect
+  ---
+  duration_ms: 1.5672
+  type: 'test'
+  ...
+# Subtest: duplicate disconnect events schedule only one reconnect loop
+ok 119 - duplicate disconnect events schedule only one reconnect loop
+  ---
+  duration_ms: 4.7291
+  type: 'test'
+  ...
+# Subtest: broker consumer cancellation schedules a reconnect
+ok 120 - broker consumer cancellation schedules a reconnect
+  ---
+  duration_ms: 1.2597
+  type: 'test'
+  ...
+# Subtest: stop cancels and closes the active consumer exactly once
+ok 121 - stop cancels and closes the active consumer exactly once
+  ---
+  duration_ms: 0.9595
+  type: 'test'
+  ...
+# Subtest: stop while waiting clears the timer and prevents a new consumer
+ok 122 - stop while waiting clears the timer and prevents a new consumer
+  ---
+  duration_ms: 0.9697
+  type: 'test'
+  ...
+# Subtest: stop during an in-flight connection closes the late channel without consuming
+ok 123 - stop during an in-flight connection closes the late channel without consuming
+  ---
+  duration_ms: 0.8672
+  type: 'test'
+  ...
+# Subtest: can start again after a clean stop
+ok 124 - can start again after a clean stop
+  ---
+  duration_ms: 0.455
+  type: 'test'
+  ...
+# Subtest: a valid event is acknowledged only after successful processing
+ok 125 - a valid event is acknowledged only after successful processing
+  ---
+  duration_ms: 3.6317
+  type: 'test'
+  ...
+# Subtest: a duplicate event is acknowledged without a second database effect
+ok 126 - a duplicate event is acknowledged without a second database effect
+  ---
+  duration_ms: 0.535
+  type: 'test'
+  ...
+# Subtest: malformed JSON goes to the DLQ and is then acknowledged
+ok 127 - malformed JSON goes to the DLQ and is then acknowledged
+  ---
+  duration_ms: 1.2622
+  type: 'test'
+  ...
+# Subtest: a schema-invalid event goes to the DLQ and is then acknowledged
+ok 128 - a schema-invalid event goes to the DLQ and is then acknowledged
+  ---
+  duration_ms: 0.8766
+  type: 'test'
+  ...
+# Subtest: an unsupported event is acknowledged and ignored
+ok 129 - an unsupported event is acknowledged and ignored
+  ---
+  duration_ms: 0.2603
+  type: 'test'
+  ...
+# Subtest: a temporary database failure is republished before the original is acknowledged
+ok 130 - a temporary database failure is republished before the original is acknowledged
+  ---
+  duration_ms: 0.4536
+  type: 'test'
+  ...
+# Subtest: a pending publisher confirm blocks the acknowledgement
+ok 131 - a pending publisher confirm blocks the acknowledgement
+  ---
+  duration_ms: 22.4697
+  type: 'test'
+  ...
+# Subtest: retries are bounded and then moved to the DLQ
+ok 132 - retries are bounded and then moved to the DLQ
+  ---
+  duration_ms: 0.8881
+  type: 'test'
+  ...
+# Subtest: a missing parcel is treated as transient and retried
+ok 133 - a missing parcel is treated as transient and retried
+  ---
+  duration_ms: 0.508
+  type: 'test'
+  ...
+# Subtest: an assignment with no visible courier is retried without trusting the payload
+ok 134 - an assignment with no visible courier is retried without trusting the payload
+  ---
+  duration_ms: 0.4339
+  type: 'test'
+  ...
+# Subtest: a parcel with no recipients is acknowledged as ignored
+ok 135 - a parcel with no recipients is acknowledged as ignored
+  ---
+  duration_ms: 0.2177
+  type: 'test'
+  ...
+# Subtest: if the DLQ copy cannot be confirmed the message is not acknowledged
+ok 136 - if the DLQ copy cannot be confirmed the message is not acknowledged
+  ---
+  duration_ms: 0.3174
+  type: 'test'
+  ...
+# Subtest: if the retry copy cannot be confirmed the message is not acknowledged
+ok 137 - if the retry copy cannot be confirmed the message is not acknowledged
+  ---
+  duration_ms: 0.3146
+  type: 'test'
+  ...
+1..137
+# tests 137
+# suites 0
+# pass 137
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4829.1447
+# start of coverage report
+# ---------------------------------------------------------------------------
+# file                      | line % | branch % | funcs % | uncovered lines
+# ---------------------------------------------------------------------------
+# src                       |        |          |         | 
+#  modules                  |        |          |         | 
+#   ai                      |        |          |         | 
+#    assistant.ts           |  69.23 |    80.00 |   87.50 | 16-18 22-26
+#   booking                 |        |          |         | 
+#    booking.persistence.ts | 100.00 |   100.00 |  100.00 | 
+#    booking.routes.ts      |  93.88 |    63.64 |  100.00 | 27 41-42
+#   courier                 |        |          |         | 
+#    courier.database.ts    | 100.00 |    77.78 |  100.00 | 
+#   dispatch                |        |          |         | 
+#    dispatch.database.ts   |  73.91 |    72.73 |   50.00 | 17-25 30-32
+#   operations              |        |          |         | 
+#    pricing.ts             | 100.00 |    73.33 |  100.00 | 
+#   webhooks                |        |          |         | 
+#    webhook-target.ts      |  86.67 |    86.21 |  100.00 | 7-8
+#    webhook.database.ts    |  91.67 |    74.07 |   81.82 | 22-23 25-28
+#  workers                  |        |          |         | 
+#   event-outbox.ts         |  75.68 |    88.89 |   37.50 | 9-10 21-25 28-29
+# ---------------------------------------------------------------------------
+# all files                 |  90.05 |    78.21 |   79.71 | 
+# ---------------------------------------------------------------------------
+# end of coverage report

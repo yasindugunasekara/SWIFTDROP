@@ -1,54 +1,21 @@
-import { Router, Request, Response } from 'express';
-import { authenticateToken } from '../../middleware/auth.js';
-import { dispatchService } from '../dispatch/dispatch.service.js';
-
-const router = Router();
-
-// =============================================================================
-// SHARED AI WORKSTREAM: SMART DISPATCH, ADDRESS & POD VISION
-// =============================================================================
-
-// 1. AI Smart Dispatch & Courier Matching (Member 5 Workstream)
-router.post('/smart-dispatch-recommendation', authenticateToken, async (req: Request, res: Response) => {
-  try {
-    const parcelId = req.body.parcelId || 'p-1001';
-    const recommendation = await dispatchService.getSmartDispatchRecommendation(parcelId);
-    res.json({
-      success: true,
-      recommendedCourierId: recommendation.recommendedCourier.id,
-      courierName: recommendation.recommendedCourier.name,
-      confidenceScore: recommendation.confidenceScore,
-      reasoning: recommendation.reasoning,
-      alternativeCouriers: recommendation.alternativeCouriers
-    });
-  } catch (err: any) {
-    res.json({
-      success: true,
-      recommendedCourierId: '10111111-1111-1111-1111-111111111111',
-      courierName: 'Sunil Silva',
-      confidenceScore: 0.94,
-      reasoning: 'Optimal route proximity and low current workload (2/15 stops active).'
-    });
-  }
+import {Router} from 'express';
+import {z} from 'zod';
+import rateLimit from 'express-rate-limit';
+import {authenticateToken} from '../../middleware/auth.js';
+import {requireRoles} from '../../middleware/rbac.js';
+import {databaseDispatchService} from '../dispatch/dispatch.database.js';
+import {answerDeliveryQuestion} from './assistant.js';
+const router=Router();
+router.use(authenticateToken);
+router.post('/chat',rateLimit({windowMs:60000,limit:10}),async(req,res)=>{
+ const parsed=z.object({question:z.string().trim().min(2).max(1000)}).strict().safeParse(req.body);
+ if(!parsed.success){res.status(400).json({error:'Enter a question between 2 and 1000 characters.'});return;}
+ try{res.json({answer:await answerDeliveryQuestion(parsed.data.question)});}catch{res.status(503).json({error:'The delivery assistant is unavailable. Use tracking or fee quote directly.'});}
 });
-
-// 2. AI Address Validation & Autocomplete (Member 2 Workstream)
-router.post('/validate-address', async (req: Request, res: Response) => {
-  const { rawAddress } = req.body;
-  res.json({
-    isValid: true,
-    normalizedAddress: rawAddress,
-    confidence: 0.98
-  });
+router.post('/smart-dispatch-recommendation',requireRoles(['DISPATCHER','ADMIN']),async(req,res)=>{
+ const input=z.object({parcelId:z.string().uuid()}).safeParse(req.body);if(!input.success){res.status(400).json({error:'A parcel ID is required.'});return;}
+ try{const result=await databaseDispatchService.getSmartDispatchRecommendation(input.data.parcelId);res.json({success:true,...result,method:'workload heuristic'});}catch{res.status(503).json({error:'Dispatch suggestions are unavailable.'});}
 });
-
-// 3. AI Proof of Delivery Verification (Member 4 Workstream)
-router.post('/verify-delivery-proof', authenticateToken, async (req: Request, res: Response) => {
-  res.json({
-    parcelDetected: true,
-    doorstepIdentified: true,
-    verificationStatus: 'VERIFIED'
-  });
-});
-
+router.post('/validate-address',(_req,res)=>{res.status(501).json({error:'Address verification is not configured. Confirm the address with the recipient.'});});
+router.post('/verify-delivery-proof',(_req,res)=>{res.status(501).json({error:'Automated proof verification is not configured. Staff must review the uploaded photo.'});});
 export default router;

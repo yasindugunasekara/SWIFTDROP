@@ -34,10 +34,10 @@ export const asyncHandler =
         // Postgres: invalid UUID / enum text
         return res.status(400).json({ error: 'Invalid identifier or value format' });
       }
-      console.error('[merchant] Unhandled route error:', err);
+      console.error('merchant operation unavailable');
       res.status(500).json({
         error: 'Internal Server Error',
-        message: process.env.NODE_ENV === 'development' ? err?.message : undefined,
+
       });
     });
   };

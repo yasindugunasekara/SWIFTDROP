@@ -4,7 +4,7 @@ export async function mobileApiFetch(endpoint: string, options: RequestInit = {}
   const version = getMobileSessionRevision();
   const token = await getMobileAccessToken();
   const headers = new Headers(options.headers);
-  if (!headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
+  if (!(typeof FormData !== 'undefined' && options.body instanceof FormData) && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
   if (token) headers.set('Authorization', `Bearer ${token}`);
   const request = async () => {
     try {

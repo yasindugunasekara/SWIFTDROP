@@ -13,7 +13,7 @@
     "worker:prod": "node dist/workers/index.js",
     "migrate": "tsx src/database/migrate.ts",
     "lint": "eslint src --ext .ts",
-    "test": "jest",
+    "test": "npm run test:audit",
     "test:signup": "tsx --test src/modules/auth/auth.test.ts",
     "auth:check": "tsx src/scripts/check-auth-setup.ts",
     "auth:http": "tsx src/scripts/check-auth-http.ts",
@@ -32,11 +32,15 @@
     "demo:dispatch": "tsx src/scripts/dispatch-demo.ts",
     "db:seed:dispatch": "tsx src/scripts/seed-dispatch.ts",
     "test:notifications": "tsx --test src/modules/notifications/notification.events.test.ts src/modules/notifications/notification.database.test.ts src/modules/notifications/notification.test.ts src/workers/notification-consumer.test.ts",
-    "test:booking": "tsx --test src/modules/booking/booking.test.ts"
+    "test:booking": "tsx --test src/modules/booking/booking.test.ts",
+    "test:operations": "tsx --test src/modules/operations/operations.integration.test.ts",
+    "test:audit": "node scripts/audit-tests.mjs"
   },
   "dependencies": {
+    "@ai-sdk/google": "4.0.124",
     "@google/generative-ai": "^0.14.0",
     "@supabase/supabase-js": "2.119.0",
+    "ai": "7.0.179",
     "amqplib": "^0.10.4",
     "bcrypt": "^5.1.1",
     "cors": "^2.8.5",

@@ -54,3 +54,5 @@ coverage/
 
 # Supabase CLI local cache (created by `supabase db query --remote`)
 **/supabase/.temp/
+# Generated from the canonical backend migrations by scripts/sync-local-schema.mjs.
+supabase/migrations/20261122165322_local_container_bootstrap.sql

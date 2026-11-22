@@ -1,7 +1,7 @@
 import { db } from '../../config/database.js';
 import { v4 as uuidv4 } from 'uuid';
 
-export type ResolutionStatus = 
+export type ResolutionStatus =
   | 'OPEN'
   | 'INVESTIGATING'
   | 'RESCHEDULED'
@@ -53,7 +53,7 @@ export class SupportService {
   public async listExceptions(filters?: { status?: string; search?: string }): Promise<ParcelException[]> {
     try {
       let query = `
-        SELECT 
+        SELECT
           e.id,
           e.parcel_id,
           p.tracking_number,
@@ -107,10 +107,7 @@ export class SupportService {
 
       const result = await db.query(query, values);
       return result.rows;
-    } catch (error) {
-      console.warn('Database query failed in listExceptions, using fallback:', error);
-      return this.getFallbackExceptions(filters);
-    }
+    } catch (error) { throw new Error('Support database unavailable'); }
   }
 
   /**
@@ -119,7 +116,7 @@ export class SupportService {
   public async getExceptionById(idOrParcelId: string): Promise<ParcelException | null> {
     try {
       const query = `
-        SELECT 
+        SELECT
           e.id,
           e.parcel_id,
           p.tracking_number,
@@ -162,12 +159,7 @@ export class SupportService {
       const exception = result.rows[0];
       exception.audit_logs = await this.getAuditLogs(exception.id);
       return exception;
-    } catch (error) {
-      console.warn('Database query failed in getExceptionById:', error);
-      const fallbackList = this.getFallbackExceptions();
-      const found = fallbackList.find(e => e.id === idOrParcelId || e.parcel_id === idOrParcelId || e.tracking_number === idOrParcelId);
-      return found || null;
-    }
+    } catch (error) { throw new Error('Support database unavailable'); }
   }
 
   /**
@@ -176,7 +168,7 @@ export class SupportService {
   public async getAuditLogs(exceptionId: string): Promise<SupportAuditLog[]> {
     try {
       const query = `
-        SELECT 
+        SELECT
           a.id,
           a.exception_id,
           a.changed_by_id,
@@ -192,10 +184,7 @@ export class SupportService {
       `;
       const result = await db.query(query, [exceptionId]);
       return result.rows;
-    } catch (error) {
-      console.warn('Error fetching audit logs:', error);
-      return [];
-    }
+    } catch (error) { throw new Error('Support database unavailable'); }
   }
 
   /**
@@ -267,13 +256,13 @@ export class SupportService {
     const timestamp = new Date().toISOString();
     const authorTag = staffUser.name || `${staffUser.role} (${staffUser.id.substring(0, 8)})`;
     const formattedNote = `[${timestamp} by ${authorTag}]: ${note.trim()}`;
-    const updatedNotes = exception.resolution_notes 
+    const updatedNotes = exception.resolution_notes
       ? `${exception.resolution_notes}\n\n${formattedNote}`
       : formattedNote;
 
     // 1. Update parcel_exceptions table
     await db.query(
-      `UPDATE parcel_exceptions 
+      `UPDATE parcel_exceptions
        SET resolution_notes = $1
        WHERE id = $2`,
       [updatedNotes, exception.id]
@@ -325,7 +314,7 @@ export class SupportService {
 
     const previousStatus = exception.resolution_status;
     const isClosing = ['RESOLVED', 'RESCHEDULED', 'RETURN_TO_SENDER', 'REFUNDED', 'CANCELLED'].includes(newStatus);
-    
+
     // Append resolution note if provided
     let updatedNotes = exception.resolution_notes || '';
     if (notes && notes.trim().length > 0) {
@@ -382,7 +371,7 @@ export class SupportService {
         exception.id,
         staffUser.id,
         JSON.stringify({ resolution_status: previousStatus }),
-        JSON.stringify({ 
+        JSON.stringify({
           resolution_status: newStatus,
           notes: notes || null,
           changed_by: staffUser.name || staffUser.id,

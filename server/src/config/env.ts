@@ -30,8 +30,8 @@ export const config = {
   redisUrl: process.env.REDIS_URL || 'redis://localhost:6379',
   rabbitmqUrl: process.env.RABBITMQ_URL || 'amqp://guest:guest@localhost:5672',
   jwt: {
-    accessSecret: process.env.JWT_ACCESS_SECRET || 'jwt_access_secret_sample',
-    refreshSecret: process.env.JWT_REFRESH_SECRET || 'jwt_refresh_secret_sample',
+    accessSecret: process.env.JWT_ACCESS_SECRET || '',
+    refreshSecret: process.env.JWT_REFRESH_SECRET || '',
     accessExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '15m',
     refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d'
   },
@@ -41,10 +41,10 @@ export const config = {
     googleCallbackUrl: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:5000/api/v1/auth/google/callback'
   },
   webhook: {
-    hmacSecret: process.env.WEBHOOK_HMAC_SECRET || 'webhook_hmac_sample_secret_key'
+    hmacSecret: process.env.WEBHOOK_HMAC_SECRET || ''
   },
   ai: {
     apiKey: process.env.GEMINI_API_KEY || '',
-    modelName: process.env.AI_MODEL_NAME || 'gemini-1.5-flash'
+    modelName: process.env.AI_MODEL_NAME || ''
   }
 };

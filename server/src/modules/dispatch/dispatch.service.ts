@@ -440,7 +440,7 @@ export class DispatchService {
       channel.sendToQueue('swiftdrop_notifications_queue', buffer, { persistent: true });
       channel.sendToQueue('swiftdrop_webhooks_queue', buffer, { persistent: true });
     } catch (err) {
-      console.warn('⚠️ RabbitMQ assignment broadcast bypassed:', err);
+      console.warn('dispatch operation unavailable');
     }
   }
 
@@ -450,7 +450,7 @@ export class DispatchService {
   public async getUnassignedParcels(zone?: string, search?: string): Promise<UnassignedParcel[]> {
     try {
       const query = `
-        SELECT 
+        SELECT
           p.id,
           p.tracking_number AS "trackingNumber",
           p.sender_name AS "senderName",
@@ -500,7 +500,7 @@ export class DispatchService {
   public async getCourierWorkloads(): Promise<CourierWorkload[]> {
     try {
       const query = `
-        SELECT 
+        SELECT
           u.id,
           u.full_name AS "name",
           u.email,
@@ -779,4 +779,5 @@ export class DispatchService {
   }
 }
 
+/** Demo-only store; HTTP routes use DatabaseDispatchService. */
 export const dispatchService = new DispatchService();
