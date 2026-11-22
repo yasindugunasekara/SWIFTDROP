@@ -3,7 +3,7 @@ import AuthBackButton from '../components/AuthBackButton';
 import React, { useRef, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { authStyles as styles } from './LoginScreen';
-import { API_URL } from '../services/auth';
+import { API_URL, authFetch } from '../services/auth';
 
 export default function RegisterScreen({ onBack, notice }: { onBack: () => void; notice?: string }) {
   const [role, setRole] = useState<'CUSTOMER' | 'COURIER' | 'MERCHANT'>('CUSTOMER');
@@ -26,17 +26,18 @@ export default function RegisterScreen({ onBack, notice }: { onBack: () => void;
       setError('Enter your name and a valid email address.'); return;
     }
     if (password.length < 8) { setError('Use at least 8 characters for your password.'); return; }
+    const passwordBytes = Array.from(password).reduce((count, character) => { const code = character.codePointAt(0)!; return count + (code < 128 ? 1 : code < 2048 ? 2 : code < 65536 ? 3 : 4); }, 0);
+    if (passwordBytes > 72) { setError('Password must be at most 72 UTF-8 bytes.'); return; }
     if (password !== confirmPassword) { setError('Passwords do not match.'); return; }
     if (role !== 'CUSTOMER' && (details.phone.trim().length < 7 || details.address.trim().length < 3)) { setError('Enter your phone number and address or delivery area.'); return; }
     if (role === 'MERCHANT' && (!details.companyName.trim() || !details.registrationNumber.trim())) { setError('Enter your company name and registration number.'); return; }
     if (role === 'COURIER' && details.vehicleType !== 'Bicycle' && !details.vehicleNumber.trim()) { setError('Enter your vehicle registration number.'); return; }
     pending.current = true; setBusy(true);
     try {
-      const response = await fetch(`${API_URL}/auth/${role === 'CUSTOMER' ? 'register' : 'register-application'}`, {
+      const response = await authFetch(`${API_URL}/auth/${role === 'CUSTOMER' ? 'register' : 'register-application'}`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fullName: fullName.trim(), email: email.trim(), password, confirmPassword, ...(role === 'CUSTOMER' ? { role: 'CUSTOMER' } : { application: { role, phone: details.phone, address: details.address,
           ...(role === 'COURIER' ? { vehicleType: details.vehicleType, vehicleNumber: details.vehicleNumber } : { companyName: details.companyName, registrationNumber: details.registrationNumber }) } }) }),
-        signal: typeof AbortSignal.timeout === 'function' ? AbortSignal.timeout(20000) : undefined,
       });
       const result = await response.json();
       if (!response.ok) {
@@ -44,7 +45,7 @@ export default function RegisterScreen({ onBack, notice }: { onBack: () => void;
         throw new Error(fields[0] as string || result.error || 'Unable to create your account.');
       }
       setPassword(''); setConfirmPassword('');
-      setSuccess(result.requiresApproval ? 'Confirm your email. Your application is pending SwiftDrop approval.' : result.requiresEmailConfirmation !== false ? 'Check your email to confirm your account.' : 'Your account is ready. Sign in to continue.');
+      setSuccess(result.message || (result.requiresEmailConfirmation !== false ? 'Check your email to confirm your account. If it already exists, sign in instead.' : 'Your account is ready. Sign in to continue.'));
     } catch (failure) { setError(failure instanceof Error ? failure.message : 'Unable to register. Please retry.'); }
     finally { pending.current = false; setBusy(false); }
   }

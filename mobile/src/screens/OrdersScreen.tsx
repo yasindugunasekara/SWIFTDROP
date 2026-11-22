@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Modal,
+  Platform,
 } from 'react-native';
 import { Colors } from '../theme/colors';
 
@@ -179,13 +180,14 @@ export default function OrdersScreen({ onTrackOrder }: Props) {
 
       {/* Order Details Modal matching Screen 5 in Reference */}
       {selectedOrder && (
-        <Modal
-          visible={true}
-          transparent={true}
-          animationType="slide"
-          onRequestClose={() => setSelectedOrder(null)}
-        >
-          <View style={styles.modalOverlay}>
+        Platform.OS === 'web' ? (
+          <View style={styles.webModalOverlay}>
+            <TouchableOpacity
+              style={StyleSheet.absoluteFillObject}
+              activeOpacity={1}
+              onPress={() => setSelectedOrder(null)}
+              accessibilityLabel="Close modal backdrop"
+            />
             <View style={styles.modalContent}>
               <View style={styles.modalHeader}>
                 <View>
@@ -244,7 +246,80 @@ export default function OrdersScreen({ onTrackOrder }: Props) {
               </TouchableOpacity>
             </View>
           </View>
-        </Modal>
+        ) : (
+          <Modal
+            visible={true}
+            transparent={true}
+            animationType="slide"
+            onRequestClose={() => setSelectedOrder(null)}
+          >
+            <View style={styles.modalOverlay}>
+              <TouchableOpacity
+                style={StyleSheet.absoluteFillObject}
+                activeOpacity={1}
+                onPress={() => setSelectedOrder(null)}
+                accessibilityLabel="Close modal backdrop"
+              />
+              <View style={styles.modalContent}>
+                <View style={styles.modalHeader}>
+                  <View>
+                    <Text style={styles.modalTrackingId}>{selectedOrder.id}</Text>
+                    <Text style={styles.modalSub}>Expected Delivery Today</Text>
+                  </View>
+                  <TouchableOpacity
+                    onPress={() => setSelectedOrder(null)}
+                    style={styles.modalCloseBtn}
+                  >
+                    <Text style={{ fontSize: 16, fontWeight: 'bold' }}>✕</Text>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Milestone Timeline */}
+                <View style={styles.timelineContainer}>
+                  {[
+                    { title: 'Order Placed', time: '10:00 AM', done: true },
+                    { title: 'Picked Up by Courier', time: '10:45 AM', done: true },
+                    { title: 'In Transit to Hub', time: '11:30 AM', done: true },
+                    { title: 'Out for Doorstep Delivery', time: '12:15 PM', done: selectedOrder.status !== 'Pending' },
+                    { title: 'Verified Delivered', time: 'Estimated 01:00 PM', done: selectedOrder.status === 'Delivered' },
+                  ].map((step, idx) => (
+                    <View key={idx} style={styles.timelineRow}>
+                      <View style={styles.timelineCol}>
+                        <View style={[styles.timelineDot, step.done && styles.timelineDotDone]}>
+                          {step.done && <Text style={{ color: '#ffffff', fontSize: 10 }}>✓</Text>}
+                        </View>
+                        {idx < 4 && <View style={[styles.timelineLine, step.done && styles.timelineLineDone]} />}
+                      </View>
+                      <View style={styles.timelineTextWrap}>
+                        <Text style={[styles.timelineTitle, step.done && styles.timelineTitleDone]}>
+                          {step.title}
+                        </Text>
+                        <Text style={styles.timelineTime}>{step.time}</Text>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+
+                {/* Package Information */}
+                <View style={styles.infoCard}>
+                  <Text style={styles.infoCardTitle}>Package Information</Text>
+                  <Text style={styles.infoCardText}>Weight: {selectedOrder.weight} &bull; Dimensions: 25x20x15 cm</Text>
+                  <Text style={styles.infoCardText}>To: {selectedOrder.address}</Text>
+                </View>
+
+                <TouchableOpacity
+                  style={styles.modalActionBtn}
+                  onPress={() => {
+                    setSelectedOrder(null);
+                    onTrackOrder(selectedOrder.id);
+                  }}
+                >
+                  <Text style={styles.modalActionText}>View on Live GPS Map &rarr;</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
+        )
       )}
     </View>
   );
@@ -404,13 +479,29 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(15, 23, 42, 0.6)',
     justifyContent: 'flex-end',
+    alignItems: 'center',
+  },
+  webModalOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(15, 23, 42, 0.6)',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    zIndex: 9999,
   },
   modalContent: {
+    width: '100%',
+    maxWidth: 480,
+    alignSelf: 'center',
     backgroundColor: '#ffffff',
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     padding: 24,
     maxHeight: '85%',
+    zIndex: 10,
   },
   modalHeader: {
     flexDirection: 'row',

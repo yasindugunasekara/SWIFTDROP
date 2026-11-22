@@ -1,5 +1,14 @@
 import dotenv from 'dotenv';
-if (!process.env.VERCEL) dotenv.config();
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+if (!process.env.VERCEL) {
+  dotenv.config();
+  if (!process.env.SUPABASE_URL) {
+    const serverEnv = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../.env');
+    dotenv.config({ path: serverEnv });
+  }
+}
 
 export const config = {
   port: process.env.PORT || 5000,
@@ -9,6 +18,13 @@ export const config = {
   supabase: {
     url: process.env.SUPABASE_URL || '',
     anonKey: process.env.SUPABASE_ANON_KEY || ''
+  },
+  authDemoEnabled: process.env.AUTH_DEMO_ENABLED === 'true',
+  demoPasswords: {
+    CUSTOMER: process.env.DEMO_CUSTOMER_PASSWORD || 'Customer@123',
+    COURIER: process.env.DEMO_COURIER_PASSWORD || 'Courier@123',
+    MERCHANT: process.env.DEMO_MERCHANT_PASSWORD || 'Merchant@123',
+    DISPATCHER: process.env.DEMO_DISPATCHER_PASSWORD || 'Dispatcher@123',
   },
   databaseUrl: process.env.DATABASE_URL || 'postgresql://postgres:postgres_password_example@localhost:5432/swiftdrop_db?schema=public',
   redisUrl: process.env.REDIS_URL || 'redis://localhost:6379',

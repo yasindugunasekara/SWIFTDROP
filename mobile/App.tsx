@@ -15,6 +15,7 @@ import {
 import SplashScreen from './src/screens/SplashScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
+import ApprovalScreen from './src/screens/ApprovalScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import TrackScreen from './src/screens/TrackScreen';
 import OrdersScreen from './src/screens/OrdersScreen';
@@ -40,7 +41,16 @@ export default function App() {
   const [logoutError, setLogoutError] = useState('');
   const logoutPending = useRef(false);
   const [bookModalVisible, setBookModalVisible] = useState(false);
+  const [selectedBookingCategory, setSelectedBookingCategory] = useState('parcels');
+  const [selectedBookingPromo, setSelectedBookingPromo] = useState('');
   const [activeTrackingId, setActiveTrackingId] = useState('SWIFT-991122');
+
+  const handleOpenBookModal = (category?: string, promo?: string) => {
+    if (category) setSelectedBookingCategory(category);
+    if (promo) setSelectedBookingPromo(promo);
+    else setSelectedBookingPromo('');
+    setBookModalVisible(true);
+  };
 
   const handleLoginSuccess = (profile: MobileUser) => {
     setCurrentScreen('main');
@@ -87,7 +97,7 @@ export default function App() {
       setBookModalVisible(false);
       setActiveTrackingId('');
     }
-  }, [user?.id]);
+  }, [user?.id, user?.role]);
 
   const handleTrackPress = (id?: string) => {
     if (id) setActiveTrackingId(id);
@@ -118,9 +128,10 @@ export default function App() {
         if (userRole === 'courier') return <TaskListScreen navigation={undefined} />;
         return (
           <HomeScreen
-            onBookNow={() => setBookModalVisible(true)}
+            onBookNow={handleOpenBookModal}
             onTrackPress={handleTrackPress}
             onNotifications={() => setActiveTab('orders')}
+            userName={user?.fullName || 'Kasun'}
           />
         );
       case 'orders':
@@ -155,6 +166,8 @@ export default function App() {
     }}><Text style={{ marginTop: 20, color: Colors.primary }}>Retry</Text></TouchableOpacity> : null}
   </SafeAreaView>;
 
+  if (user?.application && user.application.status !== 'APPROVED') return <ApprovalScreen user={user} onLogout={handleLogout} loggingOut={loggingOut} logoutError={logoutError} />;
+
   return (
     <SafeAreaView style={styles.outerContainer}>
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
@@ -164,7 +177,7 @@ export default function App() {
       <View style={styles.phoneFrame}>
         {currentScreen === 'splash' && (
           <SplashScreen
-            onGetStarted={() => { setRegistrationNotice(''); setCurrentScreen('register'); }}
+            onGetStarted={() => setCurrentScreen('register')}
             onLogin={() => setCurrentScreen('login')}
           />
         )}
@@ -190,6 +203,8 @@ export default function App() {
               visible={bookModalVisible}
               onClose={() => setBookModalVisible(false)}
               onBookingComplete={handleBookingComplete}
+              initialCategory={selectedBookingCategory}
+              initialPromoCode={selectedBookingPromo}
             />}
           </View>
         )}
@@ -211,6 +226,7 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: '#ffffff',
     overflow: 'hidden',
+    position: 'relative',
     ...Platform.select({
       web: {
         maxHeight: width > 500 ? 900 : '100%',
@@ -224,6 +240,7 @@ const styles = StyleSheet.create({
   appShell: {
     flex: 1,
     backgroundColor: '#ffffff',
+    position: 'relative',
   },
   screenArea: {
     flex: 1,

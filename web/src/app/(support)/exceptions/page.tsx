@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import { fetchApi } from '../../../lib/api';
-import { getStoredUser, User } from '../../../lib/auth';
+import { getStoredUser, subscribeAuth } from '../../../lib/auth';
 
 export type ResolutionStatus =
   | 'OPEN'
@@ -20,8 +20,8 @@ interface SupportAuditLog {
   changed_by_id: string;
   changed_by_name?: string;
   action: string;
-  previous_state: any;
-  new_state: any;
+  previous_state: Record<string, unknown> | null;
+  new_state: Record<string, unknown> | null;
   created_at: string;
 }
 
@@ -51,7 +51,8 @@ interface ParcelException {
 }
 
 export default function ExceptionsPage() {
-  const [user, setUser] = useState<User | null>(null);
+  const user = useSyncExternalStore(subscribeAuth, getStoredUser, () => null);
+  const selectedId = useRef<string | null>(null);
   const [exceptions, setExceptions] = useState<ParcelException[]>([]);
   const [selectedException, setSelectedException] = useState<ParcelException | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -72,48 +73,37 @@ export default function ExceptionsPage() {
   const [createNotes, setCreateNotes] = useState<string>('');
   const [createLoading, setCreateLoading] = useState<boolean>(false);
 
-  // 1. Fetch live exceptions
-  const loadExceptions = useCallback(async () => {
-    try {
-      setLoading(true);
-      const queryParams = new URLSearchParams();
-      if (activeFilter !== 'ALL') queryParams.append('status', activeFilter);
-      if (searchQuery.trim()) queryParams.append('search', searchQuery.trim());
-
-      const url = `/support/exceptions${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-      const res = await fetchApi<{ count: number; exceptions: ParcelException[] }>(url);
-      setExceptions(res.exceptions || []);
-
-      // If an exception was selected, refresh its details
-      if (selectedException) {
-        const refreshed = res.exceptions.find((e) => e.id === selectedException.id);
-        if (refreshed) {
-          loadExceptionDetail(refreshed.id);
-        }
-      } else if (res.exceptions.length > 0) {
-        loadExceptionDetail(res.exceptions[0].id);
-      }
-    } catch (err: any) {
-      console.error('Failed to load exceptions:', err);
-      setFeedbackMsg({ type: 'error', text: err.message || 'Failed to fetch exceptions list' });
-    } finally {
-      setLoading(false);
-    }
-  }, [activeFilter, searchQuery]);
-
   // 2. Fetch specific exception details with audit trail
-  const loadExceptionDetail = async (exceptionId: string) => {
+  const loadExceptionDetail = useCallback(async (exceptionId: string) => {
+    selectedId.current = exceptionId;
     try {
       const res = await fetchApi<{ exception: ParcelException }>(`/support/exceptions/${exceptionId}`);
       setSelectedException(res.exception);
       setTargetStatus(res.exception.resolution_status || 'INVESTIGATING');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to load exception detail:', err);
     }
-  };
+  }, []);
+
+  // Fetch updates in network completion callbacks; the effect itself does not set state.
+  const loadExceptions = useCallback(() => {
+    const queryParams = new URLSearchParams();
+    if (activeFilter !== 'ALL') queryParams.append('status', activeFilter);
+    if (searchQuery.trim()) queryParams.append('search', searchQuery.trim());
+    const url = '/support/exceptions' + (queryParams.toString() ? '?' + queryParams.toString() : '');
+    return fetchApi<{ count: number; exceptions: ParcelException[] }>(url).then(async res => {
+      const rows = res.exceptions || [];
+      setExceptions(rows);
+      const next = selectedId.current ? rows.find(row => row.id === selectedId.current) : rows[0];
+      if (next) await loadExceptionDetail(next.id);
+    }).catch((err: unknown) => {
+      console.error('Failed to load exceptions:', err);
+      setFeedbackMsg({ type: 'error', text: err instanceof Error ? err.message : 'Failed to fetch exceptions list' });
+    }).finally(() => setLoading(false));
+  }, [activeFilter, searchQuery, loadExceptionDetail]);
+
 
   useEffect(() => {
-    setUser(getStoredUser());
     loadExceptions();
   }, [loadExceptions]);
 
@@ -139,8 +129,8 @@ export default function ExceptionsPage() {
       setResolutionComment('');
       setSelectedException(res.exception);
       await loadExceptions();
-    } catch (err: any) {
-      setFeedbackMsg({ type: 'error', text: err.message || 'Failed to update resolution status' });
+    } catch (err: unknown) {
+      setFeedbackMsg({ type: 'error', text: err instanceof Error ? err.message : 'Failed to update resolution status' });
     } finally {
       setActionLoading(false);
     }
@@ -165,8 +155,8 @@ export default function ExceptionsPage() {
       setStandaloneNote('');
       setSelectedException(res.exception);
       await loadExceptions();
-    } catch (err: any) {
-      setFeedbackMsg({ type: 'error', text: err.message || 'Failed to append note' });
+    } catch (err: unknown) {
+      setFeedbackMsg({ type: 'error', text: err instanceof Error ? err.message : 'Failed to append note' });
     } finally {
       setActionLoading(false);
     }
@@ -203,8 +193,8 @@ export default function ExceptionsPage() {
       if (res.exception?.id) {
         await loadExceptionDetail(res.exception.id);
       }
-    } catch (err: any) {
-      setFeedbackMsg({ type: 'error', text: err.message || 'Failed to create exception record' });
+    } catch (err: unknown) {
+      setFeedbackMsg({ type: 'error', text: err instanceof Error ? err.message : 'Failed to create exception record' });
     } finally {
       setCreateLoading(false);
     }
@@ -352,7 +342,7 @@ export default function ExceptionsPage() {
             {['ALL', 'OPEN', 'INVESTIGATING', 'RESCHEDULED', 'RETURN_TO_SENDER', 'RESOLVED'].map((status) => (
               <button
                 key={status}
-                onClick={() => setActiveFilter(status)}
+                onClick={() => { if (status !== activeFilter) { setLoading(true); setActiveFilter(status); } }}
                 className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
                   activeFilter === status
                     ? 'bg-[#ff6600] text-white shadow-xs'
@@ -370,7 +360,7 @@ export default function ExceptionsPage() {
               type="text"
               placeholder="Search tracking, recipient, issue..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => { setLoading(true); setSearchQuery(e.target.value); }}
               className="w-full pl-9 pr-3 py-1.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#ff6600] bg-slate-50/50"
             />
             <svg

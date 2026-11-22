@@ -1,10 +1,11 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import styles from '../auth.module.css';
 import AuthBackButton from '../AuthBackButton';
 import AuthInputIcon from '../AuthInputIcon';
+import AuthVisual from '../AuthVisual';
 
 export default function RegisterPage() {
   const submitting = useRef(false);
@@ -14,26 +15,49 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState<'CUSTOMER' | 'COURIER' | 'MERCHANT'>('CUSTOMER');
+  const [details, setDetails] = useState({ phone: '', address: '', vehicleType: 'Motorcycle', vehicleNumber: '', companyName: '', registrationNumber: '' });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [requiresConfirmation, setRequiresConfirmation] = useState(true);
   const [successMessage, setSuccessMessage] = useState('');
+  const [step, setStep] = useState<1 | 2>(1);
+  const firstAccountInput = useRef<HTMLInputElement>(null);
+  const firstDetailsInput = useRef<HTMLInputElement>(null);
+  const previousStep = useRef(step);
+  useEffect(() => {
+    if (previousStep.current !== step) {
+      (step === 1 ? firstAccountInput : firstDetailsInput).current?.focus();
+      previousStep.current = step;
+    }
+  }, [step]);
+
+  const continueToDetails = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError('');
+    if (fullName.trim().length < 2 || /[\u0000-\u001f\u007f]/.test(fullName)) { setError('Enter a valid full name with at least 2 characters.'); return; }
+    if (new TextEncoder().encode(password).length > 72) { setError('Password must be at most 72 UTF-8 bytes.'); return; }
+    if (password !== confirmPassword) { setError('Passwords do not match.'); return; }
+    setStep(2);
+  };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (submitting.current) return;
     setError('');
-    if (role !== 'CUSTOMER') return;
     if (fullName.trim().length < 2 || /[\u0000-\u001f\u007f]/.test(fullName)) { setError('Enter a valid full name with at least 2 characters.'); return; }
     if (new TextEncoder().encode(password).length > 72) { setError('Password must be at most 72 UTF-8 bytes.'); return; }
     if (password !== confirmPassword) { setError('Passwords do not match.'); return; }
     submitting.current = true; setBusy(true);
     try {
       const base = '/api/v1';
-      const response = await fetch(`${base}/auth/register`, {
+      const response = await fetch(`${base}/auth/${role === 'CUSTOMER' ? 'register' : 'register-application'}`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, cache: 'no-store',
-        body: JSON.stringify({ fullName, email, password, confirmPassword, role: 'CUSTOMER' }),
+        body: JSON.stringify({ fullName, email, password, confirmPassword, ...(role === 'CUSTOMER' ? { role } : {
+          application: { role, phone: details.phone, address: details.address, ...(role === 'COURIER'
+            ? { vehicleType: details.vehicleType, vehicleNumber: details.vehicleNumber }
+            : { companyName: details.companyName, registrationNumber: details.registrationNumber }) },
+        }) }),
         signal: AbortSignal.timeout(20000),
       });
       const result = await response.json().catch(() => ({}));
@@ -53,7 +77,9 @@ export default function RegisterPage() {
   };
 
   if (success) return (
-    <div className={`${styles.page} ${styles.signupPage}`}>
+    <div className={`${styles.page} ${styles.signupPage} ${styles.redesignedPage}`}>
+      <div className={styles.authLayout}>
+      <AuthVisual register />
       <section className={`${styles.card} ${styles.signupCard}`} aria-labelledby="register-title">
         <div className={styles.topbar}><AuthBackButton /><Link href="/" className={styles.brand}>swiftdrop<span>.</span></Link></div>
         <div className={styles.signupSuccess} role="status">
@@ -62,40 +88,45 @@ export default function RegisterPage() {
           <Link href="/login" className={`${styles.primary} ${styles.signupActions}`}>Continue to sign in<span className={styles.buttonArrow} aria-hidden="true">&#8594;</span></Link>
         </div>
       </section>
+      </div>
     </div>
   );
 
   return (
-    <div className={`${styles.page} ${styles.signupPage}`}>
+    <div className={`${styles.page} ${styles.signupPage} ${styles.redesignedPage}`}>
+      <div className={styles.authLayout}>
+      <AuthVisual register />
       <section className={`${styles.card} ${styles.signupCard}`} aria-labelledby="register-title">
         <div className={styles.topbar}>
           <AuthBackButton />
           <Link href="/" className={styles.brand} aria-label="SwiftDrop home">swiftdrop<span>.</span></Link>
         </div>
         <header className={`${styles.header} ${styles.signupHeader}`}>
+          <p className={styles.eyebrow}>START SOMETHING THAT MOVES</p>
           <h1 id="register-title" className={styles.title}>Create an account</h1>
+          <p className={styles.subtitle}>{step === 2 ? 'A few details to help us review your application.' : 'Your next delivery starts with a few simple details.'}</p>
         </header>
 
         <div className={styles.signupRoles} role="group" aria-label="Account type">
           {(['CUSTOMER', 'COURIER', 'MERCHANT'] as const).map(accountRole => (
             <button key={accountRole} type="button" className={styles.signupRole}
               aria-pressed={role === accountRole} disabled={busy}
-              onClick={() => { setRole(accountRole); setError(''); }}>
+              onClick={() => { setRole(accountRole); setStep(1); setError(''); }}>
               {accountRole === 'MERCHANT' ? 'Business' : accountRole === 'COURIER' ? 'Courier' : 'Customer'}
             </button>
           ))}
         </div>
         {role !== 'CUSTOMER' && <p className={styles.signupRoleNotice} role="status">
-          {role === 'MERCHANT' ? <>For business registration, <Link href="/portal">open the merchant portal</Link>.</>
-            : 'Contact SwiftDrop to create a courier account.'}
+          <span className={styles.stepLabel}>Step {step} of 2</span> · {step === 1 ? 'Account details' : role === 'MERCHANT' ? 'Business details' : 'Courier details'} · Staff approval required
         </p>}
-        <form onSubmit={handleRegister} className={`${styles.form} ${styles.signupForm}`} aria-label="Create account" aria-busy={busy}>
+        <form onSubmit={role !== 'CUSTOMER' && step === 1 ? continueToDetails : handleRegister} className={`${styles.form} ${styles.signupForm}`} aria-label="Create account" aria-busy={busy}>
           {error && <p className={`${styles.alert} ${styles.signupNotice}`} role="alert">{error}</p>}
+          {step === 1 && <>
           <div className={styles.field}>
             <label htmlFor="register-name" className={styles.label}>Full name</label>
             <div className={styles.inputControl}>
               <span className={styles.inputIcon}><AuthInputIcon kind="name" /></span>
-            <input id="register-name" name="fullName" type="text" autoComplete="name" required minLength={2} maxLength={150} disabled={busy}
+            <input ref={firstAccountInput} id="register-name" name="fullName" type="text" autoComplete="name" required minLength={2} maxLength={150} disabled={busy}
               value={fullName} onChange={(e) => setFullName(e.target.value)}
               placeholder="Your full name" className={styles.input} />
             </div>
@@ -131,10 +162,23 @@ export default function RegisterPage() {
                 placeholder="Repeat your password" className={styles.input} />
             </div>
           </div>
-          <button type="submit" disabled={busy || role !== 'CUSTOMER'} className={`${styles.primary} ${styles.signupActions}`}>{busy ? 'Creating account...' : 'Create account'}{!busy && <span className={styles.buttonArrow} aria-hidden="true">&#8594;</span>}</button>
+          </>}
+          {role !== 'CUSTOMER' && step === 2 && <>
+            {(['phone', 'address', ...(role === 'MERCHANT' ? ['companyName', 'registrationNumber'] : details.vehicleType === 'Bicycle' ? [] : ['vehicleNumber'])] as Array<keyof typeof details>).map(key => <div className={styles.field} key={key}>
+              <label htmlFor={`application-${key}`} className={styles.label}>{{ phone: 'Phone number', address: 'Address / delivery area', companyName: 'Company name', registrationNumber: 'Business registration number', vehicleNumber: 'Vehicle registration number', vehicleType: 'Vehicle type' }[key]}</label>
+              <input ref={key === 'phone' ? firstDetailsInput : undefined} id={`application-${key}`} className={styles.input} style={{ paddingLeft: 12 }} required disabled={busy} maxLength={key === 'address' ? 300 : key === 'phone' || key === 'vehicleNumber' ? 30 : key === 'companyName' ? 255 : 100}
+                value={details[key]} onChange={event => setDetails(previous => ({ ...previous, [key]: event.target.value }))} />
+            </div>)}
+            {role === 'COURIER' && <div className={styles.field}><label htmlFor="vehicle-type" className={styles.label}>Vehicle type</label>
+              <select id="vehicle-type" className={styles.input} style={{ paddingLeft: 12 }} disabled={busy} value={details.vehicleType} onChange={event => setDetails(previous => ({ ...previous, vehicleType: event.target.value }))}>
+                {['Motorcycle', 'Car', 'Van', 'Bicycle'].map(value => <option key={value}>{value}</option>)}
+              </select></div>}
+          </>}
+          <div className={styles.signupButtonRow}>{step === 2 && <button type="button" className={styles.previousStep} disabled={busy} onClick={() => { setStep(1); setError(''); }}>Back</button>}<button type="submit" disabled={busy} className={`${styles.primary} ${styles.signupActions}`}>{busy ? 'Submitting...' : role === 'CUSTOMER' ? 'Create account' : step === 1 ? 'Continue' : 'Submit application'}{!busy && <span className={styles.buttonArrow} aria-hidden="true">&#8594;</span>}</button></div>
         </form>
         <p className={`${styles.footer} ${styles.registerFooter}`}>Already have an account? <Link href="/login">Sign in</Link></p>
       </section>
+      </div>
     </div>
   );
 }

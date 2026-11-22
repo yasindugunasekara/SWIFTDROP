@@ -4,6 +4,8 @@
   "description": "SwiftDrop Courier & Parcel Delivery Backend API",
   "main": "dist/index.js",
   "scripts": {
+    "seed:admin": "tsx src/scripts/seed-admin.ts",
+    "test:admin": "tsx --test src/modules/admin/admin.test.ts",
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
@@ -13,6 +15,9 @@
     "lint": "eslint src --ext .ts",
     "test": "jest",
     "test:signup": "tsx --test src/modules/auth/auth.test.ts",
+    "auth:check": "tsx src/scripts/check-auth-setup.ts",
+    "auth:http": "tsx src/scripts/check-auth-http.ts",
+    "auth:existing": "tsx src/scripts/check-auth-existing.ts",
     "db:check": "tsx src/scripts/check-database.ts",
     "test:webhooks": "tsx src/modules/webhooks/webhook.test.ts",
     "demo:webhooks": "tsx src/scripts/webhook-demo.ts",
@@ -22,7 +27,12 @@
     "demo:support": "tsx src/scripts/support-demo.ts",
     "test:merchant": "tsx src/modules/merchant/merchant.test.ts",
     "test:tracking": "tsx src/modules/tracking/tracking.test.ts",
-    "test:tracking-socket": "tsx src/modules/tracking/tracking.socket.test.ts"
+    "test:tracking-socket": "tsx src/modules/tracking/tracking.socket.test.ts",
+    "test:dispatch": "tsx src/modules/dispatch/dispatch.test.ts",
+    "demo:dispatch": "tsx src/scripts/dispatch-demo.ts",
+    "db:seed:dispatch": "tsx src/scripts/seed-dispatch.ts",
+    "test:notifications": "tsx --test src/modules/notifications/notification.events.test.ts src/modules/notifications/notification.database.test.ts src/modules/notifications/notification.test.ts src/workers/notification-consumer.test.ts",
+    "test:booking": "tsx --test src/modules/booking/booking.test.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.14.0",

@@ -145,12 +145,7 @@
   overflow: hidden;
 }
 
-:global(html):has(.loginPage),
-:global(html):has(.signupPage),
-:global(body):has(.loginPage),
-:global(body):has(.signupPage) {
-  overflow: hidden;
-}
+/* Page content owns its height; no document-level scroll lock. */
 
 .loginCard, .signupCard {
   max-height: 100%;
@@ -284,4 +279,224 @@
 
 @media (prefers-reduced-motion: reduce) {
   .role, .signupRole, .input, .inputIcon, .primary, .google, .back { transition: none; }
+}
+
+/* Login and registration: viewport-friendly forms with an accessible short-screen fallback. */
+.redesignedPage {
+  height: auto;
+  min-height: 100dvh;
+  overflow: visible;
+  padding: 28px;
+  align-items: center;
+  background: #f4f5f6;
+}
+.authLayout {
+  width: 100%;
+  max-width: 1120px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  background: #fff;
+  border: 1px solid #e3e6eb;
+  box-shadow: 0 18px 80px #17202e06;
+}
+.redesignedPage .card {
+  order: 1;
+  width: 100%;
+  max-width: none;
+  max-height: none;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 30px 46px;
+  align-self: center;
+}
+.redesignedPage .topbar { margin-bottom: 28px; }
+.redesignedPage .back { margin-left: -10px; font-weight: 500; }
+.redesignedPage .brand { font-size: 25px; }
+.redesignedPage .title { font-size: 32px; letter-spacing: -1.1px; font-weight: 700; margin: 0 0 8px; }
+.eyebrow { color: #c15a16; letter-spacing: 1.7px; font-size: 10px; font-weight: 700; margin-bottom: 10px; }
+.redesignedPage .subtitle { font-size: 14px; color: #7e8794; line-height: 1.6; }
+.redesignedPage .signupHeader, .redesignedPage .loginHeader { margin-bottom: 22px; }
+.redesignedPage .signupRoles { border-radius: 2px; padding: 3px; background: #f7f8fa; margin-bottom: 20px; gap: 3px; }
+.redesignedPage .signupRole { min-height: 39px; border-radius: 2px; font-size: 12px; }
+.redesignedPage .signupRole[aria-pressed="true"] { background: #fff3e9; border-color: #f5d7c3; box-shadow: none; color: #be540c; }
+.redesignedPage .loginForm { gap: 16px; }
+.redesignedPage .label { color: #445163; font-size: 13px; font-weight: 500; }
+.redesignedPage .input { height: 46px; border-radius: 2px; background: #fff; border-color: #dfe4ea; font-size: 16px; box-shadow: none; }
+.redesignedPage .input:focus { border-color: #ff6600; box-shadow: 0 0 0 3px #ff660012; }
+.redesignedPage .input::placeholder { color: #a1a9b4; font-size: 13px; }
+.redesignedPage .inputIcon { top: 14px; }
+.redesignedPage .primary { min-height: 48px; height: 48px; border-radius: 2px; background: #ff6600; border-color: #ff6600; box-shadow: none; font-size: 14px; }
+.redesignedPage .primary:hover { background: #e65b00; border-color: #e65b00; box-shadow: none; }
+.redesignedPage .toggle, .redesignedPage .google, .redesignedPage .alert, .redesignedPage .roleNote { border-radius: 2px; }
+.redesignedPage .google { height: 46px; }
+.redesignedPage .social { max-width: none; height: 88px; margin-top: 20px; }
+.redesignedPage .divider { font-size: 11px; margin-bottom: 14px; }
+.redesignedPage .footer { margin-top: 20px; padding-top: 18px; border-top: 1px solid #edf0f4; font-size: 13px; }
+.redesignedPage .alertSlot:empty { display: none; }
+.redesignedPage .alertSlot { margin: 0; }
+.redesignedPage .card :global(fieldset) button { border-radius: 2px; }
+.redesignedPage .back, .redesignedPage .previousStep { border-radius: 2px; }
+.visual {
+  order: 2;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 640px;
+  padding: 34px;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 100% 100%, #6b391f 0%, transparent 58%), #15212b;
+  color: #fff;
+}
+.visualTop { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 9px; letter-spacing: 1.9px; color: #a5afb7; }
+.visualMark { width: 39px; height: 39px; border: 1px solid #ffffff30; display: flex; justify-content: center; align-items: center; font-size: 23px; font-weight: 800; letter-spacing: -2px; color: white; }
+.visualMark span { color: #ff8b43; font-size: 17px; margin-top: -10px; }
+.visualCopy { margin-top: 42px; position: relative; z-index: 1; }
+.visualCopy>p:first-child { font-size: 9px; letter-spacing: 1.8px; color: #ffb07a; font-weight: 600; }
+.visualCopy h2 { font-size: clamp(32px, 3.2vw, 46px); font-weight: 600; line-height: 1.14; letter-spacing: -1.5px; margin: 16px 0 18px; }
+.visualCopy em { font-style: normal; color: #ff9a57; }
+.visualCopy>p:last-child { max-width: 330px; font-size: 13px; line-height: 1.8; color: #aeb8c0; }
+.visualFooter { display: flex; justify-content: space-between; gap: 15px; margin-top: auto; padding-top: 24px; border-top: 1px solid #ffffff1c; font-size: 10px; color: #aeb8c0; }
+.journey { position: relative; flex: 1; min-height: 190px; margin: 12px 0 16px; }
+.journeyLine { position: absolute; left: 12px; right: 10px; top: 74px; height: 65px; border: 1px dashed #ffffff3b; border-top: 0; border-radius: 0 0 40px 40px; }
+.journeyDot { position: absolute; top: 69px; left: 8px; height: 9px; width: 9px; border: 2px solid #ffb27d; border-radius: 50%; background: #15212b; }
+.journeyEnd { position: absolute; right: 0; top: 59px; width: 30px; height: 30px; border: 1px solid #ffffff30; color: #ffb27d; display: grid; place-items: center; background: #3b3028; }
+.parcel { position: absolute; top: 18px; left: 50%; width: 145px; height: 100px; transform: translateX(-50%) rotate(-7deg); background: #eab482; border: 1px solid #ffd5ae; box-shadow: 12px 16px 0 #080d141c; }
+.parcelTape { position: absolute; height: 100%; width: 23px; left: 64px; background: #ffdac260; border-inline: 1px solid #fff5; }
+.parcelLabel { position: absolute; bottom: 13px; left: 12px; background: #fff7ed; padding: 7px; color: #25313b; font-size: 15px; font-weight: 800; letter-spacing: -.7px; }
+.parcelLabel>span { color: #ff6600; }
+.parcelLabel small { display: block; margin-top: 3px; font-size: 5px; letter-spacing: .7px; font-weight: 600; }
+.journeyTag { position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 9px; color: #c7ccd1; background: #ffffff08; border: 1px solid #ffffff16; padding: 7px 10px; }
+.journeyTag i { display: inline-block; height: 4px; width: 4px; margin-right: 5px; background: #ff9a57; border-radius: 50%; vertical-align: middle; }
+.signupPage.redesignedPage .authLayout { max-width: 600px; display: block; }
+.signupPage.redesignedPage .visual { display: none; }
+.signupPage.redesignedPage .card { padding: 26px 34px; }
+.signupPage.redesignedPage .topbar { margin-bottom: 20px; }
+.signupPage.redesignedPage .signupHeader { margin-bottom: 18px; }
+.signupPage.redesignedPage .signupForm { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 18px; }
+.signupPage.redesignedPage .signupRoles { margin-bottom: 18px; }
+.signupPage.redesignedPage .signupRoleNotice { margin: -5px 0 15px; font-size: 11px; color: #7e8794; }
+.stepLabel { color: #b9510d; font-weight: 600; }
+.signupButtonRow { display: flex; gap: 12px; grid-column: 1 / -1; margin-top: 4px; }
+.signupButtonRow .primary { flex: 1; min-width: 0; margin: 0; }
+.previousStep { padding: 10px 20px; min-height: 48px; border: 1px solid #dfe4ea; color: #697585; background: white; font-size: 14px; }
+.previousStep:focus-visible { outline: 2px solid #ff6600; outline-offset: 3px; }
+.previousStep:disabled { opacity: .6; }
+.signupPage.redesignedPage .footer { margin-top: 18px; padding-top: 15px; }
+.signupPage.redesignedPage .signupSuccess { padding-block: 28px; }
+@media (max-width: 900px) {
+  .redesignedPage { padding: 20px; }
+  .redesignedPage .card { padding: 28px; }
+  .visual { padding: 28px; }
+  .visualCopy h2 { font-size: 35px; }
+  .visualFooter { font-size: 9px; }
+}
+@media (max-width: 720px) {
+  .redesignedPage { padding: 20px 16px; }
+  .authLayout { display: block; max-width: 470px; }
+  .visual { display: none; }
+  .redesignedPage .card { padding: 24px; }
+  .redesignedPage .topbar { margin-bottom: 22px; }
+  .redesignedPage .title { font-size: 29px; }
+  .redesignedPage .signupForm, .redesignedPage .loginForm { gap: 14px; }
+  .redesignedPage .loginForm { display: flex; }
+  .redesignedPage .loginForm .field { width: 100%; }
+  .redesignedPage .inputControl .input { padding-left: 13px; }
+  .redesignedPage .password .input { padding-right: 56px; }
+  .redesignedPage .inputIcon { display: none; }
+  .redesignedPage .signupRole { min-height: 40px; font-size: 11px; }
+  .redesignedPage .back { font-size: 12px; }
+  .signupPage.redesignedPage .card { padding: 24px; }
+  .signupPage.redesignedPage .signupForm { gap: 13px; }
+}
+@media (max-width: 420px) {
+  .signupPage.redesignedPage .signupForm { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .signupPage.redesignedPage { padding: 12px; }
+  .signupPage.redesignedPage .card { padding: 18px; }
+  .signupPage.redesignedPage .topbar { margin-bottom: 14px; }
+  .signupPage.redesignedPage .signupHeader { margin-bottom: 14px; }
+  .signupPage.redesignedPage .title { font-size: 27px; }
+  .signupPage.redesignedPage .signupRoles { margin-bottom: 14px; }
+  .signupPage.redesignedPage .subtitle { font-size: 12px; }
+  .signupPage.redesignedPage .signupRoleNotice { font-size: 10px; margin-bottom: 12px; }
+  .signupPage.redesignedPage .field { gap: 4px; }
+  .signupPage.redesignedPage .input { height: 44px; }
+  .signupPage.redesignedPage .footer { margin-top: 14px; padding-top: 12px; }
+  .signupPage.redesignedPage .primary, .previousStep { height: 44px; min-height: 44px; }
+}
+@media (max-height: 700px) and (min-width: 721px) {
+  .redesignedPage { padding-block: 16px; align-items: flex-start; }
+  .visual { min-height: 600px; }
+  .visualCopy { margin-top: 25px; }
+  .redesignedPage .card { padding-block: 22px; }
+  .redesignedPage .topbar { margin-bottom: 20px; }
+}
+
+/* Readable type without adding a second, padded viewport around sign-in. */
+.redesignedPage .title { font-size: 34px; }
+.redesignedPage .subtitle { font-size: 15px; line-height: 1.5; }
+.redesignedPage .label { font-size: 14px; line-height: 20px; }
+.redesignedPage .input, .redesignedPage .input::placeholder { font-size: 16px; }
+.redesignedPage .primary, .redesignedPage .google, .previousStep { font-size: 15px; }
+.redesignedPage .signupRole { font-size: 14px; }
+.redesignedPage .footer, .redesignedPage .roleNote { font-size: 14px; line-height: 1.5; }
+.redesignedPage .hint, .redesignedPage .toggle, .redesignedPage .labelRow a { font-size: 13px; }
+.redesignedPage .divider { font-size: 13px; }
+.redesignedPage .eyebrow { font-size: 12px; }
+.redesignedPage .alert { font-size: 13px; line-height: 1.5; }
+.signupPage.redesignedPage .signupRoleNotice { font-size: 13px; }
+.loginPage.redesignedPage { padding: 0; background: #fff; }
+.loginPage.redesignedPage .authLayout { max-width: none; min-height: 100dvh; border: 0; box-shadow: none; }
+.loginPage.redesignedPage .loginCard { max-width: 500px; justify-self: center; padding: 20px 32px; }
+.loginPage.redesignedPage .visual { min-height: 100%; padding: 34px 42px; }
+.loginPage.redesignedPage .topbar { margin-bottom: 18px; }
+.loginPage.redesignedPage .eyebrow { display: none; }
+.loginPage.redesignedPage .loginHeader { margin-bottom: 16px; }
+.loginPage.redesignedPage .signupRoles { margin-bottom: 16px; }
+.loginPage.redesignedPage .signupRole { min-height: 40px; }
+.loginPage.redesignedPage .loginForm { gap: 12px; }
+.loginPage.redesignedPage .field { gap: 5px; }
+.loginPage.redesignedPage .input { height: 44px; }
+.loginPage.redesignedPage .toggle { height: 40px; }
+.loginPage.redesignedPage .primary { height: 46px; min-height: 46px; }
+.loginPage.redesignedPage .social { height: auto; min-height: 76px; margin-top: 14px; }
+.loginPage.redesignedPage .divider { margin-bottom: 10px; }
+.loginPage.redesignedPage .google, .loginPage.redesignedPage .roleNote { height: 44px; }
+.loginPage.redesignedPage .footer { margin-top: 16px; padding-top: 14px; }
+.loginPage.redesignedPage .card :global(fieldset) { margin-top: 12px; padding-top: 6px; }
+.loginPage.redesignedPage .card :global(fieldset) :global(legend) { font-size: 13px; }
+.loginPage.redesignedPage .card :global(fieldset) button { font-size: 13px; padding: 6px 9px; }
+.loginPage.redesignedPage .visualCopy { margin-top: 36px; }
+.loginPage.redesignedPage .visualCopy>p:last-child { font-size: 15px; }
+.loginPage.redesignedPage .visualTop, .loginPage.redesignedPage .visualCopy>p:first-child { font-size: 11px; }
+.loginPage.redesignedPage .visualFooter { font-size: 12px; }
+.loginPage.redesignedPage .journeyTag { font-size: 11px; }
+@media (max-width: 900px) {
+  .loginPage.redesignedPage .loginCard { padding-inline: 24px; }
+  .loginPage.redesignedPage .visual { padding-inline: 26px; }
+}
+@media (max-width: 720px) {
+  .redesignedPage .title { font-size: 32px; }
+  .redesignedPage .signupRole { font-size: 13px; }
+  .loginPage.redesignedPage .authLayout { display: grid; grid-template-columns: minmax(0,1fr); align-items: center; }
+  .loginPage.redesignedPage .loginCard { max-width: 470px; padding: 18px 20px; }
+  .loginPage.redesignedPage .visual { display: none; }
+  .signupPage.redesignedPage .subtitle { font-size: 14px; }
+  .signupPage.redesignedPage .signupRoleNotice { font-size: 12px; }
+}
+@media (max-width: 420px) {
+  .signupPage.redesignedPage .title { font-size: 30px; }
+  .signupPage.redesignedPage .signupForm { gap: 9px; }
+  .signupPage.redesignedPage .field { gap: 4px; }
+  .signupPage.redesignedPage .hint { font-size: 13px; }
+}
+/* Short screens, browser zoom and an open keyboard can still reveal every control. */
+@media (max-height: 700px) {
+  .loginPage.redesignedPage .visualCopy { margin-top: 22px; }
+  .loginPage.redesignedPage .topbar { margin-bottom: 12px; }
+  .loginPage.redesignedPage .loginHeader { margin-bottom: 12px; }
+  .loginPage.redesignedPage .signupRoles { margin-bottom: 12px; }
+  .loginPage.redesignedPage .loginCard { padding-block: 14px; }
 }

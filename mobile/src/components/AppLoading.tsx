@@ -1,9 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { AccessibilityInfo, Animated, Easing, Modal, StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, Animated, Easing, Modal, Platform, StyleSheet, Text, View } from 'react-native';
 
 export function LoadingOverlay({ visible, label }: { visible: boolean; label: string }) {
+  if (!visible) return null;
+  if (Platform.OS === 'web') {
+    return (
+      <View style={styles.webLoadingOverlay}>
+        <AppLoading label={label} />
+      </View>
+    );
+  }
   return <Modal visible={visible} transparent animationType="none" statusBarTranslucent onRequestClose={() => {}}>
-    {visible && <AppLoading label={label} />}
+    <AppLoading label={label} />
   </Modal>;
 }
 
@@ -58,4 +66,13 @@ const styles = StyleSheet.create({
   label: { color: '#64748b', fontSize: 13, textAlign: 'center' },
   dots: { flexDirection: 'row', gap: 5 },
   dot: { width: 5, height: 5, borderRadius: 3, backgroundColor: '#ff6600' },
+  webLoadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    zIndex: 99999,
+  },
 });

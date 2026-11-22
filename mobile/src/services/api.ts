@@ -6,10 +6,21 @@ export async function mobileApiFetch(endpoint: string, options: RequestInit = {}
   const headers = new Headers(options.headers);
   if (!headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
   if (token) headers.set('Authorization', `Bearer ${token}`);
-  const request = () => fetch(`${API_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
+  const request = async () => {
+    try {
+      return await fetch(`${API_URL}${endpoint}`, { ...options, headers });
+    } catch (netErr) {
+      if (API_URL.includes(':5000')) {
+        const altUrl = API_URL.replace(':5000', ':3000');
+        try {
+          return await fetch(`${altUrl}${endpoint}`, { ...options, headers });
+        } catch {
+          // Both unreachable
+        }
+      }
+      throw netErr;
+    }
+  };
   let response = await request();
   if (response.status === 401 && token && isMobileSessionCurrent(version)) {
     const fresh = await refreshMobileAccessToken(token);

@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
+import { updateMobileProfile, requestMobilePasswordReset } from '../services/auth';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  TextInput,
 } from 'react-native';
 import { Colors } from '../theme/colors';
 
@@ -20,21 +22,26 @@ interface Props {
 }
 
 export default function AccountScreen({ userName, userEmail, userPhone, userRole, loggingOut, logoutError, onLogout, onNavigateOrders }: Props) {
-  const menuItems = [
-    { id: 'orders', label: 'My Orders', icon: '📦', action: onNavigateOrders },
-    { id: 'addr', label: 'Saved Addresses', icon: '📍', action: () => alert('Saved Addresses: Home, Office') },
-    { id: 'pay', label: 'Payment Methods', icon: '💳', action: () => alert('Saved Cards: Visa •••• 4242') },
-    { id: 'notif', label: 'Notifications & Alerts', icon: '🔔', action: () => alert('Notifications enabled') },
-    { id: 'vouchers', label: 'Coupons & Vouchers', icon: '🎟️', action: () => alert('Active Coupon: SWIFTDROP20') },
-    { id: 'support', label: 'Help & 24/7 Support', icon: '💬', action: () => alert('Contacting SwiftDrop support...') },
-    { id: 'settings', label: 'Settings & Security', icon: '⚙️', action: () => alert('Settings opened') },
-  ];
-
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState(userName);
+  const [phone, setPhone] = useState(userPhone || '');
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+  const pending = useRef(false);
+  async function perform(action: () => Promise<void>) {
+    if (pending.current) return;
+    pending.current = true; setBusy(true); setError(''); setMessage('');
+    try { await action(); }
+    catch (failure) { setError(failure instanceof Error ? failure.message : 'Please retry.'); }
+    finally { pending.current = false; setBusy(false); }
+  }
   return (
     <View style={styles.container}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         {/* Header */}
         <View style={styles.header}>
@@ -60,47 +67,31 @@ export default function AccountScreen({ userName, userEmail, userPhone, userRole
           </View>
         </View>
 
-        {/* Wallet Balance Card */}
-        <View style={styles.walletCard}>
-          <View>
-            <Text style={styles.walletLabel}>SwiftDrop Balance</Text>
-            <Text style={styles.walletAmount}>$45.00</Text>
-          </View>
-
-          <TouchableOpacity
-            style={styles.topUpBtn}
-            onPress={() => alert('Top up wallet modal opened')}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.topUpBtnText}>+ Top Up</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Menu Items List */}
         <View style={styles.menuContainer}>
-          {menuItems.map((item, idx) => (
-            <TouchableOpacity
-              key={item.id}
-              style={[styles.menuItem, idx === menuItems.length - 1 && { borderBottomWidth: 0 }]}
-              onPress={item.action}
-              activeOpacity={0.7}
-            >
-              <View style={styles.menuItemLeft}>
-                <View style={styles.menuIconWrap}>
-                  <Text style={{ fontSize: 16 }}>{item.icon}</Text>
-                </View>
-                <Text style={styles.menuItemLabel}>{item.label}</Text>
-              </View>
-              <Text style={styles.menuChevron}>&gt;</Text>
-            </TouchableOpacity>
-          ))}
+          <TouchableOpacity accessibilityRole="button" style={styles.menuItem} disabled={busy || loggingOut} onPress={onNavigateOrders}><Text>{userRole === 'courier' ? 'My tasks' : 'My orders'}</Text></TouchableOpacity>
+          <TouchableOpacity accessibilityRole="button" style={styles.menuItem} disabled={busy || loggingOut} onPress={() => { setName(userName); setPhone(userPhone || ''); setMessage(''); setError(''); setEditing(true); }}><Text>Edit profile</Text></TouchableOpacity>
+          <TouchableOpacity accessibilityRole="button" style={styles.menuItem} disabled={busy || loggingOut} onPress={() => void perform(async () => { setMessage(await requestMobilePasswordReset(userEmail)); })}><Text>{busy ? 'Please wait...' : 'Send password reset email'}</Text></TouchableOpacity>
         </View>
+        {editing && <View style={{ gap: 12, marginBottom: 20 }}>
+          <Text>Full name</Text>
+          <TextInput accessibilityLabel="Full name" value={name} onChangeText={setName} editable={!busy && !loggingOut} maxLength={150} style={{ borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 10, padding: 12 }} />
+          <Text>Phone number</Text>
+          <TextInput accessibilityLabel="Phone number" value={phone} onChangeText={setPhone} editable={!busy && !loggingOut} maxLength={30} keyboardType="phone-pad" style={{ borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 10, padding: 12 }} />
+          <TouchableOpacity accessibilityRole="button" disabled={busy || loggingOut} onPress={() => void perform(async () => {
+            if (name.trim().length < 2) throw new Error('Enter a name with at least 2 characters.');
+            await updateMobileProfile(name, phone); setEditing(false); setMessage('Profile saved.');
+          })}><Text style={{ color: Colors.primary }}>{busy ? 'Saving...' : 'Save profile'}</Text></TouchableOpacity>
+          <TouchableOpacity accessibilityRole="button" disabled={busy} onPress={() => setEditing(false)}><Text>Cancel</Text></TouchableOpacity>
+        </View>}
+        {message ? <Text accessibilityLiveRegion="polite" style={{ marginBottom: 16, color: '#15803d' }}>{message}</Text> : null}
+        {error ? <Text accessibilityRole="alert" style={{ marginBottom: 16, color: '#b91c1c' }}>{error}</Text> : null}
+
 
         {/* Logout Button */}
         <TouchableOpacity
           style={styles.logoutButton}
           onPress={onLogout}
-          disabled={loggingOut}
+          disabled={loggingOut || busy}
           activeOpacity={0.8}
         >
           <Text style={styles.logoutButtonText}>{loggingOut ? 'Logging out...' : 'Log Out'}</Text>

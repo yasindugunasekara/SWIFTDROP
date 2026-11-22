@@ -163,6 +163,8 @@ CREATE TABLE IF NOT EXISTS courier_assignments (
 -- -----------------------------------------------------------------------------
 -- MEMBER 7: Notification Preferences & Delivery Inbox
 -- -----------------------------------------------------------------------------
+-- Existing databases must also apply migrations/004_notifications_hardening.sql.
+-- The definitions below already reflect the final shape for fresh installs.
 CREATE TABLE IF NOT EXISTS user_notification_preferences (
     user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
     sms_enabled BOOLEAN DEFAULT TRUE,
@@ -175,12 +177,46 @@ CREATE TABLE IF NOT EXISTS notifications (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     parcel_id UUID REFERENCES parcels(id),
-    event_id VARCHAR(100) UNIQUE, -- Idempotency key
+    event_id VARCHAR(100),                          -- publisher id or deterministic SHA-256 fallback
+    type VARCHAR(50) NOT NULL DEFAULT 'SYSTEM',     -- PARCEL_BOOKED, COURIER_ASSIGNED, ...
     title VARCHAR(255) NOT NULL,
     message TEXT NOT NULL,
     is_read BOOLEAN DEFAULT FALSE,
+    read_at TIMESTAMP WITH TIME ZONE,
+    delivery_channels TEXT[] NOT NULL DEFAULT '{}', -- requested external channels, not proof of delivery
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+-- One row per recipient per event: the core idempotency guarantee. NULL event_id
+-- values are distinct in PostgreSQL, so manually created rows are never blocked.
+CREATE UNIQUE INDEX IF NOT EXISTS notifications_user_event_unique
+    ON notifications (user_id, event_id);
+
+CREATE INDEX IF NOT EXISTS notifications_user_created_idx
+    ON notifications (user_id, created_at DESC, id DESC);
+
+CREATE INDEX IF NOT EXISTS notifications_user_unread_idx
+    ON notifications (user_id)
+    WHERE is_read = FALSE;
+
+-- RLS is defence in depth for direct Supabase Data API access. The Express API
+-- connects as the table owner (DATABASE_URL), which bypasses RLS. anon and
+-- authenticated are revoked so PostgREST cannot read these tables directly.
+ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_notification_preferences ENABLE ROW LEVEL SECURITY;
+
+DO $notification_api_privileges$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
+        REVOKE ALL ON TABLE notifications FROM anon;
+        REVOKE ALL ON TABLE user_notification_preferences FROM anon;
+    END IF;
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
+        REVOKE ALL ON TABLE notifications FROM authenticated;
+        REVOKE ALL ON TABLE user_notification_preferences FROM authenticated;
+    END IF;
+END
+$notification_api_privileges$;
 
 -- -----------------------------------------------------------------------------
 -- MEMBER 8: Merchant Webhook Center

@@ -36,9 +36,9 @@ test('login and signup validation use existing backend handlers', async () => {
 });
 
 test('Express parses POST JSON through Next and retains auth guards', async () => {
-  const quote = await request('/api/v1/booking/quote', post({ weightKg: 4 }));
+  const quote = await request('/api/v1/booking/quote', post({ pickupAddress:'Colombo', dropoffAddress:'Kandy', weightKg:4 }));
   assert.equal(quote.status, 200);
-  assert.equal((await quote.json()).weightFee, 10);
+  assert.equal((await quote.json()).quote.weightFee, 4.5);
   for (const [path, options] of [
     ['/api/v1/auth/me', {}], ['/api/v1/booking/create', post({})],
   ]) {
@@ -69,6 +69,34 @@ test('merchant and courier modules remain mounted behind the same Next API', asy
   for (const path of ['/api/v1/merchant/profile', '/api/v1/courier/jobs']) {
     const response = await request(path);
     assert.equal(response.status, 401);
+    assert.equal((await response.json()).error, 'Access token required');
+  }
+});
+
+test('merged admin and dispatch pages render and their private APIs require authentication', async () => {
+  for (const path of ['/admin', '/admin/applications', '/admin/profile', '/admin/analytics', '/dispatch', '/config']) {
+    const response = await request(path);
+    assert.equal(response.status, 200, path);
+    assert.match(response.headers.get('content-type'), /text\/html/);
+  }
+  for (const path of ['/admin/users', '/auth/applications', '/dispatch/unassigned', '/dispatch/couriers', '/dispatch/config']) {
+    assert.equal((await request('/api/v1' + path)).status, 401, path);
+  }
+});
+
+test('notification endpoints reject unauthenticated requests', async () => {
+  const checks = [
+    ['GET', '/api/v1/notifications'],
+    ['GET', '/api/v1/notifications/unread-count'],
+    ['GET', '/api/v1/notifications/preferences'],
+    ['PATCH', '/api/v1/notifications/read-all'],
+    ['PATCH', '/api/v1/notifications/11111111-1111-4111-8111-111111111111/read'],
+    ['PUT', '/api/v1/notifications/preferences'],
+  ];
+
+  for (const [method, path] of checks) {
+    const response = await request(path, { method });
+    assert.equal(response.status, 401, `${method} ${path} should require a token`);
     assert.equal((await response.json()).error, 'Access token required');
   }
 });

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -8,23 +8,38 @@ import {
   TouchableOpacity,
   Image,
   Dimensions,
+  Platform,
+  Alert,
 } from 'react-native';
 import { Colors } from '../theme/colors';
 
 const { width } = Dimensions.get('window');
 
 interface Props {
-  onBookNow: () => void;
+  onBookNow: (category?: string, promoCode?: string) => void;
   onTrackPress: (trackingId?: string) => void;
   onNotifications: () => void;
+  userName?: string;
 }
 
-export default function HomeScreen({ onBookNow, onTrackPress, onNotifications }: Props) {
-  const quickActions = [
-    { id: 'send', label: 'Send Package', icon: '📦', action: onBookNow },
-    { id: 'track', label: 'Track Package', icon: '📍', action: () => onTrackPress('SWIFT-991122') },
-    { id: 'express', label: 'Island Express', icon: '⚡', action: onBookNow },
-    { id: 'freight', label: 'B2B Cargo', icon: '🚚', action: onBookNow },
+export default function HomeScreen({
+  onBookNow,
+  onTrackPress,
+  onNotifications,
+  userName = 'Kasun',
+}: Props) {
+  const [selectedCategory, setSelectedCategory] = useState<string>('parcels');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [balance, setBalance] = useState(120.00);
+  const [favorites, setFavorites] = useState<Record<string, boolean>>({ s1: true });
+
+  const categories = [
+    { id: 'parcels', label: 'Parcels', icon: '📦' },
+    { id: 'documents', label: 'Documents', icon: '📄' },
+    { id: 'electronics', label: 'Electronics', icon: '💻' },
+    { id: 'gift_box', label: 'Gift Box', icon: '🎁' },
+    { id: 'apparel', label: 'Apparel', icon: '👕' },
+    { id: 'heavy_cargo', label: 'Heavy Cargo', icon: '🚚' },
   ];
 
   const popularServices = [
@@ -33,7 +48,8 @@ export default function HomeScreen({ onBookNow, onTrackPress, onNotifications }:
       title: 'Same-Day Express',
       price: 'From $8.50',
       time: 'Under 2 hours',
-      tag: '15% Off',
+      tag: '15% OFF',
+      category: 'parcels',
       image: require('../../assets/service-express.jpg'),
     },
     {
@@ -42,6 +58,7 @@ export default function HomeScreen({ onBookNow, onTrackPress, onNotifications }:
       price: 'From $4.50',
       time: 'Next day verified',
       tag: 'Popular',
+      category: 'documents',
       image: require('../../assets/service-tracking.jpg'),
     },
     {
@@ -50,6 +67,7 @@ export default function HomeScreen({ onBookNow, onTrackPress, onNotifications }:
       price: 'From $12.50',
       time: 'Insured bubble pack',
       tag: 'Safe POD',
+      category: 'electronics',
       image: require('../../assets/service-pod.jpg'),
     },
     {
@@ -57,10 +75,54 @@ export default function HomeScreen({ onBookNow, onTrackPress, onNotifications }:
       title: 'Heavy Island Cargo',
       price: 'From $25.00',
       time: 'Pallets & bulk boxes',
-      tag: 'Freight',
+      tag: '15% OFF',
+      category: 'heavy_cargo',
       image: require('../../assets/service-api.jpg'),
     },
   ];
+
+  const orderMenuItems = [
+    {
+      id: 'SWIFT-991122',
+      title: 'Document Envelope',
+      price: '+$4.50',
+      qty: 'x1',
+      icon: '📄',
+      status: 'In Transit',
+      eta: '14 mins away',
+    },
+    {
+      id: 'SWIFT-882233',
+      title: 'Electronics Package',
+      price: '+$12.50',
+      qty: 'x1',
+      icon: '💻',
+      status: 'Out for Delivery',
+      eta: 'Arriving today',
+    },
+    {
+      id: 'SWIFT-782910',
+      title: 'Express Care Gift',
+      price: '+$6.20',
+      qty: 'x1',
+      icon: '🎁',
+      status: 'Confirmed',
+      eta: 'Pickup scheduled',
+    },
+  ];
+
+  const toggleFavorite = (id: string) => {
+    setFavorites(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const handleTopUp = () => {
+    setBalance(prev => prev + 25);
+    Alert.alert('Wallet Top-Up', 'Successfully added $25.00 to your SwiftDrop Wallet! New Balance: $' + (balance + 25).toFixed(2));
+  };
+
+  const handleTransfer = () => {
+    Alert.alert('Transfer Balance', 'Instant transfer to bank account or mobile wallet initiated.');
+  };
 
   return (
     <View style={styles.container}>
@@ -70,26 +132,39 @@ export default function HomeScreen({ onBookNow, onTrackPress, onNotifications }:
       >
         {/* Top Header Bar */}
         <View style={styles.topHeader}>
-          <TouchableOpacity style={styles.locationSelector} activeOpacity={0.7}>
-            <Text style={styles.locationPin}>📍</Text>
-            <View>
-              <Text style={styles.locationLabel}>Deliver to</Text>
-              <Text style={styles.locationText}>Colombo, Sri Lanka ▾</Text>
-            </View>
-          </TouchableOpacity>
+          <View>
+            <Text style={styles.brandLogo}>
+              swiftdrop<Text style={styles.brandDot}>.</Text>
+            </Text>
+            <Text style={styles.greetingTitle}>Hello, {userName}</Text>
+            <Text style={styles.greetingSubtitle}>
+              Ready to dispatch or track your island deliveries today?
+            </Text>
+          </View>
 
           <View style={styles.headerRight}>
             <TouchableOpacity
               onPress={onNotifications}
               style={styles.iconCircle}
               activeOpacity={0.7}
+              accessibilityLabel="Notifications"
             >
               <Text style={{ fontSize: 16 }}>🔔</Text>
               <View style={styles.badgeDot} />
             </TouchableOpacity>
 
+            <TouchableOpacity
+              style={styles.iconCircle}
+              activeOpacity={0.7}
+              accessibilityLabel="Settings"
+            >
+              <Text style={{ fontSize: 16 }}>⚙️</Text>
+            </TouchableOpacity>
+
             <View style={styles.avatarCircle}>
-              <Text style={styles.avatarInitials}>AS</Text>
+              <Text style={styles.avatarInitials}>
+                {userName.substring(0, 2).toUpperCase()}
+              </Text>
             </View>
           </View>
         </View>
@@ -99,24 +174,30 @@ export default function HomeScreen({ onBookNow, onTrackPress, onNotifications }:
           <Text style={styles.searchIcon}>🔍</Text>
           <TextInput
             style={styles.searchInput}
-            placeholder="Search for a service, package or location..."
+            placeholder="What parcel do you want to send today..."
             placeholderTextColor="#94a3b8"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
           />
+          <TouchableOpacity style={styles.filterPill} activeOpacity={0.7}>
+            <Text style={{ fontSize: 12 }}>⚡</Text>
+          </TouchableOpacity>
         </View>
 
-        {/* Hero Promo Banner (Vibrant Orange Gradient Card) */}
+        {/* Hero Promo Banner (Vivid Orange Rounded Card) */}
         <View style={styles.promoBanner}>
           <View style={styles.promoTextCol}>
-            <Text style={styles.promoTitle}>Send Packages{'\n'}Anywhere</Text>
+            <Text style={styles.promoPreTitle}>Get Discount Voucher</Text>
+            <Text style={styles.promoTitle}>Up To 20%</Text>
             <Text style={styles.promoSubtitle}>
-              Fast, reliable and secure delivery island-wide.
+              Doorstep pickup within 15 minutes. Island-wide live GPS tracking with verified recipient signature on delivery.
             </Text>
             <TouchableOpacity
               style={styles.promoButton}
-              onPress={onBookNow}
+              onPress={() => onBookNow('parcels', 'SWIFT20')}
               activeOpacity={0.85}
             >
-              <Text style={styles.promoButtonText}>Book Now &rarr;</Text>
+              <Text style={styles.promoButtonText}>Claim Voucher →</Text>
             </TouchableOpacity>
           </View>
 
@@ -129,88 +210,194 @@ export default function HomeScreen({ onBookNow, onTrackPress, onNotifications }:
           </View>
         </View>
 
-        {/* Quick Actions (4 Circular Items) */}
-        <View style={styles.quickActionsRow}>
-          {quickActions.map((item) => (
-            <TouchableOpacity
-              key={item.id}
-              style={styles.actionItem}
-              onPress={item.action}
-              activeOpacity={0.75}
-            >
-              <View style={styles.actionIconBadge}>
-                <Text style={styles.actionEmoji}>{item.icon}</Text>
-              </View>
-              <Text style={styles.actionLabel}>{item.label}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* Active In-Transit Shipment Card */}
-        <View style={styles.activeTrackingCard}>
-          <View style={styles.activeTrackingHeader}>
-            <View style={styles.trackingTag}>
-              <View style={styles.pulsingDot} />
-              <Text style={styles.trackingTagText}>LIVE IN TRANSIT</Text>
-            </View>
-            <Text style={styles.etaText}>Arriving in 14 mins</Text>
-          </View>
-
-          <View style={styles.trackingBody}>
-            <View style={styles.packageIconWrap}>
-              <Text style={{ fontSize: 24 }}>📦</Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.trackingCode}>#SWIFT-991122</Text>
-              <Text style={styles.trackingRoute}>Pettah &rarr; 742 Evergreen Terrace</Text>
-              <Text style={styles.courierName}>Courier: Sunil Silva (#101)</Text>
-            </View>
-          </View>
-
-          <TouchableOpacity
-            style={styles.trackDetailsButton}
-            onPress={() => onTrackPress('SWIFT-991122')}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.trackDetailsText}>View Live Map Tracking &rarr;</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Popular Services Section */}
+        {/* Your Balance Widget (From First Screenshot) */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Popular Services</Text>
-          <TouchableOpacity onPress={onBookNow}>
-            <Text style={styles.viewAllText}>View All &gt;</Text>
-          </TouchableOpacity>
+          <Text style={styles.sectionTitle}>Your Balance</Text>
         </View>
-
-        <View style={styles.servicesGrid}>
-          {popularServices.map((service) => (
+        <View style={styles.balanceCard}>
+          <View style={styles.balancePill}>
+            <Text style={styles.balanceLabel}>Balance</Text>
+            <Text style={styles.balanceAmount}>${balance.toFixed(2)}</Text>
+          </View>
+          <View style={styles.balanceActions}>
             <TouchableOpacity
-              key={service.id}
-              style={styles.serviceCard}
-              onPress={onBookNow}
+              style={styles.balanceActionBtn}
+              onPress={handleTopUp}
               activeOpacity={0.8}
             >
-              <View style={styles.serviceTagWrap}>
-                <Text style={styles.serviceTag}>{service.tag}</Text>
+              <Text style={styles.balanceActionIcon}>+</Text>
+              <Text style={styles.balanceActionText}>Top Up</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.balanceActionBtn}
+              onPress={handleTransfer}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.balanceActionIcon}>⇄</Text>
+              <Text style={styles.balanceActionText}>Transfer</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Categories Section (From First Screenshot) */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Category</Text>
+          <TouchableOpacity onPress={() => onBookNow()}>
+            <Text style={styles.viewAllText}>View all &gt;</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.categoriesGrid}>
+          {categories.map((cat) => {
+            const isSelected = selectedCategory === cat.id;
+            return (
+              <TouchableOpacity
+                key={cat.id}
+                style={[
+                  styles.categoryCard,
+                  isSelected && styles.categoryCardActive,
+                ]}
+                onPress={() => {
+                  setSelectedCategory(cat.id);
+                  onBookNow(cat.id);
+                }}
+                activeOpacity={0.75}
+              >
+                <View
+                  style={[
+                    styles.categoryIconBadge,
+                    isSelected && styles.categoryIconBadgeActive,
+                  ]}
+                >
+                  <Text style={styles.categoryEmoji}>{cat.icon}</Text>
+                </View>
+                <Text
+                  style={[
+                    styles.categoryLabel,
+                    isSelected && styles.categoryLabelActive,
+                  ]}
+                  numberOfLines={1}
+                >
+                  {cat.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {/* Your Address Section (From First Screenshot) */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Your Address</Text>
+          <TouchableOpacity onPress={() => Alert.alert('Address Book', 'Select or add a new delivery destination.')}>
+            <Text style={styles.viewAllText}>Change</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.addressCard}>
+          <View style={styles.addressHeaderRow}>
+            <View style={styles.addressPinWrap}>
+              <Text style={{ fontSize: 18 }}>📍</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.addressTitle}>Elm Street, 23 (Colombo 03)</Text>
+              <Text style={styles.addressSubtitle}>Apartment 4B, Duplication Rd, Western Province</Text>
+            </View>
+          </View>
+          <View style={styles.addressActionsRow}>
+            <TouchableOpacity
+              style={styles.addressPillBtn}
+              onPress={() => Alert.alert('Address Details', 'Apartment 4B, Buzzer #12, 4th Floor')}
+            >
+              <Text style={styles.addressPillText}>+ Add Details</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.addressPillBtn}
+              onPress={() => Alert.alert('Address Note', 'Leave package with security if away')}
+            >
+              <Text style={styles.addressPillText}>+ Add Note</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Order Menu / Active Deliveries (From First Screenshot) */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Order Menu</Text>
+          <Text style={styles.orderCountBadge}>{orderMenuItems.length} items</Text>
+        </View>
+
+        <View style={styles.orderMenuContainer}>
+          {orderMenuItems.map((item) => (
+            <TouchableOpacity
+              key={item.id}
+              style={styles.orderMenuItem}
+              onPress={() => onTrackPress(item.id)}
+              activeOpacity={0.8}
+            >
+              <View style={styles.orderMenuIconWrap}>
+                <Text style={{ fontSize: 22 }}>{item.icon}</Text>
               </View>
-
-              <Image source={service.image} style={styles.serviceCardImage} resizeMode="contain" />
-
-              <Text style={styles.serviceCardTitle}>{service.title}</Text>
-              <Text style={styles.serviceCardTime}>{service.time}</Text>
-
-              <View style={styles.serviceCardBottom}>
-                <Text style={styles.serviceCardPrice}>{service.price}</Text>
-                <View style={styles.addCircle}>
-                  <Text style={styles.addPlus}>+</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.orderMenuTitle}>{item.title}</Text>
+                <Text style={styles.orderMenuEta}>{item.status} • {item.eta}</Text>
+              </View>
+              <View style={styles.orderMenuPriceCol}>
+                <Text style={styles.orderMenuPrice}>{item.price}</Text>
+                <View style={styles.orderMenuQtyPill}>
+                  <Text style={styles.orderMenuQtyText}>{item.qty}</Text>
                 </View>
               </View>
             </TouchableOpacity>
           ))}
         </View>
 
+        {/* Popular Services Section (From First Screenshot) */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Popular Services</Text>
+          <TouchableOpacity onPress={() => onBookNow()}>
+            <Text style={styles.viewAllText}>View all &gt;</Text>
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.horizontalServicesScroll}
+        >
+          {popularServices.map((service) => (
+            <TouchableOpacity
+              key={service.id}
+              style={styles.popularServiceCard}
+              onPress={() => onBookNow(service.category)}
+              activeOpacity={0.85}
+            >
+              <View style={styles.serviceCardTopRow}>
+                <View style={styles.discountBadge}>
+                  <Text style={styles.discountBadgeText}>{service.tag}</Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => toggleFavorite(service.id)}
+                  style={styles.favoriteBtn}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <Text style={[styles.favoriteHeart, favorites[service.id] && styles.favoriteHeartActive]}>
+                    {favorites[service.id] ? '❤️' : '🤍'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              <Image source={service.image} style={styles.popularServiceImage} resizeMode="contain" />
+
+              <Text style={styles.popularServiceTitle}>{service.title}</Text>
+              <Text style={styles.popularServiceTime}>{service.time}</Text>
+
+              <View style={styles.popularServiceBottom}>
+                <Text style={styles.popularServicePrice}>{service.price}</Text>
+                <View style={styles.popularServiceAddBtn}>
+                  <Text style={styles.popularServiceAddPlus}>+</Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
       </ScrollView>
     </View>
   );
@@ -219,52 +406,56 @@ export default function HomeScreen({ onBookNow, onTrackPress, onNotifications }:
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#f8fafc',
   },
   scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 28,
+    paddingHorizontal: 18,
+    paddingTop: 14,
+    paddingBottom: 32,
   },
   topHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: 16,
   },
-  locationSelector: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  locationPin: {
-    fontSize: 20,
-  },
-  locationLabel: {
-    fontSize: 10,
-    color: '#94a3b8',
-    fontWeight: '700',
-    textTransform: 'uppercase',
-  },
-  locationText: {
-    fontSize: 14,
+  brandLogo: {
+    fontSize: 22,
     fontWeight: '900',
     color: '#0f172a',
+    letterSpacing: -0.6,
+  },
+  brandDot: {
+    color: Colors.primary,
+  },
+  greetingTitle: {
+    fontSize: 24,
+    fontWeight: '900',
+    color: '#0f172a',
+    marginTop: 4,
+    letterSpacing: -0.5,
+  },
+  greetingSubtitle: {
+    fontSize: 12,
+    color: '#64748b',
+    marginTop: 2,
+    maxWidth: 240,
   },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 8,
+    marginTop: 4,
   },
   iconCircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: '#f8fafc',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#ffffff',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
     position: 'relative',
   },
   badgeDot: {
@@ -273,8 +464,8 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: Colors.primary,
     position: 'absolute',
-    top: 8,
-    right: 8,
+    top: 6,
+    right: 6,
     borderWidth: 1.5,
     borderColor: '#ffffff',
   },
@@ -285,75 +476,105 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
   },
   avatarInitials: {
     color: '#ffffff',
-    fontSize: 13,
     fontWeight: '900',
+    fontSize: 13,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f8fafc',
-    borderRadius: 18,
+    backgroundColor: '#ffffff',
+    borderRadius: 24,
     paddingHorizontal: 16,
     paddingVertical: 10,
+    marginBottom: 16,
     borderWidth: 1,
     borderColor: '#e2e8f0',
-    marginBottom: 18,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.03,
+    shadowRadius: 6,
+    elevation: 2,
   },
   searchIcon: {
-    fontSize: 16,
+    fontSize: 15,
     marginRight: 10,
   },
   searchInput: {
     flex: 1,
     fontSize: 13,
     color: '#0f172a',
-    fontWeight: '500',
+    padding: 0,
+  },
+  filterPill: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#fff7ed',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   promoBanner: {
-    backgroundColor: '#ff8c00',
-    borderRadius: 26,
+    backgroundColor: Colors.primaryOrange,
+    borderRadius: 24,
     padding: 20,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 22,
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 4,
+    marginBottom: 20,
+    overflow: 'hidden',
+    shadowColor: Colors.primaryOrange,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 5,
   },
   promoTextCol: {
     flex: 1,
-    paddingRight: 10,
+    paddingRight: 12,
+  },
+  promoPreTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#ffffff',
+    opacity: 0.95,
   },
   promoTitle: {
     fontSize: 22,
     fontWeight: '900',
     color: '#ffffff',
-    lineHeight: 26,
+    letterSpacing: -0.5,
     marginBottom: 6,
   },
   promoSubtitle: {
     fontSize: 11,
-    color: '#ffedd5',
+    color: 'rgba(255, 255, 255, 0.9)',
     lineHeight: 16,
     marginBottom: 14,
   },
   promoButton: {
     backgroundColor: '#ffffff',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
     borderRadius: 20,
+    paddingVertical: 9,
+    paddingHorizontal: 16,
     alignSelf: 'flex-start',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   promoButtonText: {
     color: Colors.primary,
     fontSize: 12,
-    fontWeight: '800',
+    fontWeight: '900',
   },
   promoImageContainer: {
     width: 100,
@@ -362,213 +583,346 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   promoImage: {
-    width: 90,
-    height: 90,
-  },
-  quickActionsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 24,
-  },
-  actionItem: {
-    alignItems: 'center',
-    width: (width - 40) / 4,
-  },
-  actionIconBadge: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
-    backgroundColor: '#fff7ed',
-    borderWidth: 1.5,
-    borderColor: '#ffedd5',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 6,
-  },
-  actionEmoji: {
-    fontSize: 22,
-  },
-  actionLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#0f172a',
-    textAlign: 'center',
-  },
-  activeTrackingCard: {
-    backgroundColor: '#fffaf5',
-    borderRadius: 22,
-    padding: 16,
-    borderWidth: 1.5,
-    borderColor: '#ffedd5',
-    marginBottom: 24,
-  },
-  activeTrackingHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  trackingTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#ffedd5',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-  },
-  pulsingDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: Colors.primary,
-  },
-  trackingTagText: {
-    fontSize: 10,
-    fontWeight: '900',
-    color: Colors.primary,
-  },
-  etaText: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: '#0f172a',
-  },
-  trackingBody: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 14,
-  },
-  packageIconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#fed7aa',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  trackingCode: {
-    fontSize: 14,
-    fontWeight: '900',
-    color: '#0f172a',
-  },
-  trackingRoute: {
-    fontSize: 11,
-    color: '#64748b',
-    marginTop: 1,
-  },
-  courierName: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: Colors.primary,
-    marginTop: 2,
-  },
-  trackDetailsButton: {
-    backgroundColor: '#ffffff',
-    paddingVertical: 9,
-    borderRadius: 14,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#fed7aa',
-  },
-  trackDetailsText: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: Colors.primary,
+    width: 100,
+    height: 100,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 14,
+    marginBottom: 12,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '900',
     color: '#0f172a',
+    letterSpacing: -0.3,
   },
   viewAllText: {
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '800',
     color: Colors.primary,
   },
-  servicesGrid: {
+  balanceCard: {
+    backgroundColor: Colors.balanceCardBg,
+    borderRadius: 22,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+    shadowColor: Colors.balanceCardBg,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.22,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  balancePill: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    minWidth: 120,
+  },
+  balanceLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#64748b',
+    textTransform: 'uppercase',
+  },
+  balanceAmount: {
+    fontSize: 22,
+    fontWeight: '900',
+    color: '#0f172a',
+    letterSpacing: -0.5,
+  },
+  balanceActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  balanceActionBtn: {
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    borderRadius: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+  },
+  balanceActionIcon: {
+    fontSize: 16,
+    color: '#ffffff',
+    fontWeight: 'bold',
+  },
+  balanceActionText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#ffffff',
+    marginTop: 2,
+  },
+  categoriesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
-    justifyContent: 'space-between',
+    gap: 10,
+    marginBottom: 20,
   },
-  serviceCard: {
-    width: (width - 52) / 2,
+  categoryCard: {
+    width: (width > 440 ? 440 : width - 36) / 3 - 8,
+    backgroundColor: '#ffffff',
+    borderRadius: 18,
+    paddingVertical: 14,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#f1f5f9',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.02,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  categoryCardActive: {
+    borderColor: Colors.primary,
+    backgroundColor: '#fff7ed',
+  },
+  categoryIconBadge: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#f8fafc',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  categoryIconBadgeActive: {
+    backgroundColor: '#ffe8d6',
+  },
+  categoryEmoji: {
+    fontSize: 22,
+  },
+  categoryLabel: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#0f172a',
+    textAlign: 'center',
+  },
+  categoryLabelActive: {
+    color: Colors.primary,
+  },
+  addressCard: {
     backgroundColor: '#ffffff',
     borderRadius: 20,
-    padding: 14,
+    padding: 16,
+    marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#f1f5f9',
+    borderColor: '#e2e8f0',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.03,
     shadowRadius: 6,
     elevation: 2,
-    position: 'relative',
   },
-  serviceTagWrap: {
-    position: 'absolute',
-    top: 10,
-    left: 10,
-    zIndex: 2,
+  addressHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 12,
   },
-  serviceTag: {
-    fontSize: 9,
-    fontWeight: '800',
+  addressPinWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: '#fff7ed',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addressTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#0f172a',
+  },
+  addressSubtitle: {
+    fontSize: 11,
+    color: '#64748b',
+    marginTop: 2,
+  },
+  addressActionsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#f1f5f9',
+  },
+  addressPillBtn: {
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  addressPillText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#475569',
+  },
+  orderCountBadge: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#64748b',
+    backgroundColor: '#f1f5f9',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+  },
+  orderMenuContainer: {
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    padding: 12,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.03,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  orderMenuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f8fafc',
+  },
+  orderMenuIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#fff7ed',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  orderMenuTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#0f172a',
+  },
+  orderMenuEta: {
+    fontSize: 11,
+    color: '#64748b',
+    marginTop: 2,
+  },
+  orderMenuPriceCol: {
+    alignItems: 'flex-end',
+    gap: 4,
+  },
+  orderMenuPrice: {
+    fontSize: 13,
+    fontWeight: '900',
     color: Colors.primary,
+  },
+  orderMenuQtyPill: {
+    backgroundColor: '#f1f5f9',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 6,
   },
-  serviceCardImage: {
-    width: '100%',
-    height: 80,
-    marginBottom: 8,
-    marginTop: 10,
-  },
-  serviceCardTitle: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: '#0f172a',
-    marginBottom: 2,
-  },
-  serviceCardTime: {
+  orderMenuQtyText: {
     fontSize: 10,
-    color: '#94a3b8',
-    marginBottom: 10,
+    fontWeight: '700',
+    color: '#64748b',
   },
-  serviceCardBottom: {
+  horizontalServicesScroll: {
+    gap: 12,
+    paddingRight: 10,
+  },
+  popularServiceCard: {
+    width: 170,
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  serviceCardTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 'auto',
+    marginBottom: 8,
   },
-  serviceCardPrice: {
+  discountBadge: {
+    backgroundColor: '#fef2f2',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#fee2e2',
+  },
+  discountBadgeText: {
+    fontSize: 10,
+    fontWeight: '900',
+    color: Colors.danger,
+  },
+  favoriteBtn: {
+    padding: 2,
+  },
+  favoriteHeart: {
+    fontSize: 14,
+  },
+  favoriteHeartActive: {
+    color: Colors.danger,
+  },
+  popularServiceImage: {
+    width: '100%',
+    height: 80,
+    marginBottom: 10,
+  },
+  popularServiceTitle: {
     fontSize: 13,
+    fontWeight: '800',
+    color: '#0f172a',
+  },
+  popularServiceTime: {
+    fontSize: 10,
+    color: '#94a3b8',
+    marginTop: 2,
+    marginBottom: 10,
+  },
+  popularServiceBottom: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: '#f1f5f9',
+    paddingTop: 8,
+  },
+  popularServicePrice: {
+    fontSize: 12,
     fontWeight: '900',
     color: '#0f172a',
   },
-  addCircle: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
+  popularServiceAddBtn: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  addPlus: {
+  popularServiceAddPlus: {
     color: '#ffffff',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '900',
-    lineHeight: 18,
+    lineHeight: 16,
   },
 });
