@@ -83,3 +83,20 @@ test('merged admin and dispatch pages render and their private APIs require auth
     assert.equal((await request('/api/v1' + path)).status, 401, path);
   }
 });
+
+test('notification endpoints reject unauthenticated requests', async () => {
+  const checks = [
+    ['GET', '/api/v1/notifications'],
+    ['GET', '/api/v1/notifications/unread-count'],
+    ['GET', '/api/v1/notifications/preferences'],
+    ['PATCH', '/api/v1/notifications/read-all'],
+    ['PATCH', '/api/v1/notifications/11111111-1111-4111-8111-111111111111/read'],
+    ['PUT', '/api/v1/notifications/preferences'],
+  ];
+
+  for (const [method, path] of checks) {
+    const response = await request(path, { method });
+    assert.equal(response.status, 401, `${method} ${path} should require a token`);
+    assert.equal((await response.json()).error, 'Access token required');
+  }
+});

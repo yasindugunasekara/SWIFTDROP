@@ -8,7 +8,7 @@ import { dashboardFor, getStoredUser, initializeAuth, subscribeAuth, expireSessi
 
 const access: Record<string, UserRole[]> = {
   '/admin': ['ADMIN'],
-  '/booking': ['CUSTOMER'], '/history': ['CUSTOMER'], '/inbox': ['CUSTOMER'],
+  '/booking': ['CUSTOMER'], '/history': ['CUSTOMER'], '/inbox': ['CUSTOMER', 'COURIER'],
   '/tasks': ['COURIER', 'ADMIN'], '/portal': ['MERCHANT', 'ADMIN'], '/webhooks': ['MERCHANT', 'ADMIN'],
   '/dispatch': ['DISPATCHER', 'ADMIN'], '/config': ['DISPATCHER', 'ADMIN'],
   '/analytics': ['DISPATCHER', 'ADMIN'], '/exceptions': ['DISPATCHER', 'ADMIN'], '/approval': ['CUSTOMER', 'COURIER', 'MERCHANT'],

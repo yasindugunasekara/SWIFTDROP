@@ -30,7 +30,8 @@
     "test:tracking-socket": "tsx src/modules/tracking/tracking.socket.test.ts",
     "test:dispatch": "tsx src/modules/dispatch/dispatch.test.ts",
     "demo:dispatch": "tsx src/scripts/dispatch-demo.ts",
-    "db:seed:dispatch": "tsx src/scripts/seed-dispatch.ts"
+    "db:seed:dispatch": "tsx src/scripts/seed-dispatch.ts",
+    "test:notifications": "tsx --test src/modules/notifications/notification.events.test.ts src/modules/notifications/notification.database.test.ts src/modules/notifications/notification.test.ts src/workers/notification-consumer.test.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.14.0",
