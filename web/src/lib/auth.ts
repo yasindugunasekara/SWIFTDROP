@@ -2,6 +2,7 @@ import { getSupabaseClient } from './supabase';
 
 export type UserRole = 'CUSTOMER' | 'COURIER' | 'DISPATCHER' | 'ADMIN' | 'MERCHANT';
 export interface User {
+  sessionExpiresAt?: number;
   id: string; authUserId?: string; email: string; fullName: string; phone?: string | null;
   role: UserRole; merchantId?: string; approvalStatus?: string;
   application?: { id: string; requestedRole: 'COURIER' | 'MERCHANT'; status: string; reviewNote: string | null };
@@ -14,6 +15,24 @@ let signOutTask: Promise<void> | null = null;
 let refreshTask: Promise<string | null> | null = null;
 let sessionWrite: Promise<unknown> = Promise.resolve();
 let writingSession = false;
+let expiryTimer: ReturnType<typeof setTimeout> | undefined;
+
+function scheduleSessionExpiry() {
+  if (expiryTimer !== undefined) clearTimeout(expiryTimer);
+  expiryTimer = undefined;
+  const deadline = currentUser?.sessionExpiresAt;
+  if (deadline === undefined) return;
+  expiryTimer = setTimeout(() => expireSessionIfNeeded(), Math.max(0, deadline - Date.now()));
+}
+
+export async function expireSessionIfNeeded(): Promise<boolean> {
+  if (currentUser?.sessionExpiresAt === undefined || currentUser.sessionExpiresAt > Date.now()) return false;
+  // Invalidate in-flight responses immediately, including when the device is offline.
+  const task = clearAuthSession();
+  discardAuthSession();
+  await task.catch(() => discardAuthSession());
+  return true;
+}
 function serializeSession<T>(action: () => Promise<T>): Promise<T> {
   const run = async () => { writingSession = true; try { return await action(); } finally { writingSession = false; } };
   const task = sessionWrite.then(run, run);
@@ -24,12 +43,13 @@ const listeners = new Set<() => void>();
 const base = '/api/v1';
 export const getStoredUser = () => currentUser;
 export const subscribeAuth = (listener: () => void) => { listeners.add(listener); return () => { listeners.delete(listener); }; };
-export function saveAuthSession(user: User) { currentUser = user; listeners.forEach(listener => listener()); }
-export function discardAuthSession() { currentUser = null; listeners.forEach(listener => listener()); }
+export function saveAuthSession(user: User) { currentUser = user; scheduleSessionExpiry(); listeners.forEach(listener => listener()); }
+export function discardAuthSession() { currentUser = null; scheduleSessionExpiry(); listeners.forEach(listener => listener()); }
 export const getSessionRevision = () => sessionRevision;
 export const isSessionCurrent = (version: number) => version === sessionRevision && !signOutTask;
 
 export async function getAccessToken() {
+  if (await expireSessionIfNeeded()) return null;
   if (signOutTask) return null;
   const version = sessionRevision;
   const client = await getSupabaseClient();
@@ -43,6 +63,7 @@ export async function getAccessToken() {
 // One refresh owner per browser tab. The SDK coordinates other tabs and rotates
 // refresh tokens. A response from an older session must never restore an account.
 export async function refreshAccessToken(rejectedToken: string): Promise<string | null> {
+  if (await expireSessionIfNeeded()) return null;
   if (signOutTask) return null;
   if (refreshTask) return refreshTask;
   const version = sessionRevision;
@@ -220,5 +241,5 @@ export function clearAuthSession(): Promise<void> {
 export function dashboardFor(user: User) {
   if (user.application && user.application.status !== 'APPROVED') return '/approval';
   if (user.role === 'MERCHANT' && user.approvalStatus !== 'APPROVED') return '/approval';
-  return { CUSTOMER: '/booking', COURIER: '/tasks', MERCHANT: '/portal', DISPATCHER: '/dispatch', ADMIN: '/dispatch' }[user.role];
+  return { CUSTOMER: '/booking', COURIER: '/tasks', MERCHANT: '/portal', DISPATCHER: '/dispatch', ADMIN: '/admin' }[user.role];
 }

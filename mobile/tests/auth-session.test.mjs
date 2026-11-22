@@ -102,6 +102,17 @@ function authHarness({ profile = customer, refresh = async () => ({ data: { sess
   return { api: exports, requests, get saved() { return savedSession; }, get signouts() { return signedOut; }, get auto() { return auto; }, seed: value => { savedSession = value; } };
 }
 
+test('mobile session expiry clears secure credentials and blocks token refresh', async () => {
+  let refreshes=0;
+  const h=authHarness({profile:{...customer,sessionExpiresAt:Date.now()-1},refresh:async()=>{refreshes++;throw new Error('Must not refresh an expired session');}});
+  await h.api.loginMobile('test@example.test','password');
+  assert.equal(await h.api.refreshMobileAccessToken('test-token'),null);
+  assert.equal(h.api.getMobileUser(),null);
+  assert.equal(h.saved,null);
+  assert.equal(h.signouts,1);
+  assert.equal(refreshes,0);
+});
+
 test('late mobile email and demo responses cannot restore a session after logout', async () => {
   for (const demo of [false, true]) {
     const response = deferred();

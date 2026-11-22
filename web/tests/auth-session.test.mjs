@@ -19,6 +19,7 @@ function harness({ fetch = async () => ({ ok: true, json: async () => ({ user: c
   getUser = async () => ({ data: { user: customer }, error: null }),
   updateUser = async () => ({ data: { user: customer }, error: null }),
   setSession = async () => ({ error: null }),
+  now = () => Date.now(),
   location = { origin: 'https://swiftdrop.example.test', search: '', hash: '' } } = {}) {
   let callback;
   const scheduled = [];
@@ -35,7 +36,8 @@ function harness({ fetch = async () => ({ ok: true, json: async () => ({ user: c
   vm.runInNewContext(source, {
     exports, require: () => ({ getSupabaseClient: async () => ({ auth }) }),
     process: { env: {} }, fetch, AbortSignal, URLSearchParams, TextEncoder, window: { location, history: { replaceState() {} } }, localStorage: { removeItem() {} },
-    setTimeout: task => scheduled.push(task),
+    setTimeout: task => scheduled.push(task), clearTimeout() {},
+    Date: class extends Date { static now() { return now(); } },
   }, moduleOptions(source, 'web-auth.js'));
   const apiSource = ts.transpileModule(readFileSync(new URL('../src/lib/api.ts', import.meta.url), 'utf8'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
@@ -44,6 +46,28 @@ function harness({ fetch = async () => ({ ok: true, json: async () => ({ user: c
   vm.runInNewContext(apiSource, { exports: http, require: () => exports, process: { env: {} }, window: {}, fetch }, moduleOptions(apiSource, 'web-api.js'));
   return { api: exports, http, emit: (...args) => callback(...args), scheduled };
 }
+
+test('absolute session expiry automatically clears the account even offline, and blocks token refresh', async () => {
+  let clock = 1000; let logouts = 0; let refreshes = 0;
+  const {api,scheduled} = harness({now:()=>clock, signOut:async()=>{logouts++;return {error:new Error('offline')};},refreshSession:async()=>{refreshes++;return {};}});
+  api.saveAuthSession({...customer,sessionExpiresAt:2000});
+  assert.equal(await api.expireSessionIfNeeded(),false);
+  clock=2000;
+  await scheduled[0]();
+  assert.equal(api.getStoredUser(),null);
+  assert.equal(logouts,1);
+  assert.equal(refreshes,0);
+});
+
+test('expired sessions cannot issue access tokens and an old timer cannot log out a newer session', async () => {
+  let clock=1000; let reads=0;
+  const {api,scheduled}=harness({now:()=>clock,getSession:async()=>{reads++;return {data:{session:{access_token:'token'}}};}});
+  api.saveAuthSession({...customer,sessionExpiresAt:2000});
+  const oldTimer=scheduled[0];
+  api.saveAuthSession({...customer,sessionExpiresAt:4000});
+  clock=2000; await oldTimer(); assert.ok(api.getStoredUser());
+  clock=4000; assert.equal(await api.getAccessToken(),null); assert.equal(reads,0);
+});
 
 test('late email and demo login responses cannot restore a session after logout', async () => {
   for (const method of ['signIn', 'signInDemo']) {
@@ -277,7 +301,7 @@ test('callback with no restored session reports a retry instead of pretending si
 
 test('dashboard routing covers all roles and keeps pending/rejected applicants on approval', () => {
   const { api } = harness();
-  for (const [role, route] of Object.entries({ CUSTOMER: '/booking', COURIER: '/tasks', MERCHANT: '/portal', DISPATCHER: '/dispatch', ADMIN: '/dispatch' })) {
+  for (const [role, route] of Object.entries({ CUSTOMER: '/booking', COURIER: '/tasks', MERCHANT: '/portal', DISPATCHER: '/dispatch', ADMIN: '/admin' })) {
     assert.equal(api.dashboardFor({ ...customer, role, approvalStatus: 'APPROVED' }), route);
   }
   for (const status of ['PENDING', 'REJECTED']) assert.equal(api.dashboardFor({ ...customer, application: { requestedRole: 'COURIER', status } }), '/approval');

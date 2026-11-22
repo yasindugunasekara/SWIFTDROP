@@ -11,6 +11,7 @@ const defaultApiHost = Platform.OS === 'web' && typeof window !== 'undefined'
 const defaultApiAuthority = defaultApiHost.includes(':') ? `[${defaultApiHost}]` : defaultApiHost;
 export const API_URL = process.env.EXPO_PUBLIC_API_URL || `http://${defaultApiAuthority}:5000/api/v1`;
 export interface MobileUser {
+  sessionExpiresAt?: number;
   id: string; authUserId: string; fullName: string; email: string; phone: string | null;
   role: 'CUSTOMER' | 'COURIER';
   application?: { id: string; requestedRole: 'COURIER' | 'MERCHANT'; status: string; reviewNote: string | null };
@@ -43,7 +44,23 @@ export const getMobileUser = () => user;
 export const subscribeMobileAuth = (listener: () => void) => { listeners.add(listener); return () => { listeners.delete(listener); }; };
 export const getMobileSessionRevision = () => revision;
 export const isMobileSessionCurrent = (version: number) => version === revision && !signingOut;
-function saveUser(value: MobileUser | null) { user = value; listeners.forEach(listener => listener()); }
+let expiryTimer: ReturnType<typeof setTimeout> | undefined;
+function saveUser(value: MobileUser | null) {
+  user = value;
+  if (expiryTimer !== undefined) clearTimeout(expiryTimer);
+  expiryTimer = undefined;
+  if (value?.sessionExpiresAt !== undefined) {
+    expiryTimer = setTimeout(() => expireMobileSessionIfNeeded(), Math.max(0, value.sessionExpiresAt - Date.now()));
+  }
+  listeners.forEach(listener => listener());
+}
+export async function expireMobileSessionIfNeeded(): Promise<boolean> {
+  if (user?.sessionExpiresAt === undefined || user.sessionExpiresAt > Date.now()) return false;
+  const task = logoutMobile();
+  saveUser(null);
+  await task.catch(() => saveUser(null));
+  return true;
+}
 
 export function getMobileAuthClient(): Promise<SupabaseClient> {
   clientTask ||= (async () => {
@@ -59,6 +76,7 @@ export function getMobileAuthClient(): Promise<SupabaseClient> {
 }
 
 export async function getMobileAccessToken() {
+  if (await expireMobileSessionIfNeeded()) return null;
   const version = revision;
   if (signingOut) return null;
   const client = await getMobileAuthClient();
@@ -70,6 +88,7 @@ export async function getMobileAccessToken() {
 }
 
 export async function refreshMobileAccessToken(rejectedToken: string): Promise<string | null> {
+  if (await expireMobileSessionIfNeeded()) return null;
   if (signingOut) return null;
   if (refreshing) return refreshing;
   const version = revision;
