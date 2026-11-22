@@ -66,6 +66,9 @@ export interface NotificationLogger {
   error(message: string, error?: unknown): void;
 }
 
+/** The consumer only needs event processing; the REST methods are unrelated. */
+export type NotificationEventProcessor = Pick<NotificationService, 'processEvent'>;
+
 export type ProcessOutcome =
   | 'processed'
   | 'duplicate'
@@ -101,7 +104,7 @@ let isRunning = false;
 
 export async function processNotificationMessage(
   message: ConsumerMessage,
-  service: NotificationService,
+  service: NotificationEventProcessor,
   channel: NotificationChannel,
   options: ProcessNotificationOptions = {},
 ): Promise<ProcessOutcome> {

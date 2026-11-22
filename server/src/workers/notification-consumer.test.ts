@@ -4,12 +4,10 @@ import {
   processNotificationMessage,
   type ConsumerMessage,
   type NotificationChannel,
+  type NotificationEventProcessor,
   type NotificationLogger,
 } from './notification-consumer.js';
-import type {
-  NotificationService,
-  ProcessEventResult,
-} from '../modules/notifications/notification.service.js';
+import type { ProcessEventResult } from '../modules/notifications/notification.service.js';
 
 const PARCEL_ID = '66666666-6666-4666-8666-666666666666';
 const MAIN_QUEUE = 'swiftdrop_notifications_queue';
@@ -75,11 +73,11 @@ class FakeChannel implements NotificationChannel {
   }
 }
 
-function serviceReturning(result: ProcessEventResult): NotificationService {
+function serviceReturning(result: ProcessEventResult): NotificationEventProcessor {
   return { async processEvent() { return result; } };
 }
 
-function serviceThrowing(error: Error): NotificationService {
+function serviceThrowing(error: Error): NotificationEventProcessor {
   return { async processEvent() { throw error; } };
 }
 

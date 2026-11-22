@@ -59,3 +59,50 @@ export interface NotificationContent {
   title: string;
   message: string;
 }
+
+// -----------------------------------------------------------------------------
+// REST API shapes (Phase 03)
+// -----------------------------------------------------------------------------
+
+/** Safe notification representation returned by the inbox API. */
+export interface NotificationDto {
+  id: string;
+  type: string;
+  title: string;
+  message: string;
+  isRead: boolean;
+  createdAt: string;
+  readAt: string | null;
+  parcelId: string | null;
+  trackingNumber: string | null;
+  deliveryChannels: DeliveryChannel[];
+}
+
+/** Opaque keyset-pagination cursor: (created_at, id) of the last row in a page. */
+export interface NotificationCursor {
+  createdAt: string;
+  id: string;
+}
+
+export interface ListNotificationsOptions {
+  limit: number;
+  cursor?: NotificationCursor;
+  isRead?: boolean;
+  type?: NotificationType;
+}
+
+export interface NotificationListResult {
+  notifications: NotificationDto[];
+  nextCursor: string | null;
+  hasMore: boolean;
+}
+
+export interface NotificationPreferencePatch {
+  pushEnabled?: boolean;
+  emailEnabled?: boolean;
+  smsEnabled?: boolean;
+}
+
+export interface NotificationPreferencesRecord extends NotificationPreferences {
+  updatedAt: string;
+}

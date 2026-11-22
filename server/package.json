@@ -21,7 +21,7 @@
     "test:support": "tsx src/modules/support/support.test.ts",
     "demo:support": "tsx src/scripts/support-demo.ts",
     "test:merchant": "tsx src/modules/merchant/merchant.test.ts",
-    "test:notifications": "tsx --test src/modules/notifications/notification.events.test.ts src/modules/notifications/notification.database.test.ts src/workers/notification-consumer.test.ts"
+    "test:notifications": "tsx --test src/modules/notifications/notification.events.test.ts src/modules/notifications/notification.database.test.ts src/modules/notifications/notification.test.ts src/workers/notification-consumer.test.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.14.0",
