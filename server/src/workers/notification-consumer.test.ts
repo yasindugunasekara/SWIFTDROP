@@ -38,7 +38,14 @@ class FakeChannel implements NotificationChannel {
 
   async prefetch(): Promise<void> {}
   async assertQueue(): Promise<void> {}
-  async consume(): Promise<void> {}
+  async consume(): Promise<{ consumerTag: string }> {
+    return { consumerTag: 'fake-consumer' };
+  }
+  async cancel(): Promise<void> {}
+  async close(): Promise<void> {}
+  on(): this {
+    return this;
+  }
 
   ack(): void {
     this.calls.push('ack');
