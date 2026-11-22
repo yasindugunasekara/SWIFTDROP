@@ -433,3 +433,70 @@
   .redesignedPage .card { padding-block: 22px; }
   .redesignedPage .topbar { margin-bottom: 20px; }
 }
+
+/* Readable type without adding a second, padded viewport around sign-in. */
+.redesignedPage .title { font-size: 34px; }
+.redesignedPage .subtitle { font-size: 15px; line-height: 1.5; }
+.redesignedPage .label { font-size: 14px; line-height: 20px; }
+.redesignedPage .input, .redesignedPage .input::placeholder { font-size: 16px; }
+.redesignedPage .primary, .redesignedPage .google, .previousStep { font-size: 15px; }
+.redesignedPage .signupRole { font-size: 14px; }
+.redesignedPage .footer, .redesignedPage .roleNote { font-size: 14px; line-height: 1.5; }
+.redesignedPage .hint, .redesignedPage .toggle, .redesignedPage .labelRow a { font-size: 13px; }
+.redesignedPage .divider { font-size: 13px; }
+.redesignedPage .eyebrow { font-size: 12px; }
+.redesignedPage .alert { font-size: 13px; line-height: 1.5; }
+.signupPage.redesignedPage .signupRoleNotice { font-size: 13px; }
+.loginPage.redesignedPage { padding: 0; background: #fff; }
+.loginPage.redesignedPage .authLayout { max-width: none; min-height: 100dvh; border: 0; box-shadow: none; }
+.loginPage.redesignedPage .loginCard { max-width: 500px; justify-self: center; padding: 20px 32px; }
+.loginPage.redesignedPage .visual { min-height: 100%; padding: 34px 42px; }
+.loginPage.redesignedPage .topbar { margin-bottom: 18px; }
+.loginPage.redesignedPage .eyebrow { display: none; }
+.loginPage.redesignedPage .loginHeader { margin-bottom: 16px; }
+.loginPage.redesignedPage .signupRoles { margin-bottom: 16px; }
+.loginPage.redesignedPage .signupRole { min-height: 40px; }
+.loginPage.redesignedPage .loginForm { gap: 12px; }
+.loginPage.redesignedPage .field { gap: 5px; }
+.loginPage.redesignedPage .input { height: 44px; }
+.loginPage.redesignedPage .toggle { height: 40px; }
+.loginPage.redesignedPage .primary { height: 46px; min-height: 46px; }
+.loginPage.redesignedPage .social { height: auto; min-height: 76px; margin-top: 14px; }
+.loginPage.redesignedPage .divider { margin-bottom: 10px; }
+.loginPage.redesignedPage .google, .loginPage.redesignedPage .roleNote { height: 44px; }
+.loginPage.redesignedPage .footer { margin-top: 16px; padding-top: 14px; }
+.loginPage.redesignedPage .card :global(fieldset) { margin-top: 12px; padding-top: 6px; }
+.loginPage.redesignedPage .card :global(fieldset) :global(legend) { font-size: 13px; }
+.loginPage.redesignedPage .card :global(fieldset) button { font-size: 13px; padding: 6px 9px; }
+.loginPage.redesignedPage .visualCopy { margin-top: 36px; }
+.loginPage.redesignedPage .visualCopy>p:last-child { font-size: 15px; }
+.loginPage.redesignedPage .visualTop, .loginPage.redesignedPage .visualCopy>p:first-child { font-size: 11px; }
+.loginPage.redesignedPage .visualFooter { font-size: 12px; }
+.loginPage.redesignedPage .journeyTag { font-size: 11px; }
+@media (max-width: 900px) {
+  .loginPage.redesignedPage .loginCard { padding-inline: 24px; }
+  .loginPage.redesignedPage .visual { padding-inline: 26px; }
+}
+@media (max-width: 720px) {
+  .redesignedPage .title { font-size: 32px; }
+  .redesignedPage .signupRole { font-size: 13px; }
+  .loginPage.redesignedPage .authLayout { display: grid; grid-template-columns: minmax(0,1fr); align-items: center; }
+  .loginPage.redesignedPage .loginCard { max-width: 470px; padding: 18px 20px; }
+  .loginPage.redesignedPage .visual { display: none; }
+  .signupPage.redesignedPage .subtitle { font-size: 14px; }
+  .signupPage.redesignedPage .signupRoleNotice { font-size: 12px; }
+}
+@media (max-width: 420px) {
+  .signupPage.redesignedPage .title { font-size: 30px; }
+  .signupPage.redesignedPage .signupForm { gap: 9px; }
+  .signupPage.redesignedPage .field { gap: 4px; }
+  .signupPage.redesignedPage .hint { font-size: 13px; }
+}
+/* Short screens, browser zoom and an open keyboard can still reveal every control. */
+@media (max-height: 700px) {
+  .loginPage.redesignedPage .visualCopy { margin-top: 22px; }
+  .loginPage.redesignedPage .topbar { margin-bottom: 12px; }
+  .loginPage.redesignedPage .loginHeader { margin-bottom: 12px; }
+  .loginPage.redesignedPage .signupRoles { margin-bottom: 12px; }
+  .loginPage.redesignedPage .loginCard { padding-block: 14px; }
+}
