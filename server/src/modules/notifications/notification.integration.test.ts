@@ -5,8 +5,14 @@
  * RabbitMQ broker/vhost:
  *
  *   RUN_NOTIFICATION_INTEGRATION=1
+ *   NOTIFICATION_INTEGRATION_CONFIRM=I_AM_USING_DEDICATED_TEST_INFRASTRUCTURE
  *   TEST_DATABASE_URL=postgresql://.../swiftdrop_notifications_test
- *   RABBITMQ_URL=amqp://...
+ *   RABBITMQ_URL=amqp://.../<vhost-containing-test-or-ci>
+ *
+ * RABBITMQ_URL may use a non-test/ci vhost only when the exact broker/vhost is
+ * listed in NOTIFICATION_INTEGRATION_ALLOWED_BROKERS (host:port/vhost or a full
+ * amqp:// URL, comma-separated). APP_RABBITMQ_URL and PRODUCTION_RABBITMQ_URL,
+ * when configured, must not resolve to the same broker/vhost as RABBITMQ_URL.
  *
  * The suite applies only 001_initial_schema.sql and
  * 004_notifications_hardening.sql. The Supabase auth migrations are excluded
@@ -24,6 +30,7 @@ import test, { after, before } from 'node:test';
 import { Pool } from 'pg';
 import type { Channel, ConfirmChannel, ConsumeMessage } from 'amqplib';
 import { createApiShutdown } from '../../lifecycle/api-shutdown.js';
+import { evaluateNotificationIntegrationGate } from './notification.integration-gate.js';
 import type {
   NotificationCursor,
   NormalizedParcelEvent,
@@ -42,63 +49,7 @@ const RUN_FLAG = 'RUN_NOTIFICATION_INTEGRATION';
 const runRequested = process.env[RUN_FLAG] === '1';
 const runTag = randomUUID().replace(/-/g, '').slice(0, 12);
 
-interface GateResult {
-  ok: boolean;
-  error?: string;
-}
-
-function evaluateGate(): GateResult {
-  if (process.env.NODE_ENV === 'production') {
-    return { ok: false, error: 'Refusing live integration tests with NODE_ENV=production.' };
-  }
-
-  const testDatabaseUrl = process.env.TEST_DATABASE_URL;
-  if (!testDatabaseUrl) {
-    return { ok: false, error: 'TEST_DATABASE_URL is required for live integration tests.' };
-  }
-
-  if (process.env.DATABASE_URL && process.env.DATABASE_URL === testDatabaseUrl) {
-    return {
-      ok: false,
-      error: 'TEST_DATABASE_URL must differ from DATABASE_URL.',
-    };
-  }
-
-  let databaseName = '';
-  try {
-    const parsed = new URL(testDatabaseUrl);
-    if (parsed.protocol !== 'postgresql:' && parsed.protocol !== 'postgres:') {
-      return { ok: false, error: 'TEST_DATABASE_URL must use the postgresql:// scheme.' };
-    }
-    databaseName = decodeURIComponent(parsed.pathname.replace(/^\//, ''));
-  } catch {
-    return { ok: false, error: 'TEST_DATABASE_URL is not a valid PostgreSQL URL.' };
-  }
-
-  if (!/test|ci/i.test(databaseName)) {
-    return {
-      ok: false,
-      error: 'TEST_DATABASE_URL must point to a dedicated database whose name contains "test" or "ci".',
-    };
-  }
-
-  const rabbitUrl = process.env.RABBITMQ_URL;
-  if (!rabbitUrl) {
-    return { ok: false, error: 'RABBITMQ_URL is required for live integration tests.' };
-  }
-  try {
-    const parsed = new URL(rabbitUrl);
-    if (parsed.protocol !== 'amqp:' && parsed.protocol !== 'amqps:') {
-      return { ok: false, error: 'RABBITMQ_URL must use the amqp:// or amqps:// scheme.' };
-    }
-  } catch {
-    return { ok: false, error: 'RABBITMQ_URL is not a valid AMQP URL.' };
-  }
-
-  return { ok: true };
-}
-
-const gate = evaluateGate();
+const gate = evaluateNotificationIntegrationGate(process.env);
 const liveSkip = runRequested
   ? gate.ok
     ? false
