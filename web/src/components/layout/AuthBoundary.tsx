@@ -7,7 +7,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { dashboardFor, getStoredUser, initializeAuth, subscribeAuth, type UserRole } from '../../lib/auth';
 
 const access: Record<string, UserRole[]> = {
-  '/booking': ['CUSTOMER'], '/history': ['CUSTOMER'], '/inbox': ['CUSTOMER'],
+  '/booking': ['CUSTOMER'], '/history': ['CUSTOMER'], '/inbox': ['CUSTOMER', 'COURIER'],
   '/tasks': ['COURIER', 'ADMIN'], '/portal': ['MERCHANT', 'ADMIN'], '/webhooks': ['MERCHANT', 'ADMIN'],
   '/dispatch': ['DISPATCHER', 'ADMIN'], '/config': ['DISPATCHER', 'ADMIN'],
   '/analytics': ['DISPATCHER', 'ADMIN'], '/exceptions': ['DISPATCHER', 'ADMIN'], '/approval': ['MERCHANT'],

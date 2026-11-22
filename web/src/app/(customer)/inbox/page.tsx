@@ -1,149 +1,141 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
+import {
+  type KeyboardEvent,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
+import { dashboardFor, getStoredUser, subscribeAuth } from '../../../lib/auth';
+import NotificationInbox from '../../../components/notifications/NotificationInbox';
+import NotificationPreferences from '../../../components/notifications/NotificationPreferences';
+
+type TabId = 'inbox' | 'preferences';
+
+const TABS: Array<{ id: TabId; label: string }> = [
+  { id: 'inbox', label: 'Inbox' },
+  { id: 'preferences', label: 'Preferences' },
+];
 
 export default function NotificationInboxPage() {
-  const [notifications] = useState([
-    {
-      id: '1',
-      title: 'Parcel Out for Delivery',
-      message: 'Your parcel SWIFT-991122 is out for delivery with courier Sunil Silva. Estimated arrival in 8 mins.',
-      time: '10 mins ago',
-      read: false,
-    },
-    {
-      id: '2',
-      title: 'Booking Confirmed & Waybill Issued',
-      message: 'Booking for parcel SWIFT-782910 has been processed successfully. Priority sorting assigned.',
-      time: '2 hours ago',
-      read: true,
-    },
-    {
-      id: '3',
-      title: 'Special 20% Discount Voucher Added',
-      message: 'Coupon code SWIFT20 has been credited to your active wallet for intra-city courier runs.',
-      time: '1 day ago',
-      read: true,
-    },
-  ]);
+  const user = useSyncExternalStore(subscribeAuth, getStoredUser, () => null);
+  const [activeTab, setActiveTab] = useState<TabId>('inbox');
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
-  const [preferences, setPreferences] = useState({
-    sms: true,
-    email: true,
-    push: false,
-  });
+  const handleTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
+    let nextIndex: number | null = null;
+
+    if (event.key === 'ArrowRight') {
+      nextIndex = (index + 1) % TABS.length;
+    } else if (event.key === 'ArrowLeft') {
+      nextIndex = (index - 1 + TABS.length) % TABS.length;
+    } else if (event.key === 'Home') {
+      nextIndex = 0;
+    } else if (event.key === 'End') {
+      nextIndex = TABS.length - 1;
+    }
+
+    if (nextIndex === null) return;
+
+    event.preventDefault();
+    setActiveTab(TABS[nextIndex].id);
+    tabRefs.current[nextIndex]?.focus();
+  };
+
+  const courier = user?.role === 'COURIER';
+  const backHref = user ? dashboardFor(user) : '/login';
 
   return (
-    <div className="w-full min-h-screen bg-white flex flex-col font-sans antialiased text-slate-800">
-      {/* Top Header */}
-      <header className="w-full bg-white border-b border-slate-100 px-6 sm:px-10 py-4 flex items-center justify-between sticky top-0 z-40">
-        <div className="flex items-center gap-4">
-          <Link href="/" className="text-2xl font-black text-slate-900 tracking-tight">
-            swiftdrop<span className="text-[#ff6600]">.</span>
+    <div className="flex min-h-screen w-full flex-col bg-slate-50 font-sans text-slate-800 antialiased">
+      <header className="sticky top-0 z-40 border-b border-slate-100 bg-white px-4 py-4 sm:px-8">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <Link
+              href="/"
+              className="text-2xl font-black tracking-tight text-slate-900"
+            >
+              swiftdrop<span className="text-[#ff6600]">.</span>
+            </Link>
+            <span className="hidden rounded-full border border-orange-200/80 bg-orange-50 px-2.5 py-0.5 text-[10px] font-bold text-[#ff6600] sm:inline">
+              Notification Centre
+            </span>
+          </div>
+
+          <Link
+            href={backHref}
+            className="shrink-0 text-xs font-bold text-[#ff6600] hover:underline"
+          >
+            &larr; Back to dashboard
           </Link>
-          <span className="text-xs font-bold bg-orange-50 text-[#ff6600] border border-orange-200/80 px-2.5 py-0.5 rounded-full">
-            Notification Center
-          </span>
         </div>
-        <Link
-          href="/booking"
-          className="text-xs font-bold text-[#ff6600] hover:underline"
-        >
-          &larr; Back to Dashboard
-        </Link>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 w-full max-w-6xl mx-auto px-6 sm:px-10 py-8">
-        <div className="mb-8">
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-            Delivery Alerts &amp; Channel Preferences
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Real-time milestone notifications broadcast via our RabbitMQ event broker.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Left: Alerts List */}
-          <div className="lg:col-span-8 flex flex-col gap-4">
-            <h3 className="text-sm font-black text-slate-900 tracking-tight mb-1">
-              Recent Delivery Alerts
-            </h3>
-
-            {notifications.map((n) => (
-              <div
-                key={n.id}
-                className={`p-5 rounded-2xl border transition-all ${
-                  n.read
-                    ? 'bg-white border-slate-100'
-                    : 'bg-orange-50/30 border-orange-200/80 shadow-sm'
-                }`}
-              >
-                <div className="flex items-center justify-between mb-1.5">
-                  <div className="flex items-center gap-2">
-                    {!n.read && <span className="w-2 h-2 rounded-full bg-[#ff6600]" />}
-                    <h4 className="text-sm font-black text-slate-900">{n.title}</h4>
-                  </div>
-                  <span className="text-[11px] text-slate-400">{n.time}</span>
-                </div>
-                <p className="text-xs text-slate-600 leading-relaxed">{n.message}</p>
-              </div>
-            ))}
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-8 sm:py-8">
+        <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
+              {courier ? 'Delivery alerts' : 'Parcel notifications'}
+            </h1>
+            <p className="mt-1 text-xs leading-relaxed text-slate-500 sm:text-sm">
+              {courier
+                ? 'Assignment and parcel updates, plus your notification channel preferences.'
+                : 'Parcel updates and your notification channel preferences.'}
+            </p>
           </div>
 
-          {/* Right: Preferences Card */}
-          <div className="lg:col-span-4 bg-slate-50/70 rounded-3xl p-6 border border-slate-100 flex flex-col justify-between">
-            <div>
-              <h3 className="text-sm font-black text-slate-900 tracking-tight mb-4">
-                Notification Channels
-              </h3>
+          <div
+            role="tablist"
+            aria-label="Notification sections"
+            className="inline-flex self-start rounded-full border border-slate-200 bg-white p-1 shadow-sm sm:self-auto"
+          >
+            {TABS.map((tab, index) => {
+              const selected = activeTab === tab.id;
 
-              <div className="space-y-3.5 text-xs font-bold text-slate-700">
-                <label className="flex items-center justify-between p-3 bg-white rounded-xl border border-slate-200/80 cursor-pointer">
-                  <span>SMS Status Text Updates</span>
-                  <input
-                    type="checkbox"
-                    checked={preferences.sms}
-                    onChange={(e) => setPreferences({ ...preferences, sms: e.target.checked })}
-                    className="accent-[#ff6600] w-4 h-4 cursor-pointer"
-                  />
-                </label>
-
-                <label className="flex items-center justify-between p-3 bg-white rounded-xl border border-slate-200/80 cursor-pointer">
-                  <span>Email Invoices &amp; Waybills</span>
-                  <input
-                    type="checkbox"
-                    checked={preferences.email}
-                    onChange={(e) => setPreferences({ ...preferences, email: e.target.checked })}
-                    className="accent-[#ff6600] w-4 h-4 cursor-pointer"
-                  />
-                </label>
-
-                <label className="flex items-center justify-between p-3 bg-white rounded-xl border border-slate-200/80 cursor-pointer">
-                  <span>Browser Push Notifications</span>
-                  <input
-                    type="checkbox"
-                    checked={preferences.push}
-                    onChange={(e) => setPreferences({ ...preferences, push: e.target.checked })}
-                    className="accent-[#ff6600] w-4 h-4 cursor-pointer"
-                  />
-                </label>
-              </div>
-            </div>
-
-            <div className="mt-6 pt-4 border-t border-slate-200/80">
-              <button
-                type="button"
-                onClick={() => alert('Channel preferences saved!')}
-                className="w-full py-3 bg-[#ff9900] hover:bg-[#ff8800] text-white rounded-xl font-black text-xs shadow-md shadow-orange-500/20 transition-all cursor-pointer"
-              >
-                Save Preferences
-              </button>
-            </div>
+              return (
+                <button
+                  key={tab.id}
+                  ref={element => {
+                    tabRefs.current[index] = element;
+                  }}
+                  type="button"
+                  role="tab"
+                  id={`${tab.id}-tab`}
+                  aria-selected={selected}
+                  aria-controls={`${tab.id}-panel`}
+                  tabIndex={selected ? 0 : -1}
+                  onClick={() => setActiveTab(tab.id)}
+                  onKeyDown={event => handleTabKeyDown(event, index)}
+                  className={`min-h-[44px] rounded-full px-5 text-xs font-black transition-colors ${
+                    selected
+                      ? 'bg-[#ff6600] text-white shadow-sm shadow-orange-500/20'
+                      : 'text-slate-600 hover:text-[#ff6600]'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
           </div>
         </div>
+
+        <section
+          role="tabpanel"
+          id="inbox-panel"
+          aria-labelledby="inbox-tab"
+          hidden={activeTab !== 'inbox'}
+        >
+          <NotificationInbox role={user?.role} />
+        </section>
+
+        <section
+          role="tabpanel"
+          id="preferences-panel"
+          aria-labelledby="preferences-tab"
+          hidden={activeTab !== 'preferences'}
+        >
+          <NotificationPreferences />
+        </section>
       </main>
     </div>
   );
