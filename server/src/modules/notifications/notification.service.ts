@@ -310,26 +310,25 @@ export function createNotificationService(database: Queryable): NotificationServ
   }
 
   /**
-   * Create-and-return the caller's preference row in one statement, so a GET
-   * always returns the persisted defaults instead of in-memory values.
+   * Create-and-return the caller's preference row in one statement.
+   *
+   * ON CONFLICT DO UPDATE (not DO NOTHING) is deliberate. Under READ COMMITTED,
+   * a concurrent first-time request can block on the unique index and then find
+   * the winning row invisible to its own statement snapshot. DO NOTHING plus a
+   * SELECT can therefore return zero rows. DO UPDATE always takes the conflict
+   * path, and RETURNING always yields the inserted or updated row, so both
+   * concurrent requests receive a record.
    */
   async function readPreferencesRecord(userId: string): Promise<NotificationPreferencesRecord> {
     const { rows } = await database.query<PreferenceRecordRow>(
-      `WITH inserted AS (
-         INSERT INTO public.user_notification_preferences (user_id)
-         VALUES ($1)
-         ON CONFLICT (user_id) DO NOTHING
-         RETURNING push_enabled, email_enabled, sms_enabled, updated_at
-       )
-       SELECT push_enabled, email_enabled, sms_enabled,
-              COALESCE(updated_at, now()) AS updated_at
-         FROM inserted
-       UNION ALL
-       SELECT push_enabled, email_enabled, sms_enabled,
-              COALESCE(updated_at, now()) AS updated_at
-         FROM public.user_notification_preferences
-        WHERE user_id = $1
-       LIMIT 1`,
+      `INSERT INTO public.user_notification_preferences
+         (user_id, push_enabled, email_enabled, sms_enabled, updated_at)
+       VALUES
+         ($1, TRUE, TRUE, TRUE, now())
+       ON CONFLICT (user_id) DO UPDATE SET
+         updated_at = COALESCE(public.user_notification_preferences.updated_at, now())
+       RETURNING push_enabled, email_enabled, sms_enabled,
+                 COALESCE(updated_at, now()) AS updated_at`,
       [userId],
     );
 

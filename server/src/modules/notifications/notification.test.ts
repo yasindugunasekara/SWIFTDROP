@@ -15,6 +15,7 @@ import { errorHandler } from '../../middleware/error-handler.js';
 import { createNotificationRouter } from './notification.routes.js';
 import {
   createNotificationService,
+  type NotificationService,
   type Queryable,
 } from './notification.service.js';
 
@@ -27,6 +28,7 @@ const COURIER_A = '22222222-2222-4222-8222-222222222222';
 const CUSTOMER_B = '33333333-3333-4333-8333-333333333333';
 const COURIER_B = '44444444-4444-4444-8444-444444444444';
 const DISPATCHER = '55555555-5555-4555-8555-555555555555';
+const RACE_USER = '99999999-9999-4999-8999-999999999999';
 
 const PARCEL_A = '66666666-6666-4666-8666-666666666666';
 const PARCEL_B = '77777777-7777-4777-8777-777777777777';
@@ -91,7 +93,8 @@ const SEED = `
     ('${COURIER_A}', 'COURIER'),
     ('${CUSTOMER_B}', 'CUSTOMER'),
     ('${COURIER_B}', 'COURIER'),
-    ('${DISPATCHER}', 'DISPATCHER');
+    ('${DISPATCHER}', 'DISPATCHER'),
+    ('${RACE_USER}', 'CUSTOMER');
 
   INSERT INTO public.parcels (id, tracking_number, customer_id) VALUES
     ('${PARCEL_A}', 'SWIFT-991122', '${CUSTOMER_A}'),
@@ -194,6 +197,7 @@ const profiles: Record<string, AuthProfile> = {
 let database: PGlite;
 let server: Server;
 let baseUrl: string;
+let service: NotificationService;
 
 function pgliteQueryable(pglite: PGlite): Queryable {
   return {
@@ -219,7 +223,7 @@ before(async () => {
   await database.exec(migration);
   await database.exec(SEED);
 
-  const service = createNotificationService(pgliteQueryable(database));
+  service = createNotificationService(pgliteQueryable(database));
   const authenticate = createAuthenticationMiddleware({
     async authenticate(token: string): Promise<AuthProfile> {
       const profile = profiles[token];
@@ -560,6 +564,55 @@ test('marks all remaining notifications as read and is idempotent', async () => 
 // -----------------------------------------------------------------------------
 // Preferences
 // -----------------------------------------------------------------------------
+
+test('getPreferences uses a conflict-update statement that always returns a row', async () => {
+  const statements: string[] = [];
+  const fake: Queryable = {
+    async query<R extends Record<string, unknown>>(text: string) {
+      statements.push(text);
+      return {
+        rows: [{
+          push_enabled: true,
+          email_enabled: false,
+          sms_enabled: true,
+          updated_at: new Date('2026-11-22T01:00:00Z'),
+        }] as unknown as R[],
+        rowCount: 1,
+      };
+    },
+  };
+
+  const preferences = await createNotificationService(fake)
+    .getPreferences('11111111-1111-4111-8111-111111111111');
+
+  assert.equal(statements.length, 1, 'one statement, not a DO NOTHING + SELECT pair');
+  assert.match(statements[0], /ON CONFLICT \(user_id\) DO UPDATE/);
+  assert.match(statements[0], /RETURNING/);
+  assert.doesNotMatch(statements[0], /UNION ALL/);
+  assert.equal(preferences.pushEnabled, true);
+  assert.equal(preferences.emailEnabled, false);
+  assert.equal(preferences.smsEnabled, true);
+});
+
+test('simultaneous first-time preference reads both return a record', async () => {
+  const [first, second] = await Promise.all([
+    service.getPreferences(RACE_USER),
+    service.getPreferences(RACE_USER),
+  ]);
+
+  assert.equal(first.pushEnabled, true);
+  assert.equal(second.pushEnabled, true);
+  assert.equal(first.emailEnabled, true);
+  assert.equal(second.emailEnabled, true);
+
+  const row = await database.query<{ count: number }>(
+    `SELECT count(*)::int AS count
+       FROM public.user_notification_preferences
+      WHERE user_id = $1`,
+    [RACE_USER],
+  );
+  assert.equal(row.rows[0].count, 1, 'exactly one preference row exists');
+});
 
 test('retrieves persisted preferences and creates defaults for a new user', async () => {
   const customerA = await request('GET', '/preferences', { token: 'customer-a-token' });
