@@ -15,6 +15,8 @@ const RABBITMQ_CONNECT_TIMEOUT_MS = 5_000;
 let connection: BrokerConnection | null = null;
 let channel: BrokerChannel | null = null;
 let connecting: Promise<Broker | null> | null = null;
+let shuttingDown = false;
+let closing: Promise<void> | null = null;
 
 const resetBroker = () => {
   connection = null;
@@ -30,6 +32,7 @@ const resetBroker = () => {
  * channels on this shared connection with createRabbitMQChannel().
  */
 export const connectRabbitMQ = async (): Promise<Broker | null> => {
+  if (shuttingDown) return null;
   if (connecting) return connecting;
 
   connecting = (async () => {
@@ -41,6 +44,16 @@ export const connectRabbitMQ = async (): Promise<Broker | null> => {
         activeConnection = await amqplib.connect(config.rabbitmqUrl, {
           timeout: RABBITMQ_CONNECT_TIMEOUT_MS,
         });
+
+        if (shuttingDown) {
+          try {
+            await activeConnection.close();
+          } catch {
+            // Shutdown is discarding this connection anyway.
+          }
+          return null;
+        }
+
         activeConnection.on('close', () => {
           console.warn('⚠️ RabbitMQ connection closed');
           resetBroker();
@@ -54,6 +67,17 @@ export const connectRabbitMQ = async (): Promise<Broker | null> => {
       let activeChannel = channel;
       if (!activeChannel) {
         activeChannel = await activeConnection.createChannel();
+
+        if (shuttingDown) {
+          try {
+            await activeConnection.close();
+          } catch {
+            // Shutdown is discarding this connection anyway.
+          }
+          resetBroker();
+          return null;
+        }
+
         activeChannel.on('close', () => {
           if (channel === activeChannel) channel = null;
         });
@@ -62,6 +86,8 @@ export const connectRabbitMQ = async (): Promise<Broker | null> => {
         });
         channel = activeChannel;
       }
+
+      if (shuttingDown) return null;
 
       if (isNewConnection) {
         console.log('✅ RabbitMQ broker connected successfully');
@@ -101,34 +127,43 @@ export const getRabbitMQChannel = () => channel;
  * Dedicated consumer/publisher channels close with their connection.
  */
 export const closeRabbitMQ = async (): Promise<void> => {
-  const pending = connecting;
-  const active = connection;
-  connection = null;
-  channel = null;
+  if (closing) return closing;
 
-  if (pending) {
-    try {
-      await pending;
-    } catch {
-      // connectRabbitMQ() reports failures itself and normally resolves null.
+  shuttingDown = true;
+  closing = (async () => {
+    const pending = connecting;
+    const active = connection;
+    connection = null;
+    channel = null;
+
+    if (pending) {
+      try {
+        await pending;
+      } catch {
+        // connectRabbitMQ() reports failures itself and normally resolves null.
+      }
     }
-  }
 
-  const late = connection;
-  connection = null;
-  channel = null;
+    const late = connection;
+    connection = null;
+    channel = null;
 
-  const connections = new Set<BrokerConnection>();
-  if (active) connections.add(active);
-  if (late) connections.add(late);
+    const connections = new Set<BrokerConnection>();
+    if (active) connections.add(active);
+    if (late) connections.add(late);
 
-  for (const brokerConnection of connections) {
-    try {
-      await brokerConnection.close();
-    } catch {
-      // Best effort only; the process is terminating or discarding the broker.
+    for (const brokerConnection of connections) {
+      try {
+        await brokerConnection.close();
+      } catch {
+        // Best effort only; the process is terminating or discarding the broker.
+      }
     }
-  }
+  })().finally(() => {
+    closing = null;
+  });
+
+  return closing;
 };
 
 /** Dedicated consumer channel on the shared connection. */

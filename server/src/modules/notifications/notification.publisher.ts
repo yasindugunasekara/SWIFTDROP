@@ -118,13 +118,18 @@ export function createNotificationPublisher(
   let connecting: Promise<PublisherChannel | null> | null = null;
   let closing = false;
   let cooldownUntil = 0;
+  const cleanedChannels = new WeakSet<PublisherChannel>();
 
   const markFailure = () => {
     if (failureCooldownMs > 0) cooldownUntil = now() + failureCooldownMs;
   };
 
   async function closeQuietly(candidate: PublisherChannel | null): Promise<void> {
-    if (!candidate) return;
+    if (!candidate || cleanedChannels.has(candidate)) return;
+
+    // Mark before awaiting so concurrent close/error/publish-failure paths
+    // cannot call close() on the same channel more than once.
+    cleanedChannels.add(candidate);
     try {
       await withTimeout(candidate.close(), DEFAULT_CLOSE_TIMEOUT_MS);
     } catch {
@@ -137,11 +142,18 @@ export function createNotificationPublisher(
       if (channel === candidate) channel = null;
     };
 
-    candidate.on('close', invalidate);
+    candidate.on('close', () => {
+      // A close event means the broker has already closed the channel. Never
+      // attempt to close it again from this path.
+      invalidate();
+      cleanedChannels.add(candidate);
+    });
+
     candidate.on('error', () => {
       invalidate();
       void closeQuietly(candidate);
     });
+
     return candidate;
   }
 
@@ -189,7 +201,7 @@ export function createNotificationPublisher(
           return null;
         }
 
-        if (closing) {
+        if (closing || cleanedChannels.has(attached)) {
           await closeQuietly(attached);
           return null;
         }

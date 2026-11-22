@@ -23,6 +23,7 @@ class FakeChannel implements PublisherChannel {
   readonly asserted: Array<{ queue: string; options?: { durable?: boolean } }> = [];
   readonly sent: SentMessage[] = [];
   closed = false;
+  closeCalls = 0;
   private readonly listeners = new Map<string, Array<(...args: unknown[]) => void>>();
 
   constructor(private readonly mode: SendMode = 'confirm') {}
@@ -49,6 +50,7 @@ class FakeChannel implements PublisherChannel {
   }
 
   async close(): Promise<void> {
+    this.closeCalls += 1;
     this.closed = true;
   }
 
@@ -158,6 +160,7 @@ test('a nack fails the publish, closes the channel, and the next publish reconne
 
   assert.equal(await publisher.publish({ n: 1 }), false);
   assert.equal(first.closed, true);
+  assert.equal(first.closeCalls, 1);
   assert.equal(first.sent.length, 1);
 
   assert.equal(await publisher.publish({ n: 2 }), true);
@@ -178,6 +181,7 @@ test('a confirmation timeout returns false without retrying within the same call
   assert.equal(await publisher.publish({ n: 1 }), false);
   assert.equal(first.sent.length, 1);
   assert.equal(first.closed, true);
+  assert.equal(first.closeCalls, 1);
 
   assert.equal(await publisher.publish({ n: 2 }), true);
   assert.equal(second.sent.length, 1);
@@ -202,14 +206,107 @@ test('channel close and error events invalidate the cached channel', async () =>
 
   assert.equal(await publisher.publish({ n: 1 }), true);
   first.emit('close');
+  await flush();
+  assert.equal(first.closeCalls, 0);
 
   assert.equal(await publisher.publish({ n: 2 }), true);
   assert.equal(creates, 2);
   second.emit('error');
+  await flush();
+  assert.equal(second.closeCalls, 1);
 
   assert.equal(await publisher.publish({ n: 3 }), true);
   assert.equal(creates, 3);
   assert.equal(third.sent.length, 1);
+});
+
+test('a close event invalidates without attempting to close the channel', async () => {
+  const first = new FakeChannel();
+  const second = new FakeChannel();
+  const publisher = createNotificationPublisher({
+    createConfirmChannel: channelQueue([first, second]),
+    queueName: () => 'notifications.test',
+    logger: silentLogger,
+    connectTimeoutMs: 100,
+    confirmTimeoutMs: 100,
+  });
+
+  assert.equal(await publisher.publish({ n: 1 }), true);
+  first.emit('close');
+  await flush();
+
+  assert.equal(first.closeCalls, 0);
+  assert.equal(first.closed, false);
+  assert.equal(await publisher.publish({ n: 2 }), true);
+  assert.equal(second.sent.length, 1);
+});
+
+test('repeated error events close the failed channel at most once', async () => {
+  const first = new FakeChannel();
+  const second = new FakeChannel();
+  const publisher = createNotificationPublisher({
+    createConfirmChannel: channelQueue([first, second]),
+    queueName: () => 'notifications.test',
+    logger: silentLogger,
+    connectTimeoutMs: 100,
+    confirmTimeoutMs: 100,
+  });
+
+  assert.equal(await publisher.publish({ n: 1 }), true);
+  first.emit('error');
+  first.emit('error');
+  first.emit('error');
+  await flush();
+
+  assert.equal(first.closeCalls, 1);
+
+  first.emit('close');
+  await flush();
+  assert.equal(first.closeCalls, 1);
+
+  assert.equal(await publisher.publish({ n: 2 }), true);
+  assert.equal(second.sent.length, 1);
+});
+
+test('a close event followed by an error never calls close on the channel', async () => {
+  const first = new FakeChannel();
+  const second = new FakeChannel();
+  const publisher = createNotificationPublisher({
+    createConfirmChannel: channelQueue([first, second]),
+    queueName: () => 'notifications.test',
+    logger: silentLogger,
+    connectTimeoutMs: 100,
+    confirmTimeoutMs: 100,
+  });
+
+  assert.equal(await publisher.publish({ n: 1 }), true);
+  first.emit('close');
+  first.emit('error');
+  await flush();
+
+  assert.equal(first.closeCalls, 0);
+  assert.equal(await publisher.publish({ n: 2 }), true);
+  assert.equal(second.sent.length, 1);
+});
+
+test('explicit publisher close after error cleanup does not close twice', async () => {
+  const channel = new FakeChannel();
+  const publisher = createNotificationPublisher({
+    createConfirmChannel: async () => channel,
+    queueName: () => 'notifications.test',
+    logger: silentLogger,
+    connectTimeoutMs: 100,
+    confirmTimeoutMs: 100,
+  });
+
+  assert.equal(await publisher.publish({ n: 1 }), true);
+  channel.emit('error');
+  await flush();
+  assert.equal(channel.closeCalls, 1);
+
+  await publisher.close();
+  assert.equal(channel.closeCalls, 1);
+  assert.equal(await publisher.publish({ n: 2 }), false);
 });
 
 test('broker unavailability returns false and the cooldown limits reconnect attempts', async () => {
@@ -291,6 +388,33 @@ test('a failed queue declaration closes the channel and returns false', async ()
 
   assert.equal(await publisher.publish({ n: 1 }), false);
   assert.equal(channel.closed, true);
+  assert.equal(channel.closeCalls, 1);
+});
+
+test('a channel closed during initialization is not cached', async () => {
+  class CloseDuringAssertChannel extends FakeChannel {
+    async assertQueue(queue: string, options?: { durable?: boolean }): Promise<void> {
+      await super.assertQueue(queue, options);
+      this.emit('close');
+    }
+  }
+
+  const first = new CloseDuringAssertChannel();
+  const second = new FakeChannel();
+  const publisher = createNotificationPublisher({
+    createConfirmChannel: channelQueue([first, second]),
+    queueName: () => 'notifications.test',
+    logger: silentLogger,
+    connectTimeoutMs: 100,
+    confirmTimeoutMs: 100,
+  });
+
+  assert.equal(await publisher.publish({ n: 1 }), false);
+  assert.equal(first.sent.length, 0);
+  assert.equal(first.closeCalls, 0);
+
+  assert.equal(await publisher.publish({ n: 2 }), true);
+  assert.equal(second.sent.length, 1);
 });
 
 test('a late channel after the connection timeout is closed instead of leaked', async () => {
@@ -311,6 +435,7 @@ test('a late channel after the connection timeout is closed instead of leaked', 
   await flush();
 
   assert.equal(channel.closed, true);
+  assert.equal(channel.closeCalls, 1);
 });
 
 test('close during initialization closes the late channel and prevents publishing', async () => {
@@ -333,6 +458,7 @@ test('close during initialization closes the late channel and prevents publishin
   assert.equal(await pending, false);
   await closing;
   assert.equal(channel.closed, true);
+  assert.equal(channel.closeCalls, 1);
   assert.equal(await publisher.publish({ n: 2 }), false);
 });
 
@@ -354,7 +480,9 @@ test('close is idempotent and prevents further publishing', async () => {
   assert.equal(await publisher.publish({ n: 1 }), true);
   await publisher.close();
   assert.equal(channel.closed, true);
+  assert.equal(channel.closeCalls, 1);
   await publisher.close();
+  assert.equal(channel.closeCalls, 1);
 
   assert.equal(await publisher.publish({ n: 2 }), false);
   assert.equal(creates, 1);
