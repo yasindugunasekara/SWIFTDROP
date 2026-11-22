@@ -1,0 +1,31 @@
+.admin-shell{background:#f6f7f9;min-height:100vh}.admin-nav{position:sticky;top:0;z-index:40;background:#fff;border-bottom:1px solid #e5e7eb;padding:18px max(20px,calc((100vw - 1280px)/2));display:flex;align-items:center;gap:32px}.admin-brand{font-size:25px;font-weight:900;letter-spacing:-1px}.admin-brand span{color:#f60}.admin-nav nav{display:flex;gap:8px;flex:1}.admin-nav nav a{padding:11px 16px;font-size:16px;color:#667085;border-bottom:2px solid transparent}.admin-nav nav a[aria-current]{color:#d45400;background:transparent;border-color:transparent}.admin-nav button{padding:10px 16px;border:1px solid #e5e7eb;background:white}.admin-shell button,.admin-shell input,.admin-shell select,.admin-shell textarea,.admin-shell a{border-radius:4px!important;transition:background-color .18s,color .18s,border-color .18s}.admin-shell button:disabled{opacity:.5}.admin-shell button:hover:not(:disabled){filter:brightness(.96)}.admin-shell article,.admin-shell section,.admin-shell form{border-radius:6px!important}@media(max-width:680px){.admin-nav{flex-wrap:wrap;gap:10px;padding:14px 16px}.admin-nav nav{order:3;width:100%;overflow:auto}.admin-nav nav a{white-space:nowrap;padding:10px}.admin-nav>button{margin-left:auto}.admin-brand{font-size:22px}}
+
+html:has(.admin-shell),body:has(.admin-shell){scrollbar-width:none}html:has(.admin-shell)::-webkit-scrollbar,body:has(.admin-shell)::-webkit-scrollbar{display:none}.admin-shell{min-width:0;overflow-x:clip}.admin-account-actions{display:flex;gap:12px;align-items:center}.admin-profile-link{display:flex;gap:8px;align-items:center;padding:10px 13px;border:1px solid transparent;font-size:15px;color:#657181}.admin-profile-link[aria-current],.admin-profile-link:hover{background:transparent;color:#cd5506;border-color:transparent}.admin-nav button{font-size:15px;min-height:40px}.admin-shell :focus-visible{outline:2px solid #ff6600;outline-offset:3px}.admin-shell select{appearance:none;-webkit-appearance:none;padding:10px 36px 10px 12px!important;background-color:#fff8f2!important;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23d65a08' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;border:1px solid #f1d9c8!important;color:#a64a0b!important;cursor:pointer;min-width:145px}.admin-shell select:focus{outline:none;border-color:#f60!important;box-shadow:0 0 0 3px #ff660018}.admin-shell select option{background:white;color:#3e4a5b;padding:10px}.admin-shell select option:checked{background:#fff0e5;color:#c65b12}@media(max-width:680px){.admin-account-actions{margin-left:auto;gap:8px}.admin-profile-link span{display:none}.admin-profile-link{padding:10px}.admin-nav nav{justify-content:center}.admin-nav nav a{flex:1;text-align:center}}
+
+/* Comfortable reading size across the administrator workspace. */
+.admin-shell{font-size:16px;line-height:1.6}.admin-shell input,.admin-shell textarea,.admin-shell select{font-size:16px}.admin-nav nav a{line-height:1.4}.admin-nav{flex-wrap:wrap}.admin-shell .text-xs{font-size:14px;line-height:1.5}.admin-shell .text-sm{font-size:16px;line-height:1.6}.admin-shell .text-3xl{font-size:34px;line-height:1.25}@media(max-width:680px){.admin-nav{gap:10px}.admin-nav nav a{font-size:15px}.admin-shell .text-3xl{font-size:30px}}
+
+/* Keep primary navigation within thumb reach on phones and small tablets. */
+.admin-nav-icon{display:none}
+.admin-account-actions{margin-left:auto;flex-shrink:0}
+@media(max-width:800px){
+ .admin-shell{padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}
+ .admin-nav{flex-wrap:nowrap;gap:8px;padding:12px 16px;padding-top:max(12px,env(safe-area-inset-top,0px))}
+ .admin-brand{font-size:23px;white-space:nowrap}
+ .admin-account-actions{gap:8px;margin-left:auto}
+ .admin-profile-link{padding:10px;min-height:44px;min-width:44px;justify-content:center}
+ .admin-profile-link span{display:none}
+ .admin-account-actions>button{padding:10px 12px;min-height:44px;font-size:14px;max-width:115px}
+ .admin-nav nav{position:fixed;inset:auto 0 0;z-index:50;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%;padding:8px 12px calc(8px + env(safe-area-inset-bottom,0px));background:#fff;border-top:1px solid #e7eaf0;box-shadow:0 -6px 24px #17202e08;overflow:visible}
+ .admin-nav nav a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:58px;padding:7px 4px;border-bottom:0;border-top:2px solid transparent;font-size:13px;line-height:1.3;font-weight:500;min-width:0;white-space:nowrap}
+ .admin-nav nav a[aria-current]{border-top-color:transparent;background:transparent;color:#c85100}
+ .admin-nav-icon{display:block;flex-shrink:0}
+ .admin-shell{scroll-padding-bottom:110px}
+}
+
+/* A quiet, animated underline marks the current destination. */
+.admin-nav nav a,.admin-profile-link{position:relative}
+.admin-nav nav a::after,.admin-profile-link::after{content:'';position:absolute;bottom:0;left:20%;right:20%;height:3px;background:#ff6600;border-radius:2px;transform:scaleX(0);transform-origin:center;transition:transform .2s ease}
+.admin-nav nav a[aria-current]::after,.admin-profile-link[aria-current]::after{transform:scaleX(1)}
+@media(max-width:800px){.admin-nav nav a::after{left:calc(50% - 18px);right:auto;width:36px}}
+@media(prefers-reduced-motion:reduce){.admin-nav nav a::after,.admin-profile-link::after{transition:none}}
