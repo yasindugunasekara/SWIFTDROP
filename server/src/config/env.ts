@@ -1,5 +1,14 @@
 import dotenv from 'dotenv';
-if (!process.env.VERCEL) dotenv.config();
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+if (!process.env.VERCEL) {
+  dotenv.config();
+  if (!process.env.SUPABASE_URL) {
+    const serverEnv = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../.env');
+    dotenv.config({ path: serverEnv });
+  }
+}
 
 export const config = {
   port: process.env.PORT || 5000,

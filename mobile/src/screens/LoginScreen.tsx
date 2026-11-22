@@ -17,7 +17,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { Colors } from '../theme/colors';
-import { loginMobile, type MobileUser } from '../services/auth';
+import { loginMobile, setDemoCustomerUser, type MobileUser } from '../services/auth';
 
 interface Props {
   onLoginSuccess: (user: MobileUser) => void;
@@ -89,6 +89,26 @@ export default function LoginScreen({ onLoginSuccess, onBack, onRegister, notice
           {/* Greeting */}
           <View style={styles.headerBlock}>
             <Text style={styles.welcomeTitle}>Welcome back</Text>
+            <View style={styles.quickFillRow}>
+              <TouchableOpacity
+                style={styles.quickFillPill}
+                onPress={() => {
+                  setEmail('customer@swiftdrop.com');
+                  setPassword('Customer@123');
+                }}
+              >
+                <Text style={styles.quickFillText}>👤 customer@swiftdrop.com</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.quickFillPill}
+                onPress={() => {
+                  setEmail('courier@swiftdrop.com');
+                  setPassword('Courier@123');
+                }}
+              >
+                <Text style={styles.quickFillText}>🚚 courier@swiftdrop.com</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           {notice ? <Text style={styles.error} accessibilityRole="alert">{notice}</Text> : null}
@@ -150,7 +170,16 @@ export default function LoginScreen({ onLoginSuccess, onBack, onRegister, notice
             {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
           </View>
 
-          <View style={styles.googleDivider}><View style={styles.dividerLine} /><Text style={styles.dividerText}>or</Text><View style={styles.dividerLine} /></View>
+            {/* Quick Demo Login */}
+            <TouchableOpacity
+              style={styles.demoLoginBtn}
+              onPress={() => onLoginSuccess(setDemoCustomerUser())}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.demoLoginText}>⚡ Quick Demo Sign-In as Kasun (Customer)</Text>
+            </TouchableOpacity>
+
+            <View style={styles.googleDivider}><View style={styles.dividerLine} /><Text style={styles.dividerText}>or</Text><View style={styles.dividerLine} /></View>
           <TouchableOpacity onPress={handleGoogle} disabled={busy} accessibilityRole="button" accessibilityLabel="Continue with Google" style={styles.googleButton}>
             <Text style={styles.googleMark} accessibilityElementsHidden>G</Text><Text style={styles.googleText}>Continue with Google</Text>
           </TouchableOpacity>
@@ -179,8 +208,11 @@ export const authStyles = StyleSheet.create({
   backArrow: { fontSize: 30, lineHeight: 34, color: '#636366', fontWeight: '400' },
   logoText: { fontSize: 23, fontWeight: '800', color: '#1c1c1e', letterSpacing: -0.9 },
   logoDot: { color: Colors.primary },
-  headerBlock: { marginBottom: 24 },
-  welcomeTitle: { fontSize: 30, fontWeight: '700', color: '#1c1c1e', letterSpacing: -1 },
+  headerBlock: { marginBottom: 20 },
+  welcomeTitle: { fontSize: 28, fontWeight: '800', color: '#1c1c1e', letterSpacing: -1 },
+  quickFillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 },
+  quickFillPill: { backgroundColor: '#f1f5f9', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1, borderColor: '#e2e8f0' },
+  quickFillText: { fontSize: 11, fontWeight: '600', color: '#475569' },
   roleContainer: { flexDirection: 'row', backgroundColor: '#f2f2f7', borderRadius: 11, padding: 3, marginBottom: 24 },
   roleTab: { flex: 1, minHeight: 40, alignItems: 'center', justifyContent: 'center', borderRadius: 8 },
   activeRoleTab: { backgroundColor: '#ffffff', shadowColor: '#000000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.09, shadowRadius: 3, elevation: 2 },
@@ -198,6 +230,8 @@ export const authStyles = StyleSheet.create({
   loginButton: { backgroundColor: Colors.primary, borderRadius: 14, minHeight: 52, flexDirection: 'row', gap: 10, alignItems: 'center', justifyContent: 'center', marginTop: 6 },
   loginButtonText: { color: '#ffffff', fontSize: 16, fontWeight: '600' },
   error: { marginTop: 12, color: '#b91c1c', backgroundColor: '#fff1f2', borderRadius: 10, padding: 12, fontSize: 13, lineHeight: 19 },
+  demoLoginBtn: { backgroundColor: '#fff7ed', borderRadius: 14, minHeight: 46, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: Colors.primary, marginBottom: 16 },
+  demoLoginText: { color: Colors.primary, fontSize: 13, fontWeight: '700' },
   googleDivider: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16 },
   dividerLine: { flex: 1, height: 1, backgroundColor: '#ededf2' },
   dividerText: { color: '#8e8e93', fontSize: 12 },

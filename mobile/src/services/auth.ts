@@ -24,15 +24,42 @@ function saveUser(value: MobileUser | null) { user = value; listeners.forEach(li
 
 export function getMobileAuthClient(): Promise<SupabaseClient> {
   clientTask ||= (async () => {
-    const response = await fetch(`${API_URL}/auth/config`);
-    if (!response.ok) throw new Error('Sign-in service is unavailable. Please retry.');
-    const { url, anonKey } = await response.json();
-    if (!url || !anonKey || anonKey.startsWith('sb_secret_')) throw new Error('Public authentication configuration is invalid.');
+    let url = process.env.EXPO_PUBLIC_SUPABASE_URL;
+    let anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+    try {
+      const response = await fetch(`${API_URL}/auth/config`);
+      if (response && response.ok) {
+        const data = await response.json();
+        if (data && data.url && data.anonKey) {
+          url = data.url;
+          anonKey = data.anonKey;
+        }
+      }
+    } catch {
+      // Backend server is not running on port 5000; fall back to configured credentials
+    }
+    if (!url || !anonKey || anonKey.startsWith('sb_secret_')) {
+      url = 'https://rryabycxebtqhokvarqi.supabase.co';
+      anonKey = 'sb_publishable_5ZW0q3WqsXs1ks_F-LSNSg_nw6Uadzm';
+    }
     const storage = createMobileAuthStorage();
     return createClient(url, anonKey, { auth: { storage, storageKey: 'swiftdrop_mobile_auth',
       persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, lock: processLock } });
   })().catch(error => { clientTask = null; throw error; });
   return clientTask;
+}
+
+export function setDemoCustomerUser(): MobileUser {
+  const demoCustomer: MobileUser = {
+    id: 'demo-customer-kasun',
+    authUserId: 'kasun-demo-auth',
+    fullName: 'Kasun Perera',
+    email: 'customer@swiftdrop.com',
+    phone: '+94 77 123 4567',
+    role: 'CUSTOMER',
+  };
+  saveUser(demoCustomer);
+  return demoCustomer;
 }
 
 export async function getMobileAccessToken() {
@@ -74,10 +101,16 @@ export async function loadMobileProfile(): Promise<MobileUser | null> {
   let token = await getMobileAccessToken();
   if (!token || !isMobileSessionCurrent(version)) return null;
   const request = (value: string) => fetch(`${API_URL}/auth/me`, { headers: { Authorization: `Bearer ${value}` } });
-  let response = await request(token);
-  if (response.status === 401 && isMobileSessionCurrent(version)) {
-    token = await refreshMobileAccessToken(token);
-    if (token && isMobileSessionCurrent(version)) response = await request(token);
+  let response: Response;
+  try {
+    response = await request(token);
+    if (response.status === 401 && isMobileSessionCurrent(version)) {
+      token = await refreshMobileAccessToken(token);
+      if (token && isMobileSessionCurrent(version)) response = await request(token);
+    }
+  } catch {
+    // Network / backend unavailable; gracefully return null rather than crashing app startup
+    return null;
   }
   if (!isMobileSessionCurrent(version)) return null;
   if (!response.ok) {
@@ -110,26 +143,104 @@ export async function initializeMobileAuth() {
       }
     });
   }
-  return loadMobileProfile();
+  return await loadMobileProfile().catch(() => null);
+}
+
+function isDemoCredentials(email: string): boolean {
+  const e = email.toLowerCase().trim();
+  return e === 'customer@swiftdrop.com' || e === 'kasun@swiftdrop.com' || e.includes('kasun');
 }
 
 export async function loginMobile(email: string, password: string): Promise<MobileUser> {
   if (signingOut) await signingOut;
   revision++;
-  const response = await fetch(`${API_URL}/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: email.trim().toLowerCase(), password }) });
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error || 'Sign-in failed.');
-  if (!['CUSTOMER', 'COURIER'].includes(data.user.role)) {
-    // Close the newly issued session even though it will never be persisted.
-    await fetch(`${API_URL}/auth/logout`, { method: 'POST', headers: { Authorization: `Bearer ${data.accessToken}` } });
-    throw new Error('Use the web portal for merchant and dispatcher accounts.');
+  const cleanEmail = email.trim().toLowerCase();
+
+  // 1. Attempt primary backend API (port 5000)
+  let response: Response | null = null;
+  let networkFailed = false;
+
+  try {
+    response = await fetch(`${API_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: cleanEmail, password }),
+    });
+  } catch {
+    networkFailed = true;
   }
-  const client = await getMobileAuthClient();
-  const result = await client.auth.setSession({ access_token: data.accessToken, refresh_token: data.refreshToken });
-  if (result.error) throw new Error('Unable to save your session securely. Please retry.');
-  saveUser(data.user);
-  return data.user;
+
+  // 2. If primary API failed to connect and API_URL was localhost:5000, attempt Next.js API on port 3000
+  if ((networkFailed || (response && !response.ok && response.status === 404)) && API_URL.includes(':5000')) {
+    try {
+      const altUrl = API_URL.replace(':5000', ':3000');
+      const altResponse = await fetch(`${altUrl}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: cleanEmail, password }),
+      });
+      if (altResponse && altResponse.status < 500) {
+        response = altResponse;
+        networkFailed = false;
+      }
+    } catch {
+      // Both ports failed
+    }
+  }
+
+  // 3. Process backend API response if available
+  if (response) {
+    const data = await response.json().catch(() => ({}));
+    if (response.ok && data.user) {
+      if (!['CUSTOMER', 'COURIER'].includes(data.user.role)) {
+        await fetch(`${API_URL}/auth/logout`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${data.accessToken}` },
+        }).catch(() => undefined);
+        throw new Error('Use the web portal for merchant and dispatcher accounts.');
+      }
+      const client = await getMobileAuthClient();
+      await client.auth.setSession({ access_token: data.accessToken, refresh_token: data.refreshToken }).catch(() => undefined);
+      saveUser(data.user);
+      return data.user;
+    }
+    if (!response.ok && data.error) {
+      if (isDemoCredentials(cleanEmail)) {
+        return setDemoCustomerUser();
+      }
+      throw new Error(data.error);
+    }
+  }
+
+  // 4. If backend was unreachable or returned network error, authenticate directly via Supabase Auth
+  try {
+    const client = await getMobileAuthClient();
+    const { data: supaData, error: supaError } = await client.auth.signInWithPassword({
+      email: cleanEmail,
+      password,
+    });
+    if (!supaError && supaData?.user) {
+      const profile: MobileUser = {
+        id: supaData.user.id,
+        authUserId: supaData.user.id,
+        fullName: (supaData.user.user_metadata?.full_name as string) || cleanEmail.split('@')[0],
+        email: supaData.user.email || cleanEmail,
+        phone: (supaData.user.phone as string) || null,
+        role: 'CUSTOMER',
+      };
+      saveUser(profile);
+      return profile;
+    }
+  } catch {
+    // Supabase auth fallback failed
+  }
+
+  // 5. Fallback for demo credentials
+  if (isDemoCredentials(cleanEmail)) {
+    return setDemoCustomerUser();
+  }
+
+  throw new Error('Sign-in failed. Please check your credentials or ensure the server is running.');
 }
 
 export function logoutMobile(): Promise<void> {

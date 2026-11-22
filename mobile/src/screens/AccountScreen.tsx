@@ -64,7 +64,7 @@ export default function AccountScreen({ userName, userEmail, userPhone, userRole
         <View style={styles.walletCard}>
           <View>
             <Text style={styles.walletLabel}>SwiftDrop Balance</Text>
-            <Text style={styles.walletAmount}>$45.00</Text>
+            <Text style={styles.walletAmount}>$120.00</Text>
           </View>
 
           <TouchableOpacity
