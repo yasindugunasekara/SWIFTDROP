@@ -28,6 +28,10 @@ import {
 } from '../config/rabbitmq.js';
 import { normalizeParcelEvent, parseParcelEvent } from '../modules/notifications/notification.events.js';
 import {
+  notificationDeadLetterQueueName,
+  notificationQueueName,
+} from '../modules/notifications/notification.queue.js';
+import {
   notificationService,
   type NotificationService,
 } from '../modules/notifications/notification.service.js';
@@ -89,8 +93,6 @@ export interface ProcessNotificationOptions {
 // Configuration
 // -----------------------------------------------------------------------------
 
-const DEFAULT_QUEUE = process.env.RABBITMQ_QUEUE_NOTIFICATIONS || 'swiftdrop_notifications_queue';
-const DEFAULT_DEAD_LETTER_QUEUE = process.env.RABBITMQ_QUEUE_DLQ || 'swiftdrop_dead_letter_queue';
 const DEFAULT_MAX_RETRIES = 5;
 const DEFAULT_RETRY_DELAY_MS = 2_000;
 const PUBLISH_CONFIRM_TIMEOUT_MS = 10_000;
@@ -109,8 +111,8 @@ export async function processNotificationMessage(
   options: ProcessNotificationOptions = {},
 ): Promise<ProcessOutcome> {
   const logger = options.logger ?? console;
-  const queue = options.queue ?? DEFAULT_QUEUE;
-  const deadLetterQueue = options.deadLetterQueue ?? DEFAULT_DEAD_LETTER_QUEUE;
+  const queue = options.queue ?? notificationQueueName();
+  const deadLetterQueue = options.deadLetterQueue ?? notificationDeadLetterQueueName();
 
   let payload: unknown;
   try {
@@ -340,8 +342,8 @@ export const startNotificationConsumer = async () => {
     });
 
     const channel = createChannelAdapter(consumerChannel, publisherChannel);
-    const queue = process.env.RABBITMQ_QUEUE_NOTIFICATIONS || DEFAULT_QUEUE;
-    const deadLetterQueue = process.env.RABBITMQ_QUEUE_DLQ || DEFAULT_DEAD_LETTER_QUEUE;
+    const queue = notificationQueueName();
+    const deadLetterQueue = notificationDeadLetterQueueName();
 
     await channel.assertQueue(queue, { durable: true });
     await channel.assertQueue(deadLetterQueue, { durable: true });
