@@ -48,7 +48,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full swiftdrop-landing">
       {/* HERO SECTION */}
       <section className="relative w-full min-h-[660px] sm:min-h-[720px] lg:min-h-[800px] flex items-center pt-28 sm:pt-36 pb-16 overflow-hidden bg-[#e8e7e2]">
         {/* Full-bleed 3D Isometric Logistics Scene */}
@@ -69,12 +69,12 @@ export default function HomePage() {
           {/* Left Column: Typography, Glassmorphism Search Bar & Stats */}
           <div className="max-w-xl flex flex-col gap-4 sm:gap-5 text-left">
             <span className="text-[11px] sm:text-xs font-bold tracking-[0.25em] text-slate-400 uppercase">
-              DELIVERING A BRIGHTER TOMORROW
+              YOUR NEXT DELIVERY. SIMPLIFIED.
             </span>
             
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-[#111827] tracking-tight leading-[1.04]">
-              Send<br />
-              Anything.<br />
+              Deliver<br />
+              More.<br />
               <span className="text-[#ff6600]">Anywhere.</span>
             </h1>
 
