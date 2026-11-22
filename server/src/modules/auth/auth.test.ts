@@ -45,7 +45,7 @@ before(async () => {
       'SELECT nullif(current_setting(''request.jwt.claim.sub'',true),'''')::uuid';
     CREATE FUNCTION auth.jwt() RETURNS JSONB LANGUAGE SQL STABLE AS
       'SELECT coalesce(nullif(current_setting(''request.jwt.claims'',true),''''),''{}'')::jsonb';
-    CREATE TABLE auth.sessions(id UUID PRIMARY KEY,user_id UUID REFERENCES auth.users(id),not_after TIMESTAMPTZ);
+    CREATE TABLE auth.sessions(id UUID PRIMARY KEY,user_id UUID REFERENCES auth.users(id),not_after TIMESTAMPTZ,created_at TIMESTAMPTZ DEFAULT now());
     GRANT USAGE ON SCHEMA auth TO authenticated;
     CREATE TYPE public.user_role AS ENUM ('CUSTOMER','COURIER','MERCHANT','DISPATCHER','ADMIN');
     CREATE TABLE public.users(id UUID PRIMARY KEY,email VARCHAR(255) UNIQUE NOT NULL,password_hash VARCHAR(255) NOT NULL,
@@ -64,6 +64,7 @@ before(async () => {
   const approvalMigration = await readFile(new URL('../../database/migrations/20261119095136_account_application_approvals.sql', import.meta.url), 'utf8');
   await database.exec(approvalMigration);
   await database.exec(approvalMigration);
+  await database.exec(await readFile(new URL('../../database/migrations/20261122080440_absolute_session_lifetime.sql', import.meta.url), 'utf8'));
 });
 after(async () => {
   await Promise.all(servers.map(server => new Promise<void>((resolve, reject) => {
@@ -195,6 +196,10 @@ test('session check rejects missing, expired, revoked and another user session w
   assert.equal(await check(own), true);
   assert.equal(await check(other), false);
   assert.equal(await check(null), false);
+  await database.query("UPDATE auth.sessions SET created_at=now()-interval '61 minutes' WHERE id=$1", [own]);
+  assert.equal(await check(own), false, 'refresh cannot extend the absolute lifetime');
+  await database.query('UPDATE auth.sessions SET created_at=now() WHERE id=$1', [own]);
+  assert.equal(await check(own), true);
   await database.query("UPDATE auth.sessions SET not_after=now()-interval '1 minute' WHERE id=$1::uuid", [own]);
   assert.equal(await check(own), false);
   await database.query('DELETE FROM auth.sessions WHERE id=$1::uuid', [own]);
@@ -338,4 +343,25 @@ test('rejection preserves customer role and revoked staff sessions cannot approv
   assert.equal(profile.role, 'CUSTOMER');
   await database.query('DELETE FROM auth.sessions WHERE id=$1', [staffSession]);
   await asActor(staffId, staffSession, async () => { await assert.rejects(database.query("SELECT public.review_account_application($1,'APPROVED','Invalid session')", [application.id])); });
+});
+
+test('admin directory denies other roles and revoked sessions, bounds results and never exposes credentials', async () => {
+  await database.exec(await readFile(new URL('../../database/migrations/20261122020616_admin_user_directory.sql', import.meta.url), 'utf8'));
+  await database.query('INSERT INTO auth.sessions(id,user_id) VALUES ($1,$2)', [staffSession,staffId]);
+  await asActor(staffId,staffSession,async () => {
+    await assert.rejects(database.query('SELECT public.admin_user_directory()'));
+  });
+  await database.query("UPDATE public.users SET role='ADMIN' WHERE auth_user_id=$1",[staffId]);
+  await asActor(staffId,staffSession,async () => {
+    const {rows:[row]} = await database.query<{data:{users:Record<string,unknown>[];total:number}}>("SELECT public.admin_user_directory(1,'ADMIN') AS data");
+    assert.equal(row.data.total,1);
+    assert.equal(row.data.users[0].role,'ADMIN');
+    assert.ok(!('password_hash' in row.data.users[0]));
+    const {rows:[empty]} = await database.query<{data:{users:unknown[];total:number}}>("SELECT public.admin_user_directory(9999,'ADMIN') AS data");
+    assert.equal(empty.data.total,1); assert.equal(empty.data.users.length,0);
+    await assert.rejects(database.query('SELECT public.admin_user_directory(0)'));
+    await assert.rejects(database.query("SELECT public.admin_user_directory(1,'SUPERADMIN')"));
+  });
+  await database.query('DELETE FROM auth.sessions WHERE id=$1',[staffSession]);
+  await asActor(staffId,staffSession,async () => { await assert.rejects(database.query('SELECT public.admin_user_directory()')); });
 });

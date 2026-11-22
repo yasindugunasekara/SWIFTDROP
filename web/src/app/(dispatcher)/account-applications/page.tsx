@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { fetchApi } from '../../../lib/api';
 
 interface Application {
@@ -8,6 +9,7 @@ interface Application {
   status: string; review_note: string | null; created_at: string; reviewed_at: string | null;
 }
 export default function AccountApplicationsPage() {
+  const admin = usePathname()?.startsWith('/admin');
   const [status, setStatus] = useState('PENDING');
   const [applications, setApplications] = useState<Application[]>([]);
   const [notes, setNotes] = useState<Record<string, string>>({});
@@ -36,7 +38,7 @@ export default function AccountApplicationsPage() {
     finally { pending.current = false; setBusy(''); }
   }
   return <div className="min-h-screen bg-slate-50 p-5 sm:p-10"><div className="mx-auto max-w-4xl">
-    <Link href="/dispatch" className="text-orange-700 underline">Back to dispatch</Link>
+    <Link href={admin ? "/admin" : "/dispatch"} className="text-orange-700 underline">{admin ? "Back to administration" : "Back to dispatch"}</Link>
     <h1 className="text-3xl font-bold mt-5">Account approvals</h1>
     <p className="mt-2 text-slate-600">Review courier and merchant applications before granting workspace access.</p>
     <div className="flex flex-wrap gap-2 my-6">{['PENDING', 'APPROVED', 'REJECTED'].map(value => <button key={value} disabled={!!busy} aria-pressed={status === value}

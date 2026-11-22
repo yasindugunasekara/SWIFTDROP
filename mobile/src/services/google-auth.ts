@@ -2,7 +2,7 @@ import { Platform } from 'react-native';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { makeRedirectUri } from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
-import { API_URL, acceptMobileGoogleSession, createMobileAuthStorage, type MobileUser } from './auth';
+import { API_URL, authFetch, acceptMobileGoogleSession, createMobileAuthStorage, type MobileUser } from './auth';
 
 const pendingKey = 'swiftdrop_google_pending';
 const storageKey = 'swiftdrop_mobile_google';
@@ -13,7 +13,7 @@ export class RegistrationRequired extends Error {
 
 async function getOAuthClient() {
   oauthClient ||= (async () => {
-    const response = await fetch(`${API_URL}/auth/config`, { signal: typeof AbortSignal.timeout === 'function' ? AbortSignal.timeout(10000) : undefined });
+    const response = await authFetch(`${API_URL}/auth/config`);
     if (!response.ok) throw new Error('Google sign-in is unavailable. Please retry.');
     const { url, anonKey } = await response.json();
     return createClient(url, anonKey, { auth: { flowType: 'pkce', storageKey,

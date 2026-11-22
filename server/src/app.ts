@@ -36,6 +36,7 @@ app.get(['/health', '/api/v1/health'], (req: Request, res: Response) => {
 
 // Member Module Routes
 import authRoutes from './modules/auth/auth.routes.js';
+import adminRoutes from './modules/admin/admin.routes.js';
 import bookingRoutes from './modules/booking/booking.routes.js';
 import trackingRoutes from './modules/tracking/tracking.routes.js';
 import courierRoutes from './modules/courier/courier.routes.js';
@@ -48,6 +49,7 @@ import supportRoutes from './modules/support/support.routes.js';
 import aiRoutes from './modules/ai/ai.routes.js';
 
 app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/booking', bookingRoutes);
 app.use('/api/v1/tracking', trackingRoutes);
 app.use('/api/v1/courier', courierRoutes);

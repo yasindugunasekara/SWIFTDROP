@@ -72,3 +72,14 @@ test('merchant and courier modules remain mounted behind the same Next API', asy
     assert.equal((await response.json()).error, 'Access token required');
   }
 });
+
+test('merged admin and dispatch pages render and their private APIs require authentication', async () => {
+  for (const path of ['/admin', '/admin/applications', '/admin/profile', '/admin/analytics', '/dispatch', '/config']) {
+    const response = await request(path);
+    assert.equal(response.status, 200, path);
+    assert.match(response.headers.get('content-type'), /text\/html/);
+  }
+  for (const path of ['/admin/users', '/auth/applications', '/dispatch/unassigned', '/dispatch/couriers', '/dispatch/config']) {
+    assert.equal((await request('/api/v1' + path)).status, 401, path);
+  }
+});

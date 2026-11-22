@@ -48,7 +48,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full swiftdrop-landing">
       {/* HERO SECTION */}
       <section className="relative w-full min-h-[660px] sm:min-h-[720px] lg:min-h-[800px] flex items-center pt-28 sm:pt-36 pb-16 overflow-hidden bg-[#e8e7e2]">
         {/* Full-bleed 3D Isometric Logistics Scene */}
@@ -69,12 +69,12 @@ export default function HomePage() {
           {/* Left Column: Typography, Glassmorphism Search Bar & Stats */}
           <div className="max-w-xl flex flex-col gap-4 sm:gap-5 text-left">
             <span className="text-[11px] sm:text-xs font-bold tracking-[0.25em] text-slate-400 uppercase">
-              DELIVERING A BRIGHTER TOMORROW
+              YOUR NEXT DELIVERY. SIMPLIFIED.
             </span>
             
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-[#111827] tracking-tight leading-[1.04]">
-              Send<br />
-              Anything.<br />
+              Deliver<br />
+              More.<br />
               <span className="text-[#ff6600]">Anywhere.</span>
             </h1>
 
@@ -557,7 +557,7 @@ export default function HomePage() {
                           <button
                             key={w.id}
                             type="button"
-                            onClick={() => setEstWeight(w.id as any)}
+                            onClick={() => setEstWeight(w.id as typeof estWeight)}
                             className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-all relative flex flex-col justify-between ${
                               isSelected
                                 ? 'border-[#ff6600] bg-orange-50/60 shadow-md ring-2 ring-[#ff6600]/25 text-slate-900'
@@ -607,7 +607,7 @@ export default function HomePage() {
                           <button
                             key={d.id}
                             type="button"
-                            onClick={() => setEstDistance(d.id as any)}
+                            onClick={() => setEstDistance(d.id as typeof estDistance)}
                             className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-all relative flex flex-col justify-between ${
                               isSelected
                                 ? 'border-[#ff6600] bg-orange-50/60 shadow-md ring-2 ring-[#ff6600]/25 text-slate-900'
@@ -668,7 +668,7 @@ export default function HomePage() {
                           <button
                             key={s.id}
                             type="button"
-                            onClick={() => setEstTier(s.id as any)}
+                            onClick={() => setEstTier(s.id as typeof estTier)}
                             className={`p-4 rounded-2xl border text-left transition-all relative flex flex-col justify-between ${
                               isSelected
                                 ? 'border-[#ff6600] bg-orange-50/60 shadow-md ring-2 ring-[#ff6600]/25 text-slate-900'
@@ -1048,11 +1048,11 @@ export default function HomePage() {
                 Services
               </h5>
               <ul className="text-xs sm:text-sm text-slate-400 space-y-2.5">
-                <li><a href="/#services" className="hover:text-white transition-colors">Same-Day Express</a></li>
-                <li><a href="/#services" className="hover:text-white transition-colors">Live GPS Tracking</a></li>
-                <li><a href="/#services" className="hover:text-white transition-colors">Merchant Partner API</a></li>
-                <li><a href="/#services" className="hover:text-white transition-colors">Verified Delivery POD</a></li>
-                <li><a href="/#coverage" className="hover:text-white transition-colors">Provincial Sorting Hubs</a></li>
+                <li><Link href="/#services" className="hover:text-white transition-colors">Same-Day Express</Link></li>
+                <li><Link href="/#services" className="hover:text-white transition-colors">Live GPS Tracking</Link></li>
+                <li><Link href="/#services" className="hover:text-white transition-colors">Merchant Partner API</Link></li>
+                <li><Link href="/#services" className="hover:text-white transition-colors">Verified Delivery POD</Link></li>
+                <li><Link href="/#coverage" className="hover:text-white transition-colors">Provincial Sorting Hubs</Link></li>
               </ul>
             </div>
 

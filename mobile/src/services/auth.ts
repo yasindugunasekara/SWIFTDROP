@@ -11,6 +11,7 @@ const defaultApiHost = Platform.OS === 'web' && typeof window !== 'undefined'
 const defaultApiAuthority = defaultApiHost.includes(':') ? `[${defaultApiHost}]` : defaultApiHost;
 export const API_URL = process.env.EXPO_PUBLIC_API_URL || `http://${defaultApiAuthority}:5000/api/v1`;
 export interface MobileUser {
+  sessionExpiresAt?: number;
   id: string; authUserId: string; fullName: string; email: string; phone: string | null;
   role: 'CUSTOMER' | 'COURIER';
   application?: { id: string; requestedRole: 'COURIER' | 'MERCHANT'; status: string; reviewNote: string | null };
@@ -21,16 +22,49 @@ let revision = 0;
 let subscribed = false;
 let signingOut: Promise<void> | null = null;
 let refreshing: Promise<string | null> | null = null;
+let sessionWrite: Promise<unknown> = Promise.resolve();
+let writingSession = false;
+function serializeSession<T>(action: () => Promise<T>): Promise<T> {
+  const run = async () => { writingSession = true; try { return await action(); } finally { writingSession = false; } };
+  const task = sessionWrite.then(run, run);
+  sessionWrite = task.catch(() => undefined);
+  return task;
+}
+export async function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 20000);
+  try { return await fetch(url, { ...options, signal: controller.signal }); }
+  catch (error) {
+    if (controller.signal.aborted) throw new Error('The request timed out. Check your connection and retry.');
+    throw error;
+  } finally { clearTimeout(timeout); }
+}
 const listeners = new Set<() => void>();
 export const getMobileUser = () => user;
 export const subscribeMobileAuth = (listener: () => void) => { listeners.add(listener); return () => { listeners.delete(listener); }; };
 export const getMobileSessionRevision = () => revision;
 export const isMobileSessionCurrent = (version: number) => version === revision && !signingOut;
-function saveUser(value: MobileUser | null) { user = value; listeners.forEach(listener => listener()); }
+let expiryTimer: ReturnType<typeof setTimeout> | undefined;
+function saveUser(value: MobileUser | null) {
+  user = value;
+  if (expiryTimer !== undefined) clearTimeout(expiryTimer);
+  expiryTimer = undefined;
+  if (value?.sessionExpiresAt !== undefined) {
+    expiryTimer = setTimeout(() => expireMobileSessionIfNeeded(), Math.max(0, value.sessionExpiresAt - Date.now()));
+  }
+  listeners.forEach(listener => listener());
+}
+export async function expireMobileSessionIfNeeded(): Promise<boolean> {
+  if (user?.sessionExpiresAt === undefined || user.sessionExpiresAt > Date.now()) return false;
+  const task = logoutMobile();
+  saveUser(null);
+  await task.catch(() => saveUser(null));
+  return true;
+}
 
 export function getMobileAuthClient(): Promise<SupabaseClient> {
   clientTask ||= (async () => {
-    const response = await fetch(`${API_URL}/auth/config`);
+    const response = await authFetch(`${API_URL}/auth/config`);
     if (!response.ok) throw new Error('Sign-in service is unavailable. Please retry.');
     const { url, anonKey } = await response.json();
     if (!url || !anonKey || anonKey.startsWith('sb_secret_')) throw new Error('Public authentication configuration is invalid.');
@@ -42,6 +76,7 @@ export function getMobileAuthClient(): Promise<SupabaseClient> {
 }
 
 export async function getMobileAccessToken() {
+  if (await expireMobileSessionIfNeeded()) return null;
   const version = revision;
   if (signingOut) return null;
   const client = await getMobileAuthClient();
@@ -53,6 +88,7 @@ export async function getMobileAccessToken() {
 }
 
 export async function refreshMobileAccessToken(rejectedToken: string): Promise<string | null> {
+  if (await expireMobileSessionIfNeeded()) return null;
   if (signingOut) return null;
   if (refreshing) return refreshing;
   const version = revision;
@@ -79,7 +115,7 @@ export async function loadMobileProfile(): Promise<MobileUser | null> {
   const version = revision;
   let token = await getMobileAccessToken();
   if (!token || !isMobileSessionCurrent(version)) return null;
-  const request = (value: string) => fetch(`${API_URL}/auth/me`, { headers: { Authorization: `Bearer ${value}` } });
+  const request = (value: string) => authFetch(`${API_URL}/auth/me`, { headers: { Authorization: `Bearer ${value}` } });
   let response = await request(token);
   if (response.status === 401 && isMobileSessionCurrent(version)) {
     token = await refreshMobileAccessToken(token);
@@ -109,7 +145,7 @@ export async function initializeMobileAuth() {
     subscribed = true;
     client.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT') { revision++; saveUser(null); }
-      if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session && !signingOut) {
+      if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session && !signingOut && !writingSession) {
         if (user && user.authUserId !== session.user.id) { revision++; saveUser(null); }
         const version = revision;
         setTimeout(() => { if (isMobileSessionCurrent(version)) void loadMobileProfile().catch(() => undefined); }, 0);
@@ -121,38 +157,45 @@ export async function initializeMobileAuth() {
 
 export async function loginMobile(email: string, password: string): Promise<MobileUser> {
   if (signingOut) await signingOut;
-  revision++;
-  const response = await fetch(`${API_URL}/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+  const version = ++revision;
+  saveUser(null);
+  const response = await authFetch(`${API_URL}/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email: email.trim().toLowerCase(), password }) });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || 'Sign-in failed.');
-  return establishMobileSession(data);
+  return establishMobileSession(data, version);
 }
-async function establishMobileSession(data: { user: MobileUser; accessToken: string; refreshToken: string }): Promise<MobileUser> {
+async function establishMobileSession(data: { user: MobileUser; accessToken: string; refreshToken: string }, version: number): Promise<MobileUser> {
   if (!['CUSTOMER', 'COURIER'].includes(data.user.role)) {
     // Close the newly issued session even though it will never be persisted.
-    await fetch(`${API_URL}/auth/logout`, { method: 'POST', headers: { Authorization: `Bearer ${data.accessToken}` } });
+    await authFetch(`${API_URL}/auth/logout`, { method: 'POST', headers: { Authorization: `Bearer ${data.accessToken}` } });
     throw new Error('Use the web portal for merchant and dispatcher accounts.');
   }
-  const client = await getMobileAuthClient();
-  const result = await client.auth.setSession({ access_token: data.accessToken, refresh_token: data.refreshToken });
-  if (result.error) throw new Error('Unable to save your session securely. Please retry.');
-  saveUser(data.user);
-  return data.user;
+  return serializeSession(async () => {
+    if (!isMobileSessionCurrent(version)) throw new Error('Your session changed. Please sign in again.');
+    const client = await getMobileAuthClient();
+    if (!isMobileSessionCurrent(version)) throw new Error('Your session changed. Please sign in again.');
+    const result = await client.auth.setSession({ access_token: data.accessToken, refresh_token: data.refreshToken });
+    if (result.error) throw new Error('Unable to save your session securely. Please retry.');
+    if (!isMobileSessionCurrent(version)) throw new Error('Your session changed. Please sign in again.');
+    saveUser(data.user);
+    return data.user;
+  });
 }
 
 export async function loginMobileDemo(role: 'CUSTOMER' | 'COURIER'): Promise<MobileUser> {
   if (signingOut) await signingOut;
-  revision++;
-  const response = await fetch(`${API_URL}/auth/demo`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ role }) });
+  const version = ++revision;
+  saveUser(null);
+  const response = await authFetch(`${API_URL}/auth/demo`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ role }) });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || 'Demo login is unavailable.');
-  return establishMobileSession(data);
+  return establishMobileSession(data, version);
 }
 
 export async function requestMobilePasswordReset(email: string): Promise<string> {
-  const response = await fetch(`${API_URL}/auth/forgot-password`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: email.trim().toLowerCase() }), signal: typeof AbortSignal.timeout === 'function' ? AbortSignal.timeout(20000) : undefined });
+  const response = await authFetch(`${API_URL}/auth/forgot-password`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: email.trim().toLowerCase() }) });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || 'Unable to request a reset email.');
   return data.message;
@@ -161,13 +204,24 @@ export async function requestMobilePasswordReset(email: string): Promise<string>
 export function logoutMobile(): Promise<void> {
   if (signingOut) return signingOut;
   revision++;
-  signingOut = (async () => {
+  signingOut = serializeSession(async () => {
     const client = await getMobileAuthClient();
     const { error } = await client.auth.signOut({ scope: 'local' });
     if (error) throw new Error('Unable to sign out securely. Check your connection and retry.');
     saveUser(null);
-  })().finally(() => { signingOut = null; });
+  }).finally(() => { signingOut = null; });
   return signingOut;
+}
+export async function updateMobileProfile(fullName: string, phone: string): Promise<MobileUser> {
+  const version = revision;
+  const token = await getMobileAccessToken();
+  if (!token || !isMobileSessionCurrent(version)) throw new Error('Please sign in again.');
+  const response = await authFetch(`${API_URL}/auth/me`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ fullName: fullName.trim(), phone: phone.trim() || null }) });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || 'Unable to save your profile.');
+  if (!isMobileSessionCurrent(version)) throw new Error('Your session changed. Please sign in again.');
+  saveUser(data.user); return data.user;
 }
 
 export async function setMobileAuthActive(active: boolean) {
@@ -192,17 +246,12 @@ export function createMobileAuthStorage() {
 // current customer profile. Other roles never enter the mobile customer shell.
 export async function acceptMobileGoogleSession(accessToken: string, refreshToken: string): Promise<MobileUser> {
   if (signingOut) await signingOut;
-  revision++;
-  const version = revision;
-  const response = await fetch(API_URL + '/auth/me', { headers: { Authorization: 'Bearer ' + accessToken }, signal: typeof AbortSignal.timeout === 'function' ? AbortSignal.timeout(15000) : undefined });
+  const version = ++revision;
+  saveUser(null);
+  const response = await authFetch(API_URL + '/auth/me', { headers: { Authorization: 'Bearer ' + accessToken } });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || 'Unable to verify your Google account.');
   if (data.user?.role !== 'CUSTOMER') throw new Error('Google sign-in is available for Customer accounts only.');
   if (!isMobileSessionCurrent(version)) throw new Error('Your session changed. Please sign in again.');
-  const client = await getMobileAuthClient();
-  const result = await client.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
-  if (result.error) throw new Error('Unable to save your session. Please retry.');
-  if (!isMobileSessionCurrent(version)) throw new Error('Your session changed. Please sign in again.');
-  saveUser(data.user);
-  return data.user;
+  return establishMobileSession({ user: data.user, accessToken, refreshToken }, version);
 }

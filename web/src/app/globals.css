@@ -8,3 +8,5 @@ body {
   color: #0f172a;
   min-height: 100vh;
 }
+
+.swiftdrop-landing{background:#fffcf7}.swiftdrop-landing button,.swiftdrop-landing a,.swiftdrop-landing form{border-radius:4px!important}.swiftdrop-landing section:first-child{margin:90px auto 24px;max-width:1440px;border:1px solid #e8e4dc;min-height:680px;padding-top:60px}.swiftdrop-landing h1{font-size:clamp(44px,5.2vw,76px);letter-spacing:-3px}.swiftdrop-landing section:not(:first-child){border-top:1px solid #eee8df}.swiftdrop-landing button{transition:transform .18s,background .18s}.swiftdrop-landing button:hover{transform:translateY(-2px)}

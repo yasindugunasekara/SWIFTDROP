@@ -4,5 +4,10 @@
 **/.env
 **/.env.local
 **/.env.*.local
+**/.env.*
+!**/.env.example
+**/uploads
+**/coverage
+**/*.tsbuildinfo
 .git
 **/*.log

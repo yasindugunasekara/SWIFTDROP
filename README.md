@@ -1,77 +1,295 @@
-# ⚡ SwiftDrop - Courier & Parcel Delivery System
+# SwiftDrop - Courier & Parcel Delivery System
 
-[![Next.js 16](https://img.shields.io/badge/Frontend-Next.js%2016%20%7C%20React%2019-orange)](https://nextjs.org/)
-[![Node.js](https://img.shields.io/badge/Backend-Node.js%20%7C%20Express%20%7C%20WebSockets-green)](https://nodejs.org/)
-[![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL%20%7C%20Supabase-blue)](https://supabase.com/)
-[![React Native](https://img.shields.io/badge/Mobile-React%20Native%20%7C%20Expo%2051-black)](https://expo.dev/)
-[![Docker](https://img.shields.io/badge/Infrastructure-Docker%20%7C%20Kubernetes-2496ED)](https://www.docker.com/)
+## Docker Installation
 
-**SwiftDrop** is a mission-critical, enterprise-grade courier, dispatch, real-time tracking, and parcel delivery platform designed and engineered by a 10-member software engineering team. The system provides seamless end-to-end logistics orchestration across Web, Mobile, and Cloud micro-services tailored for the Sri Lankan logistics ecosystem.
+Docker runs the web application, standalone API/WebSockets, background workers, Redis, and RabbitMQ. Authentication and PostgreSQL use your **existing Supabase project**. The mobile app runs separately through Expo. Node.js does not need to be installed on the host for this Docker setup.
 
----
+### 1. Prepare the Environment
 
-## 🌟 What's New in Recent Releases
+Install Git and Docker Desktop, start Docker Desktop with **Linux containers**, then clone the repository:
 
-### 🎨 Brand Identity & 3D Visual Hub
-- **3D Isometric Logistics Hub**: High-resolution 3D isometric hero background showcasing SwiftDrop's automated distribution facility, conveyor line-hauls, and courier fleet.
-- **3D Claymorphic Service Cards**: Custom high-fidelity 3D illustrations for **Same-Day Express**, **GPS Live Tracking**, **Automated Merchant API**, and **Verified Proof of Delivery (POD)**.
-- **Electric Orange Favicon Suite**: Custom brand parcel favicon in SVG, ICO, and PNG formats configured with Next.js 16 metadata standards.
+```bash
+git clone https://github.com/yasindugunasekara/SWIFTDROP.git
+cd SWIFTDROP
+docker compose version
+```
 
-### 💰 Transparent Dynamic Pricing & Sri Lankan Rupee (LKR) Migration
-- **LKR Currency Standard**: Full migration from USD to Sri Lankan Rupees (`LKR`) across pricing plans, fee estimates, and booking breakdowns.
-- **Dynamic Calculation Engine**: Replaced rigid flat fees with a real-time formula based on actual road transit distance (km), scale weight brackets, and priority service level agreements (SLAs).
-- **Full-Width Interactive Fee Estimator (`max-w-7xl`)**:
-  - **Left Configuration Console**: 3-step selector featuring 4 parcel weight tiers (`< 1 kg`, `1–3 kg`, `3–10 kg`, `10–25 kg`), 3 transit zones (`Intra-City < 15 km`, `Inter-District 15–60 km`, `Island-Wide 60+ km`), and 2 delivery speeds (`Standard Next-Day` vs. `⚡ 2–4 Hours Express`).
-  - **Right Live Fare Receipt Card**: Dark slate glassmorphism summary with live LKR range, itemized cost breakdown, guaranteed delivery ETA, free parcel insurance guarantee, and direct booking integration.
-- **3 Transparency Pillars**:
-  1. *Island-Wide Line-Haul*: Full logistics coverage across all 9 provinces and 25 districts.
-  2. *Dynamic Pricing Engine*: Zero artificial markups or hidden surcharges.
-  3. *Digital Proof of Delivery*: Geotagged camera snapshots and recipient e-signatures.
+Copy the templates if the destination files do not already exist. On Windows PowerShell:
 
-### 📡 Real-Time WebSocket Parcel Tracking (Member 3)
-- **Live Courier Coordinates**: WebSocket streaming updates for driver GPS location and live delivery route tracking.
-- **Milestone Timeline**: Real-time event progression (`Booked`, `Picked Up`, `In Transit`, `Out for Delivery`, `Delivered`).
-- **Customer Delivery History & Receipts**: Ownership-verified past shipments, downloadable digital receipts, and public tracking lookup.
+```powershell
+Copy-Item .env.example .env
+Copy-Item server/.env.example server/.env
+```
 
-### 🛡️ Parcel Support & Exceptions Desk (Member 10)
-- **Exceptions Management Console**: Dedicated portal for handling failed delivery attempts, damaged goods, and address corrections.
-- **Doorstep Audit Trail**: Review photo proofs captured by couriers, customer dispute logs, and status escalation workflows.
+On macOS/Linux:
 
-### 🔐 Enterprise Auth & Active Session Security (Member 1)
-- **Supabase Auth & Google OAuth**: Production email verification, Google OAuth, and password hashing managed securely via Supabase Auth.
-- **Active Session RPC Enforcement**: Restricted boolean RPC database checks to instantly reject revoked or logged-out JWT tokens.
-- **Expo SecureStore Integration**: AES-encrypted token persistence and automatic rotation on native mobile devices.
+```bash
+cp .env.example .env
+cp server/.env.example server/.env
+```
 
----
+Set these values in `server/.env`:
 
-## 👥 10-Member Engineering Team Architecture
+| Variable | Required configuration |
+|---|---|
+| `SUPABASE_URL` | Your Supabase project URL. |
+| `SUPABASE_ANON_KEY` | Your project's anon/publishable key. |
+| `DATABASE_URL` | PostgreSQL connection URL for that same Supabase project; use its session pooler connection string and percent-encode reserved password characters. |
+| `DATABASE_SSL_CA` | Project CA certificate if required, with literal `\n` line breaks. |
+| `AUTH_DEMO_ENABLED` | Keep `false` unless demo accounts have been provisioned. |
 
-| # | Member Responsibility | Core Module & Endpoints | Web / Mobile Interface |
-|---|------------------------|-------------------------|------------------------|
-| **1** | **Identity, Security & Account Management** | `server/src/modules/auth` | `/login`, `/register`, `/auth/callback` |
-| **2** | **Customer Booking & Instant Dynamic Quoting** | `server/src/modules/booking` | `/booking`, `/quote` |
-| **3** | **Live Real-Time Tracking, History & Receipts** | `server/src/modules/tracking` | `/tracking`, `/tracking/[id]`, `/history` |
-| **4** | **Courier Execution & Proof-of-Delivery (POD)** | `server/src/modules/courier` | Mobile App (`mobile/src/screens/courier`) |
-| **5** | **Dispatcher Console & Line-Haul Routing** | `server/src/modules/dispatch` | `/dispatch`, `/admin/routes` |
-| **6** | **Merchant B2B Portal & Bulk Order API** | `server/src/modules/merchant` | `/portal`, `/merchant`, `/api/v1/merchant` |
-| **7** | **Multi-Channel Notifications & Inbox** | `server/src/modules/notifications` | RabbitMQ Worker, User Notifications Bar |
-| **8** | **Merchant Webhooks Center & DLQ Retries** | `server/src/modules/webhooks` | `/portal/webhooks`, Webhook Background Worker |
-| **9** | **Operational Analytics, Heatmaps & Reports** | `server/src/modules/analytics` | `/analytics`, `/admin/reports` |
-| **10** | **Parcel Support Desk & Exception Resolution** | `server/src/modules/support` | `/support`, `/support/exceptions` |
-| **★** | **Shared AI Workstream** | `server/src/modules/ai` | Smart Dispatch, Address Verification, OCR POD |
+Configure optional feature secrets in `server/.env` as needed. Compose injects this file into the web, API, and worker containers at runtime. The Docker build excludes local environment files, uploaded files, and host build outputs.
 
-Member 01 setup, API contracts and verification evidence: [Identity and account security](docs/member-01-auth.md).
+The root `.env` controls Compose's ports and shared settings:
 
----
+```dotenv
+WEB_PORT=3000
+API_PORT=5000
+APP_URL=http://localhost:3000
+CORS_ORIGIN=http://localhost:3000
+TRACKING_WS_URL=ws://localhost:5000/ws/tracking
+RABBITMQ_USER=swiftdrop
+RABBITMQ_PASSWORD=swiftdrop_local
+```
+
+Use a non-`guest` RabbitMQ account because application containers connect across the Docker network. If you choose another password, URL-encode reserved characters when they appear in an AMQP URL. Compose overrides `REDIS_URL` and `RABBITMQ_URL` from `server/.env` with container service addresses. It also overrides `APP_URL`, `CORS_ORIGIN`, and `TRACKING_WS_URL` using the root `.env`; database/auth settings come from `server/.env`.
+
+### 2. Prepare Supabase
+
+For a new development project, apply the SQL files in `server/src/database/migrations/` in filename order through the Supabase SQL Editor. For an existing project, apply only outstanding migrations. Do not initialize the same project again with `schema.sql`. These migrations require Supabase's Auth schema and roles; Compose intentionally does not start a plain PostgreSQL replacement.
+
+Configure the web site URL and allow `http://localhost:3000/auth/callback` in Supabase Auth. Keep email confirmation enabled, and confirm a registered customer's email before login. See the authentication setup under local installation below for Google login and optional demo accounts.
+
+### 3. Build and Start
+
+From the repository root:
+
+```bash
+docker compose config --quiet
+docker compose up --build -d --wait
+docker compose ps
+```
+
+The first build downloads Node.js 22 images and installs the locked dependencies. Both application images compile the backend; the web image also builds Next.js. Containers run the compiled applications as the `node` user. Source folders are not mounted over the image, so host `node_modules`, `dist`, and `.next` directories are not required.
+
+| Service | Address |
+|---|---|
+| Web application | `http://localhost:3000` |
+| Web HTTP API health | `http://localhost:3000/api/v1/health` |
+| Standalone API health | `http://localhost:5000/health` |
+| Standalone HTTP API | `http://localhost:5000/api/v1` |
+| Tracking WebSocket | `ws://localhost:5000/ws/tracking` |
+| RabbitMQ management | `http://localhost:15672` (credentials from root `.env`) |
+| Redis | `127.0.0.1:6379` |
+
+Next.js serves its HTTP API on the web origin; the standalone API supplies WebSockets and native mobile access. Redis and RabbitMQ use service names inside the Docker network. Their published ports are limited to the host loopback address. Uploaded files share a persistent volume between the API and web containers; Redis and RabbitMQ also retain data in named volumes.
+
+Check startup and provider configuration:
+
+```bash
+docker compose logs --tail=100 server web worker
+docker compose exec server node dist/scripts/check-database.js
+docker compose exec server node dist/scripts/check-auth-setup.js
+```
+
+The provider checks require network access to Supabase. HTTP health checks verify that the application process responds; they do not establish that every database operation works. Register, confirm email, and sign in to verify the configured authentication flow.
+
+### 4. Stop, Rebuild, and Troubleshoot
+
+```bash
+# Stop containers and keep stored data
+docker compose down
+
+# Rebuild after source or Dockerfile changes
+docker compose up --build -d --wait
+```
+
+- If Docker cannot resolve `registry-1.docker.io`, fix Docker Desktop's network, DNS, or proxy access, then retry the build. The initial build requires access to Docker Hub and the npm registry.
+- If ports are occupied, stop the conflicting local processes or change `WEB_PORT`/`API_PORT` in the root `.env`. Update `APP_URL`, `CORS_ORIGIN`, `TRACKING_WS_URL`, and the Supabase callback allowlist to match the browser-facing URLs.
+- For a physical phone, use the computer's LAN address for the API and tracking socket, and allow the required port through the host firewall. For Expo web preview, add its browser origin to the comma-separated `CORS_ORIGIN` value.
+- If RabbitMQ rejects credentials, check the root `.env` and worker logs. RabbitMQ only provisions its default account when its data volume is first initialized; changing environment values does not change an existing broker account. Update the account through RabbitMQ management using its existing credentials.
+- Environment changes require container recreation (`docker compose up -d`); source changes require rebuilding. Keep the named volumes when stopping the stack to preserve data.
+
+## 🚀 Installation and Local Development
+
+### 1. Prerequisites
+- **Git** to clone the repository.
+- **Node.js 22 or higher** and its bundled **npm**. The pinned Supabase client requires Node.js 22; Node.js 18 is insufficient.
+- A **Supabase project** for authentication and the application database, with its URL, anon/publishable key, and PostgreSQL connection string available.
+- **Docker Desktop with Docker Compose** for local Redis and RabbitMQ, or existing instances of those services.
+- For mobile: an Android emulator or physical device; the iOS simulator requires macOS and Xcode. The app uses Expo SDK 51, so use a compatible client/development build.
+
+Check the tools before starting:
+
+```bash
+git --version
+node --version
+npm --version
+docker compose version
+```
+
+### 2. Clone the Repository
+
+```bash
+git clone https://github.com/yasindugunasekara/SWIFTDROP.git
+cd SWIFTDROP
+```
+
+All commands below start in the repository root unless a different directory is stated. There is no root `package.json`; install dependencies in each application directory.
+
+### 3. Configure Environment Files
+
+On Windows PowerShell, copy the templates only if the destination files do not already exist:
+
+```powershell
+Copy-Item .env.example .env
+Copy-Item server/.env.example server/.env
+Copy-Item mobile/.env.example mobile/.env
+```
+
+On macOS/Linux:
+
+```bash
+cp .env.example .env
+cp server/.env.example server/.env
+cp mobile/.env.example mobile/.env
+```
+
+The web app loads `server/.env` through `web/next.config.ts`. A separate `web/.env.example` is not provided or required for local setup. The root `.env` supplies Docker Compose values; it does not automatically configure the standalone backend.
+
+Edit `server/.env` with the following values:
+
+| Variable | Local value / purpose |
+|---|---|
+| `SUPABASE_URL` | Your Supabase project URL. |
+| `SUPABASE_ANON_KEY` | The project's anon/publishable key, never a service-role secret. |
+| `DATABASE_URL` | PostgreSQL connection string for the **same Supabase project**, preferably its session pooler URL. Percent-encode reserved characters in the password. |
+| `APP_URL` | `http://localhost:3000` |
+| `CORS_ORIGIN` | `http://localhost:3000` for the web app; adjust for a different browser preview origin when needed. |
+| `PORT` | `5000` for the standalone API. |
+| `REDIS_URL` | `redis://localhost:6379` |
+| `RABBITMQ_URL` | `amqp://guest:guest@localhost:5672` for local development. |
+| `TRACKING_WS_URL` | `ws://localhost:5000/ws/tracking` when running the standalone server; leave empty for HTTP polling. |
+
+Keep `AUTH_DEMO_ENABLED=false` unless you intentionally provision examiner/demo accounts. Configure optional AI, webhook, and upload settings from the template only for the features you use. Keep credentials out of commits.
+
+#### Supabase Auth setup
+
+- Authentication > URL Configuration: set the site URL to the web origin and
+  allow `http://localhost:3000/auth/callback` plus the deployed callback URL.
+- Email confirmation remains enabled. Users must confirm their email before login.
+  Configure production SMTP for delivery to real customers; observe Supabase's
+  email limits. Set the provider's minimum password length to at least 8 as well.
+- Authentication > Providers > Google: supply Google OAuth credentials and enable
+  the provider. `npm run auth:check` in `server/` reports the live provider status
+  without displaying credentials.
+- Native mobile login uses the real `/auth/login` and `/auth/me` endpoints. The
+  backend profile decides whether the account is a customer or courier; the role
+  selector and demo shortcuts cannot grant access. Merchant/dispatcher accounts
+  use the web portal. Mobile signup and Google PKCE login are implemented;
+  courier/business signup enters a staff approval queue before operational access.
+
+See [Member 01 setup](docs/member-01-auth.md) for password-reset callbacks, native
+Google redirects, the approval migration and demo configuration.
+
+### 4. Install Dependencies
+
+Use the committed lockfiles for reproducible installation:
+
+```bash
+npm ci --prefix server
+npm ci --prefix web
+npm ci --prefix mobile
+```
+
+The mobile installation is optional if you are only reviewing the web application.
+
+### 5. Initialize the Database and Supporting Services
+
+Use a new development Supabase project. The migrations reference Supabase's `auth` schema and roles, so a plain PostgreSQL container alone cannot initialize the current application.
+
+From the repository root, start the local messaging/cache services:
+
+```bash
+docker compose up -d redis rabbitmq
+```
+
+Then apply migrations to the database configured in `server/.env`:
+
+```bash
+cd server
+npm run migrate
+npm run db:check
+npm run auth:check
+```
+
+The migration command reads SQL files from `server/src/database/migrations/` in filename order, including the initial schema, sample data, Supabase Auth integration, session checks, and account approval changes. Alternatively, run those files in that order through the Supabase SQL Editor. Do not also run `schema.sql` as a second initialization step.
+
+The current runner does not track applied migrations and can report an error without a nonzero exit code. Check its output for successful application of every file, then verify connectivity with `db:check`; do not repeatedly replay all migrations against an existing database. Apply only outstanding files to an existing project.
+
+For optional demo identities, follow the instructions in `server/src/database/seeds/supabase-demo-accounts.sql` after migrations. Ordinary sample profile rows alone do not create working Supabase Auth logins.
+
+### 6. Run the Applications
+
+Open separate terminals from the repository root. For web-only use, the Next.js process serves both pages and HTTP API routes; start the standalone backend additionally for native mobile API access or live WebSocket tracking.
+
+#### Terminal 1: Web Application and HTTP API
+```bash
+cd web
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000). Verify the embedded API at [http://localhost:3000/api/v1/health](http://localhost:3000/api/v1/health). The `predev` script builds the shared server package automatically, so install server dependencies first. Restart the web process after changes to shared backend code.
+
+#### Terminal 2: Standalone Backend and WebSockets
+```bash
+cd server
+npm run dev
+```
+> API: `http://localhost:5000/api/v1` | Health: `http://localhost:5000/health` | Live tracking: `ws://localhost:5000/ws/tracking`
+
+#### Terminal 3: Background Workers
+```bash
+cd server
+npm run worker
+```
+
+Run workers for notification delivery and webhook retries with RabbitMQ and the database configured.
+
+#### Terminal 4: Mobile App (Optional)
+
+Edit `mobile/.env`: set `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` to the same project as the backend. Set `EXPO_PUBLIC_API_URL` to `http://<computer-LAN-IP>:5000/api/v1` on a physical phone, or `http://10.0.2.2:5000/api/v1` on the standard Android emulator. A phone's `localhost` refers to the phone itself. Set the socket URL to the reachable backend host as well. The phone and computer must share a network, with port 5000 reachable.
+
+```bash
+cd mobile
+npm run web      # For Web Preview
+# or
+npm run android  # For Android Emulator
+# or
+npm run ios      # For iOS Simulator
+```
+> Expo Dev Server running on `http://localhost:8081`
+
+Restart Expo after environment changes. For the iOS simulator, use `http://localhost:5000/api/v1`. Configure native authentication redirects and the Google provider as described above.
+
+### 7. Verify and Troubleshoot
+
+- Open `/register`, register a customer, confirm the verification email, and sign in at `/login`. Courier/business applications require staff approval before operational access.
+- If login fails, check the Supabase URL/key, callback allowlist, email confirmation, and migration output. Run `npm run auth:check` from `server/`.
+- If a business page reports database errors, check `DATABASE_URL` and run `npm run db:check` from `server/`; a healthy HTTP endpoint alone does not prove database connectivity.
+- If notifications or retries fail, run `docker compose ps` and check the worker terminal. RabbitMQ management is available at `http://localhost:15672` (credentials from the root `.env`; defaults are `swiftdrop` / `swiftdrop_local`). Match the standalone server's `RABBITMQ_URL` to those credentials.
+- If a port is occupied, stop the conflicting process or select another port and update the corresponding URLs, CORS origin, and auth redirects.
+- Stop application terminals with `Ctrl+C`. Run `docker compose stop redis rabbitmq` from the repository root to stop supporting services while keeping their data.
 
 ## 📁 Repository Structure
 
 ```
 SWIFTDROP/
 ├── .env.example                     # Master environment variables template
-├── docker-compose.yml               # Complete Docker orchestration (DB, Redis, RabbitMQ, API, Web, Worker)
+├── docker-compose.yml               # Web, API, worker, Redis, and RabbitMQ; external Supabase
+├── .dockerignore                    # Excludes host builds, dependencies, and credentials
 ├── .gitignore                       # Universal gitignore
-├── k8s/                             # Shared Kubernetes Deployment Workstream
+├── k8s/                             # Kubernetes deployment manifests
 │   └── base/
 │       ├── kustomization.yaml
 │       ├── namespace.yaml
@@ -103,210 +321,48 @@ SWIFTDROP/
 │       ├── config/                  # DB, RabbitMQ, Redis, environment config
 │       ├── middleware/              # JWT auth, RBAC, rate-limiting, error handling
 │       ├── database/
-│       │   ├── schema.sql           # Unified PostgreSQL schema for all 10 members
+│       │   ├── schema.sql           # Application PostgreSQL schema
 │       │   └── migrations/          # Versioned schema migrations
-│       ├── modules/                 # 10 Team Member Modules + AI
-│       │   ├── auth/                # [Member 1] Identity & Account Security
-│       │   ├── booking/             # [Member 2] Customer Booking & Fee Quote
-│       │   ├── tracking/            # [Member 3] Real-Time Tracking, History & Receipt
-│       │   ├── courier/             # [Member 4] Courier Task Execution
-│       │   ├── dispatch/            # [Member 5] Dispatch & Service Configuration
-│       │   ├── merchant/            # [Member 6] Merchant Account, Orders & Partner API
-│       │   ├── notifications/       # [Member 7] Notification Preferences & Delivery Inbox
-│       │   ├── webhooks/            # [Member 8] Merchant Webhook Center & DLQ
-│       │   ├── analytics/           # [Member 9] Operational Analytics & Reports
-│       │   ├── support/             # [Member 10] Parcel Support & Exception Management
-│       │   └── ai/                  # [Shared AI] Dispatch optimization, OCR & POD audit
+│       ├── modules/                 # Application modules
+│       │   ├── auth/                # Identity & Account Security
+│       │   ├── booking/             # Customer Booking & Fee Quote
+│       │   ├── tracking/            # Real-Time Tracking, History & Receipt
+│       │   ├── courier/             # Courier Task Execution
+│       │   ├── dispatch/            # Dispatch & Service Configuration
+│       │   ├── merchant/            # Merchant Account, Orders & Partner API
+│       │   ├── notifications/       # Notification Preferences & Delivery Inbox
+│       │   ├── webhooks/            # Merchant Webhook Center & DLQ
+│       │   ├── analytics/           # Operational Analytics & Reports
+│       │   ├── support/             # Parcel Support & Exception Management
+│       │   └── ai/                  # Dispatch optimization, OCR & POD audit
 │       └── workers/
 │           ├── index.ts             # Background workers runner
 │           ├── notification-consumer.ts # RabbitMQ notification consumer
 │           └── webhook-worker.ts    # Webhook delivery & retry worker
 └── web/                             # Frontend (Next.js 16, React 19, TypeScript, Tailwind CSS)
-    ├── .env.example                 # Frontend environment variables
     ├── Dockerfile
     ├── public/                      # Static brand assets (3D renders, favicons, logos)
     └── src/
-        ├── app/                     # App router pages mapped to each member's module
+        ├── app/                     # App router pages
         ├── components/              # Role-aware navigation & shared UI components
         ├── lib/                     # API fetchers, Supabase client, auth helpers
         └── pages/api/[...path].ts   # Serverless Vercel API bridge
 ```
 
----
+## Dispatch and Fleet Configuration
 
-## 🚀 Quick Start (Local Development)
+The dispatcher workspace includes the unassigned parcel board, courier workload balancing, assignment, service configuration, and AI matching. Dispatcher and administrator roles can access these APIs.
 
-### 1. Prerequisites
-- **Node.js**: v18.0.0 or higher
-- **npm**: v9.0.0 or higher
-- **Docker & Docker Compose** (optional for local DB/RabbitMQ)
-
-### 2. Configure Environment Files
-Copy the sample environment templates:
-```bash
-# In the root repository
-cp .env.example .env
-
-# Server
-cp server/.env.example server/.env
-
-# Web
-cp web/.env.example web/.env.local
-
-# Mobile
-cp mobile/.env.example mobile/.env
-```
-
-#### Supabase Auth setup
-
-- Authentication > URL Configuration: set the site URL to the web origin and
-  allow `http://localhost:3000/auth/callback` plus the deployed callback URL.
-- Email confirmation remains enabled. Users must confirm their email before login.
-  Configure production SMTP for delivery to real customers; observe Supabase's
-  email limits. Set the provider's minimum password length to at least 8 as well.
-- Authentication > Providers > Google: supply Google OAuth credentials and enable
-  the provider. `npm run auth:check` in `server/` reports the live provider status
-  without displaying credentials. Google was verified enabled on 2026-11-19.
-- Native mobile login uses the real `/auth/login` and `/auth/me` endpoints. The
-  backend profile decides whether the account is a customer or courier; the role
-  selector and demo shortcuts cannot grant access. Merchant/dispatcher accounts
-  use the web portal. Mobile signup and Google PKCE login are implemented;
-  courier/business signup enters a staff approval queue before operational access.
-
-See [Member 01 setup](docs/member-01-auth.md) for password-reset callbacks, native
-Google redirects, the approval migration and demo configuration.
-
-### 3. Install Dependencies
-```bash
-# Install server dependencies
-cd server && npm install
-
-# Install web dependencies
-cd ../web && npm install
-
-# Install mobile dependencies
-cd ../mobile && npm install
-```
-
-### 4. Run Development Servers
-
-You can run services concurrently in separate terminals:
-
-#### Terminal 1: Backend API & WebSocket Server
-```bash
-cd server
-npm run dev
-```
-> API listening on `http://localhost:5000` | WebSockets on `ws://localhost:5000`
-
-#### Terminal 2: Next.js Web Frontend
-```bash
-cd web
-npm run dev
-```
-> Web App running on `http://localhost:3000`
-
-#### Terminal 3: Mobile App (Expo)
-```bash
-cd mobile
-npm run web      # For Web Preview
-# or
-npm run android  # For Android Emulator
-# or
-npm run ios      # For iOS Simulator
-```
-> Expo Dev Server running on `http://localhost:8081`
-
----
-
-## 🐳 Docker Compose Orchestration
-
-To run the complete micro-services infrastructure (PostgreSQL, RabbitMQ, Redis, API, Worker, and Web):
+Run these commands from `server/`:
 
 ```bash
-docker-compose up --build
-```
-
-- **Web App**: [http://localhost:3000](http://localhost:3000)
-- **API Server**: [http://localhost:5000/health](http://localhost:5000/health)
-- **RabbitMQ Management Dashboard**: [http://localhost:15672](http://localhost:15672) *(guest / guest)*
-- **PostgreSQL**: `localhost:5432`
-- **Redis**: `localhost:6379`
-
----
-
-## 🧪 Automated Testing & Verification Suite
-
-The repository contains isolated test suites and live demo runners across backend, web, and mobile:
-
-### Backend Testing (`server/`)
-```bash
-# Verify live Supabase Auth and database connectivity
-npm run db:check
-
-# Run Member 1 Auth & RLS signup suite
-npm run test:signup
-
-# Run Member 3 Tracking & Receipt suite
-npm run test:tracking
-
-# Run Member 3 Live WebSocket tracking suite
-npm run test:tracking-socket
-
-# Run Member 4 Courier execution suite & demo
-npm run test:courier
-npm run demo:courier
-
-# Run Member 5 Dispatch, Workload Balancer & AI suite & demo
 npm run test:dispatch
 npm run demo:dispatch
 npm run db:seed:dispatch
-
-# Run Member 8 Webhooks & DLQ retry suite & demo
-npm run test:webhooks
-npm run demo:webhooks
-
-# Run Member 10 Parcel Support & Exception Desk suite & demo
-npm run test:support
-npm run demo:support
 ```
 
-### Web Testing (`web/`)
-```bash
-# Test Supabase session lifecycle, token refresh & logout race conditions
-npm run test:auth
+Review the demo seed configuration before using it against a shared database.
 
-# Test same-origin Vercel API mounting
-npm run test:api
+## License
 
-# Test Tracking client state, normalisation & retry
-npm run test:tracking
-
-# Type-check TypeScript across the web app
-npx tsc --noEmit
-```
-
-### Mobile Testing (`mobile/`)
-```bash
-# Test Expo SecureStore token persistence & Google sign-in
-npm run test:auth
-```
-
----
-
-## 🌐 Production Deployment
-
-### Unified Vercel Deployment (Web + API)
-The web application is configured to run both the Next.js pages and the Express API serverless handlers on Vercel:
-1. In Vercel, set the **Root Directory** to `web` and enable **Include source files outside Root Directory**.
-2. Set `SUPABASE_URL` and `SUPABASE_ANON_KEY` in Vercel Project Environment Variables.
-3. Set `APP_URL` to your production URL (e.g. `https://swiftdrop.vercel.app`) and authorize `/auth/callback` in Supabase Auth.
-4. Next.js automatically mounts API routes at `/api/v1/*` through `web/src/pages/api/[...path].ts`.
-
-### Kubernetes (`k8s/`)
-Production enterprise deployment manifests are maintained under `k8s/base/` with ConfigMaps, Secrets, Ingress, and auto-scaling deployments for the API, Background Workers, and Web pods.
-
----
-
-## 📄 License
 This project is proprietary and confidential. Developed by the SwiftDrop Engineering Team.
