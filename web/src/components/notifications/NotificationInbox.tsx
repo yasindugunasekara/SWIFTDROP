@@ -165,7 +165,7 @@ export default function NotificationInbox({ role }: NotificationInboxProps) {
   };
 
   const handleLoadMore = async () => {
-    if (!nextCursor || isLoadingMore || isMarkingAll) return;
+    if (!nextCursor || isLoadingMore || isMarkingAll || isRefreshing) return;
 
     const request = requestId.current;
     setIsLoadingMore(true);
@@ -196,7 +196,7 @@ export default function NotificationInbox({ role }: NotificationInboxProps) {
   };
 
   const handleMarkRead = async (id: string) => {
-    if (isMarkingAll || pendingReadIds.has(id)) return;
+    if (isMarkingAll || isRefreshing || pendingReadIds.has(id)) return;
 
     const request = requestId.current;
     setPendingReadIds(previous => new Set(previous).add(id));
@@ -237,7 +237,7 @@ export default function NotificationInbox({ role }: NotificationInboxProps) {
   };
 
   const handleMarkAll = async () => {
-    if (unreadCount === 0 || isMarkingAll || isLoadingMore) return;
+    if (unreadCount === 0 || isMarkingAll || isLoadingMore || isRefreshing) return;
 
     const request = requestId.current;
     setIsMarkingAll(true);
@@ -311,7 +311,11 @@ export default function NotificationInbox({ role }: NotificationInboxProps) {
               type="button"
               onClick={() => void handleMarkAll()}
               disabled={
-                unreadCount === 0 || isMarkingAll || status !== 'ready' || isLoadingMore
+                unreadCount === 0 ||
+                isMarkingAll ||
+                isRefreshing ||
+                status !== 'ready' ||
+                isLoadingMore
               }
               className="min-h-[44px] rounded-xl bg-[#ff6600] px-4 text-xs font-black text-white shadow-sm shadow-orange-500/20 transition-colors hover:bg-[#ea580c] disabled:cursor-not-allowed disabled:opacity-50"
             >
@@ -368,7 +372,12 @@ export default function NotificationInbox({ role }: NotificationInboxProps) {
         </div>
       )}
 
-      {status === 'loading' && <NotificationSkeleton />}
+      {status === 'loading' && (
+        <div role="status" aria-live="polite">
+          <span className="sr-only">Loading notifications...</span>
+          <NotificationSkeleton />
+        </div>
+      )}
 
       {status === 'error' && (
         <div
@@ -409,7 +418,7 @@ export default function NotificationInbox({ role }: NotificationInboxProps) {
                 notification={notification}
                 onMarkRead={id => void handleMarkRead(id)}
                 pending={pendingReadIds.has(notification.id)}
-                disabled={isMarkingAll}
+                disabled={isMarkingAll || isRefreshing}
               />
             ))}
           </ul>
@@ -419,7 +428,7 @@ export default function NotificationInbox({ role }: NotificationInboxProps) {
               <button
                 type="button"
                 onClick={() => void handleLoadMore()}
-                disabled={isLoadingMore || isMarkingAll}
+                disabled={isLoadingMore || isMarkingAll || isRefreshing}
                 className="min-h-[44px] rounded-xl border border-slate-200 bg-white px-5 text-xs font-black text-slate-600 transition-colors hover:border-orange-300 hover:text-[#ff6600] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isLoadingMore ? 'Loading more...' : 'Load more'}
